@@ -21,6 +21,14 @@ export default function Register() {
 
     const handleChange = (e) => {
         const { name, value } = e.target
+        showFieldError(name, '');
+
+        const requiredFields = ['email', 'password', 'firstName', 'lastName', 'dateOfBirth'];
+
+        if (requiredFields.includes(name) && !value) {
+            showFieldError(name, "This field is needed")
+        }
+
         setFormData(prev => ({ ...prev, [name]: value }))
     }
 
@@ -125,8 +133,10 @@ export default function Register() {
                         value={formData.password}
                         onChange={handleChange}
                         className="w-full p-2 border rounded"
+                        id="password"
                         required
                     />
+                    <div id="password-error" className="text-red-500"></div>
                 </div>
                 <div>
                     <label className="block mb-1">First Name <span className="text-red-500">*</span></label>
@@ -136,8 +146,10 @@ export default function Register() {
                         value={formData.firstName}
                         onChange={handleChange}
                         className="w-full p-2 border rounded"
+                        id="firstName"
                         required
                     />
+                    <div id="firstName-error" className="text-red-500"></div>
                 </div>
                 <div>
                     <label className="block mb-1">Last Name <span className="text-red-500">*</span></label>
@@ -147,8 +159,10 @@ export default function Register() {
                         value={formData.lastName}
                         onChange={handleChange}
                         className="w-full p-2 border rounded"
+                        id="lastName"
                         required
                     />
+                    <div id="lastName-error" className="text-red-500"></div>
                 </div>
                 <div>
                     <label className="block mb-1">Date of Birth (YYYY-MM-DD)  <span className="text-red-500">*</span></label>
@@ -158,8 +172,10 @@ export default function Register() {
                         value={formData.dateOfBirth}
                         onChange={handleChange}
                         className="w-full p-2 border rounded"
+                        id="dateOfBirth"
                         required
                     />
+                    <div id="dateOfBirth-error" className="text-red-500"></div>
                 </div>
                 <div>
                     <label className="block mb-1">Avatar Image</label>
@@ -201,8 +217,10 @@ export default function Register() {
                         value={formData.aboutMe}
                         onChange={handleChange}
                         className="w-full p-2 border rounded"
+                        id="aboutMe"
                         rows="3"
                     />
+                    <div id="aboutMe-error" className="text-red-500"></div>
                 </div>
                 <button
                     type="submit"
