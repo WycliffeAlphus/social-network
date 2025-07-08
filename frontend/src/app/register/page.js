@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { showFieldError } from '@/lib/auth'
 
 export default function Register() {
     const [formData, setFormData] = useState({
@@ -10,17 +11,31 @@ export default function Register() {
         firstName: '',
         lastName: '',
         dateOfBirth: '',
-        avatarImage: '',
+        avatarImage: null,
         nickname: '',
         aboutMe: '',
     })
     const [error, setError] = useState('')
+    const [preview, setPreview] = useState('') // for image preview
     const router = useRouter()
 
-    // this is executed everytime there is a change in the input fields to update the form data
     const handleChange = (e) => {
         const { name, value } = e.target
         setFormData(prev => ({ ...prev, [name]: value }))
+    }
+
+    const handleFileChange = (e) => {
+        const file = e.target.files[0]
+        if (file) {
+            setFormData(prev => ({ ...prev, avatarImage: file }))
+
+            // create selected image preview
+            const reader = new FileReader()
+            reader.onloadend = () => {
+                setPreview(reader.result)
+            }
+            reader.readAsDataURL(file)
+        }
     }
 
     const handleSubmit = async (e) => {
@@ -28,6 +43,19 @@ export default function Register() {
         setError('')
 
         try {
+            const formDataToSend = new FormData()
+
+            // append all form data to FormData object
+            Object.entries(formData).forEach(([key, value]) => {
+                if (value !== null && value !== undefined) {
+                    if (key === 'avatarImage' && value instanceof File) {
+                        formDataToSend.append(key, value)
+                    } else {
+                        formDataToSend.append(key, value)
+                    }
+                }
+            })
+
             const response = await fetch('http://localhost:8080/api/register', {
                 method: 'POST',
                 headers: {
@@ -37,12 +65,21 @@ export default function Register() {
             })
 
             if (!response.ok) {
-                throw new Error('Registration failed')
+                const data = await response.json();
+
+                if (data.Email) {
+                    showFieldError('email', data.Email);
+                }
+                if (data.Nickname) {
+                    showFieldError('nickname', data.Nickname);
+                }
             }
 
-            const data = await response.json()
-            console.log('Registration successful:', data)
-            router.push('/login') // redirect to login page after registration
+            // const data = await response.json()
+            // console.log('Registration successful:', data)
+            if (response.ok) {
+                router.push('/login') // redirect to login page after registration
+            }
         } catch (err) {
             setError('Registration failed. Please try again.')
             console.error('Registration error:', err)
@@ -62,8 +99,10 @@ export default function Register() {
                         value={formData.email}
                         onChange={handleChange}
                         className="w-full p-2 border rounded"
+                        id="email"
                         required
                     />
+                    <div id="email-error" className="text-red-500"></div>
                 </div>
                 <div>
                     <label className="block mb-1">Password*</label>
@@ -110,13 +149,22 @@ export default function Register() {
                     />
                 </div>
                 <div>
-                    <label className="block mb-1">Avatar Image URL</label>
+                    <label className="block mb-1">Avatar Image</label>
+                    {preview && (
+                        <div className="mb-2">
+                            <img
+                                src={preview}
+                                alt="Preview"
+                                className="w-25 object-cover rounded-full"
+                            />
+                        </div>
+                    )}
                     <input
-                        type="text"
+                        type="file"
                         name="avatarImage"
-                        value={formData.avatarImage}
-                        onChange={handleChange}
+                        onChange={handleFileChange}
                         className="w-full p-2 border rounded"
+                        accept="image/*"
                     />
                 </div>
                 <div>
@@ -127,7 +175,9 @@ export default function Register() {
                         value={formData.nickname}
                         onChange={handleChange}
                         className="w-full p-2 border rounded"
+                        id="nickname"
                     />
+                    <div id="nickname-error" className="text-red-500"></div>
                 </div>
                 <div>
                     <label className="block mb-1">About Me</label>
