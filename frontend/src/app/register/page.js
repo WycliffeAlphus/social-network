@@ -34,6 +34,14 @@ export default function Register() {
                 e.target.value = ''; // clear the file input
                 return;
             }
+
+            // validate file size (20MB max)
+            if (file.size > 20 * 1000 * 1000) {
+                setError('Image must be 20MB or smaller');
+                e.target.value = '';
+                return;
+            }
+
             setFormData(prev => ({ ...prev, avatarImage: file }))
 
             // create selected image preview
