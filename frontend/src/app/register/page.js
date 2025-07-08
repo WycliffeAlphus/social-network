@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { showFieldError } from '@/lib/auth'
 
@@ -19,11 +19,14 @@ export default function Register() {
     const [preview, setPreview] = useState('') // for image preview
     const router = useRouter()
 
+    // memoize required fields to avoid recreation on every render
+    const requiredFields = useMemo(() => [
+        'email', 'password', 'firstName', 'lastName', 'dateOfBirth'
+    ], [])
+
     const handleChange = (e) => {
         const { name, value } = e.target
         showFieldError(name, '');
-
-        const requiredFields = ['email', 'password', 'firstName', 'lastName', 'dateOfBirth'];
 
         if (requiredFields.includes(name) && !value) {
             showFieldError(name, "This field is needed")
