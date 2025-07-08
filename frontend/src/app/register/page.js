@@ -61,7 +61,7 @@ export default function Register() {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(formData),
+                body: JSON.stringify(formDataToSend),
             })
 
             if (!response.ok) {
