@@ -25,19 +25,20 @@ export default function Register() {
     }
 
     const handleFileChange = (e) => {
+        showFieldError('image', '');
         const file = e.target.files[0]
         if (file) {
             // validate file type
             const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
             if (!validTypes.includes(file.type)) {
-                setError('Only JPEG, PNG, and GIF images are allowed');
+                showFieldError('image', 'Only JPEG, PNG, and GIF images are allowed');
                 e.target.value = ''; // clear the file input
                 return;
             }
 
             // validate file size (20MB max)
             if (file.size > 20 * 1000 * 1000) {
-                setError('Image must be 20MB or smaller');
+                showFieldError('image', 'Image must be 20MB or smaller');
                 e.target.value = '';
                 return;
             }
@@ -176,8 +177,10 @@ export default function Register() {
                         name="avatarImage"
                         onChange={handleFileChange}
                         className="w-full p-2 border rounded"
+                        id="image"
                         accept="image/*"
                     />
+                    <div id="image-error" className="text-red-500"></div>
                 </div>
                 <div>
                     <label className="block mb-1">Nickname</label>
