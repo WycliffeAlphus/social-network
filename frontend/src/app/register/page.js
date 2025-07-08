@@ -14,6 +14,7 @@ export default function Register() {
         avatarImage: null,
         nickname: '',
         aboutMe: '',
+        profileVisibility: 'public',
     })
     const [error, setError] = useState('')
     const [preview, setPreview] = useState('') // for image preview
@@ -21,7 +22,7 @@ export default function Register() {
 
     // memoize required fields to avoid recreation on every render
     const requiredFields = useMemo(() => [
-        'email', 'password', 'firstName', 'lastName', 'dateOfBirth'
+        'email', 'password', 'firstName', 'lastName', 'dateOfBirth', 'profileVisibility'
     ], [])
 
     const handleChange = (e) => {
@@ -224,6 +225,22 @@ export default function Register() {
                         rows="3"
                     />
                     <div id="aboutMe-error" className="text-red-500"></div>
+                </div>
+                {/* profile visibility */}
+                <div>
+                    <label className="block mb-1">Profile Visibility*</label>
+                    <select
+                        name="profileVisibility"
+                        value={formData.profileVisibility}
+                        onChange={handleChange}
+                        className="w-full p-2 border rounded"
+                        id="profileVisibility"
+                        required
+                    >
+                        <option value="public" className="bg-gray-900">Public (Anyone can view your profile)</option>
+                        <option value="private" className="bg-gray-900">Private (Only you can view your profile)</option>
+                    </select>
+                    <div id="profileVisibility-error" className="text-red-500"></div>
                 </div>
                 <button
                     type="submit"
