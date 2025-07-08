@@ -27,6 +27,13 @@ export default function Register() {
     const handleFileChange = (e) => {
         const file = e.target.files[0]
         if (file) {
+            // validate file type
+            const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
+            if (!validTypes.includes(file.type)) {
+                setError('Only JPEG, PNG, and GIF images are allowed');
+                e.target.value = ''; // clear the file input
+                return;
+            }
             setFormData(prev => ({ ...prev, avatarImage: file }))
 
             // create selected image preview
