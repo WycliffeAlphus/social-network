@@ -92,7 +92,7 @@ export default function Register() {
             {error && <p className="text-red-500 mb-4">{error}</p>}
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                    <label className="block mb-1">Email*</label>
+                    <label className="block mb-1">Email <span className="text-red-500">*</span></label>
                     <input
                         type="email"
                         name="email"
@@ -105,7 +105,7 @@ export default function Register() {
                     <div id="email-error" className="text-red-500"></div>
                 </div>
                 <div>
-                    <label className="block mb-1">Password*</label>
+                    <label className="block mb-1">Password <span className="text-red-500">*</span></label>
                     <input
                         type="password"
                         name="password"
@@ -116,7 +116,7 @@ export default function Register() {
                     />
                 </div>
                 <div>
-                    <label className="block mb-1">First Name*</label>
+                    <label className="block mb-1">First Name <span className="text-red-500">*</span></label>
                     <input
                         type="text"
                         name="firstName"
@@ -127,7 +127,7 @@ export default function Register() {
                     />
                 </div>
                 <div>
-                    <label className="block mb-1">Last Name*</label>
+                    <label className="block mb-1">Last Name <span className="text-red-500">*</span></label>
                     <input
                         type="text"
                         name="lastName"
@@ -138,7 +138,7 @@ export default function Register() {
                     />
                 </div>
                 <div>
-                    <label className="block mb-1">Date of Birth* (YYYY-MM-DD)</label>
+                    <label className="block mb-1">Date of Birth (YYYY-MM-DD)  <span className="text-red-500">*</span></label>
                     <input
                         type="date"
                         name="dateOfBirth"
