@@ -132,8 +132,6 @@ export default function Register() {
                 }
             }
 
-            // const data = await response.json()
-            // console.log('Registration successful:', data)
             if (response.ok) {
                 router.push('/login') // redirect to login page after registration
             }
