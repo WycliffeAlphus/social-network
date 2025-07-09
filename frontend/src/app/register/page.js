@@ -130,19 +130,6 @@ export default function Register() {
                     <div id="email-error" className="text-red-500"></div>
                 </div>
                 <div>
-                    <label className="block mb-1">Password <span className="text-red-500">*</span></label>
-                    <input
-                        type="password"
-                        name="password"
-                        value={formData.password}
-                        onChange={handleChange}
-                        className="w-full p-2 border rounded"
-                        id="password"
-                        required
-                    />
-                    <div id="password-error" className="text-red-500"></div>
-                </div>
-                <div>
                     <label className="block mb-1">First Name <span className="text-red-500">*</span></label>
                     <input
                         type="text"
@@ -180,6 +167,19 @@ export default function Register() {
                         required
                     />
                     <div id="dateOfBirth-error" className="text-red-500"></div>
+                </div>
+                <div>
+                    <label className="block mb-1">Password <span className="text-red-500">*</span></label>
+                    <input
+                        type="password"
+                        name="password"
+                        value={formData.password}
+                        onChange={handleChange}
+                        className="w-full p-2 border rounded"
+                        id="password"
+                        required
+                    />
+                    <div id="password-error" className="text-red-500"></div>
                 </div>
                 <div>
                     <label className="block mb-1">Avatar Image</label>
