@@ -20,6 +20,15 @@ export default function Register() {
     const [preview, setPreview] = useState('') // for image preview
     const router = useRouter()
 
+    // initial password requirements state
+    const [passwordRequirements, setPasswordRequirements] = useState({
+        length: false,
+        digit: false,
+        uppercase: false,
+        lowercase: false,
+        special: false
+    })
+
     // memoize required fields to avoid recreation on every render
     const requiredFields = useMemo(() => [
         'email', 'password', 'firstName', 'lastName', 'dateOfBirth', 'profileVisibility'
@@ -34,6 +43,22 @@ export default function Register() {
         }
 
         setFormData(prev => ({ ...prev, [name]: value }))
+
+        // validate password if it's the password field
+        if (name === 'password') {
+            validatePassword(value)
+        }
+    }
+
+    const validatePassword = (password) => {
+        const requirements = {
+            length: password.length >= 8 && password.length <= 16,
+            digit: /\d/.test(password),
+            uppercase: /[A-Z]/.test(password),
+            lowercase: /[a-z]/.test(password),
+            special: /[!@#$%^&*(),.?":{}|<>]/.test(password)
+        }
+        setPasswordRequirements(requirements)
     }
 
     const handleFileChange = (e) => {
@@ -69,6 +94,13 @@ export default function Register() {
     const handleSubmit = async (e) => {
         e.preventDefault()
         setError('')
+
+        // check if all password requirements are met
+        const allRequirementsMet = Object.values(passwordRequirements).every(req => req);
+        if (!allRequirementsMet) {
+            showFieldError('password', 'Please meet all password requirements');
+            return;
+        }
 
         try {
             const formDataToSend = new FormData()
@@ -180,6 +212,25 @@ export default function Register() {
                         required
                     />
                     <div id="password-error" className="text-red-500"></div>
+
+                    {/* Password Requirements */}
+                    <div className="password-requirements mt-2 text-sm">
+                        <p className={`requirement ${passwordRequirements.length ? 'text-green-500' : 'text-gray-500'}`}>
+                            • Your password length must be 8-16 characters
+                        </p>
+                        <p className={`requirement ${passwordRequirements.digit ? 'text-green-500' : 'text-gray-500'}`}>
+                            • It must have at least one digit
+                        </p>
+                        <p className={`requirement ${passwordRequirements.uppercase ? 'text-green-500' : 'text-gray-500'}`}>
+                            • Must contain at least one uppercase letter
+                        </p>
+                        <p className={`requirement ${passwordRequirements.lowercase ? 'text-green-500' : 'text-gray-500'}`}>
+                            • Must contain at least one lowercase letter
+                        </p>
+                        <p className={`requirement ${passwordRequirements.special ? 'text-green-500' : 'text-gray-500'}`}>
+                            • Must have at least one of the special characters (!@#$%^&*(),.?":&#123;&#125;|&lt;&gt;)
+                        </p>
+                    </div>
                 </div>
                 <div>
                     <label className="block mb-1">Avatar Image</label>
