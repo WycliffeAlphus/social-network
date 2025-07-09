@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { showFieldError } from '@/lib/auth'
+import Link from 'next/link'
 
 export default function Register() {
     const [formData, setFormData] = useState({
@@ -300,9 +301,9 @@ export default function Register() {
             </form>
             <p className="mt-4">
                 Already have an account?{' '}
-                <a href="/login" className="text-blue-500 hover:underline">
+                <Link href="/login" className="text-blue-500 hover:underline">
                     Login here
-                </a>
+                </Link>
             </p>
         </div>
     )
