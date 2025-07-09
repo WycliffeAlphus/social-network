@@ -187,7 +187,7 @@ export default function Register() {
                     <div id="lastName-error" className="text-red-500"></div>
                 </div>
                 <div>
-                    <label className="block mb-1">Date of Birth (YYYY-MM-DD)  <span className="text-red-500">*</span></label>
+                    <label className="block mb-1">Date of Birth (mm/dd/yyy)  <span className="text-red-500">*</span></label>
                     <input
                         type="date"
                         name="dateOfBirth"
