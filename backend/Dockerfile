@@ -20,8 +20,7 @@ FROM alpine:latest
 
 WORKDIR /app
 
-# Install ca-certificates for HTTPS communication if needed (e.g., if your Go app makes external calls)
-# Also, ensure sqlite3 is available if your Go app's driver has CGO dependencies
+# Install ca-certificates for HTTPS communication if needed (e.g., if Go app makes external calls)
 # For pure Go SQLite drivers (like go-sqlite3), this might not be strictly necessary,
 # but it's good practice for general compatibility.
 RUN apk --no-cache add ca-certificates sqlite-libs
@@ -29,7 +28,7 @@ RUN apk --no-cache add ca-certificates sqlite-libs
 # Copy the built binary from the builder stage
 COPY --from=builder /app/main .
 
-# Expose the port your Go application listens on
+# Expose the port Go application listens on
 EXPOSE 8080
 
 # Command to run the executable
