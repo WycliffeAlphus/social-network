@@ -17,7 +17,7 @@ import (
 const DBFile = "./pkg/db/data/app.db"
 
 // MigrationsPath is the folder containing .sql migration files
-const MigrationsPath =  "file://pkg/db/migrations"
+const MigrationsPath = "file://pkg/db/migrations"
 
 // ConnectAndMigrate opens the SQLite DB and runs migrations
 func ConnectAndMigrate() (*sql.DB, error) {
@@ -28,7 +28,7 @@ func ConnectAndMigrate() (*sql.DB, error) {
 	}
 
 	// Open SQLite DB
-	db, err := sql.Open("sqlite3", DBFile + "?_foreign_keys=on")
+	db, err := sql.Open("sqlite3", DBFile+"?_foreign_keys=on")
 	if err != nil {
 		return nil, fmt.Errorf("failed to open SQLite DB: %w", err)
 	}
@@ -49,12 +49,19 @@ func ConnectAndMigrate() (*sql.DB, error) {
 		return nil, fmt.Errorf("failed to create migrate instance: %w", err)
 	}
 
+	// version is the migration version in the schema_migrations table
+	// dirty is a boolean flag that indicates whether the last migration attempt failed
+	version, dirty, err := m.Version()
+	if err != nil && err != migrate.ErrNilVersion {
+		return nil, fmt.Errorf("failed to get migration version: %v", err)
+	}
+
 	// Apply all up migrations
 	err = m.Up()
 	if err != nil && err != migrate.ErrNoChange {
 		return nil, fmt.Errorf("migration failed: %w", err)
 	}
 
-	log.Println("Migrations applied successfully.")
+	log.Printf("Migrations applied successfully with version %d, and %v dirty state.\n", version, dirty)
 	return db, nil
 }
