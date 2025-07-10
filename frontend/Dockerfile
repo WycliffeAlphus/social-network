@@ -5,7 +5,7 @@ WORKDIR /app
 
 # Copy package.json and yarn.lock/package-lock.json first to leverage Docker cache
 COPY package.json yarn.lock* package-lock.json* ./
-# Use yarn if using it, otherwise npm
+# Use yarn if you are using it, otherwise npm
 RUN if [ -f yarn.lock ]; then yarn install --frozen-lockfile; else npm install --legacy-peer-deps; fi
 
 # Copy the rest of the application
@@ -25,7 +25,7 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json
 
-# If there is a custom server.js or next.config.js, copy them too
+# If you have custom server.js or next.config.js, copy them too
 # COPY --from=builder /app/server.js ./server.js
 # COPY --from=builder /app/next.config.js ./next.config.js
 
