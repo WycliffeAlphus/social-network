@@ -1,13 +1,15 @@
+
 CREATE TABLE users (
-    id TEXT PRIMARY KEY,
-    email TEXT NOT NULL UNIQUE,
-    fname TEXT NOT NULL,
-    lname TEXT NOT NULL,
-    dob TEXT NOT NULL,
-    imgurl TEXT,
-    nickname TEXT,
+    id VARCHAR(40) PRIMARY KEY,
+    email VARCHAR(254) NOT NULL UNIQUE,    
+    fname VARCHAR(30) NOT NULL,
+    lname VARCHAR(30) NOT NULL,
+    dob DATE NOT NULL,
+    imgurl VARCHAR(255),
+    nickname VARCHAR(30) UNIQUE,
     about TEXT,
-    password TEXT NOT NULL,
-    profileVisibility TEXT DEFAULT 'public',
+    password VARCHAR(255) NOT NULL,
+    profileVisibility TEXT NOT NULL DEFAULT 'public' CHECK(profileVisibility IN ('public', 'private')),
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+
 );
