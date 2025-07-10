@@ -58,8 +58,12 @@ func ConnectAndMigrate() (*sql.DB, error) {
 
 	// Apply all up migrations
 	err = m.Up()
-	if err != nil && err != migrate.ErrNoChange {
-		return nil, fmt.Errorf("migration failed: %w", err)
+	if err != nil {
+		if err == migrate.ErrNoChange {
+			log.Println("No new migrations to apply")
+		} else {
+			return nil, fmt.Errorf("migration failed: %v", err)
+		}
 	}
 
 	log.Printf("Migrations applied successfully with version %d, and %v dirty state.\n", version, dirty)
