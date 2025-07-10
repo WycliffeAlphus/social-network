@@ -7,7 +7,7 @@ import (
 
 func main() {
 	_, err := sqlite.ConnectAndMigrate()
-if err != nil{
-	fmt.Println(err.Error())
-}
+	if err != nil {
+		fmt.Println(err.Error())
+	}
 }

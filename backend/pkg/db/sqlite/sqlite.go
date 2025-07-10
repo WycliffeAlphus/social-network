@@ -28,7 +28,7 @@ func ConnectAndMigrate() (*sql.DB, error) {
 	}
 
 	// Open SQLite DB
-	db, err := sql.Open("sqlite3", DBFile)
+	db, err := sql.Open("sqlite3", DBFile + "?_foreign_keys=on")
 	if err != nil {
 		return nil, fmt.Errorf("failed to open SQLite DB: %w", err)
 	}
