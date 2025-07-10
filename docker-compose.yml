@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend # Path to your Go backend directory
+      dockerfile: Dockerfile
+    container_name: social-backend
+    ports:
+      - "8080:8080" # Map host port 8080 to container port 8080
+    environment:
+      # Example environment variables for your Go backend
+      # - DB_HOST=database
+      # - DB_PORT=5432
+      - BACKEND_PORT=8080 # This is what your Go app should listen on
+    # depends_on:
+    #   - database # Uncomment if you have a database service
+
+  frontend:
+    build:
+      context: ./frontend # Path to your Next.js frontend directory
+      dockerfile: Dockerfile
+    container_name: social-frontend
+    ports:
+      - "3000:3000" # Map host port 3000 to container port 3000
+    environment:
+      # Next.js requires environment variables to be prefixed with NEXT_PUBLIC_ for client-side access
+      - NEXT_PUBLIC_BACKEND_URL=http://backend:8080 # How the frontend accesses the backend within the Docker network
+      # If your frontend also talks to a database directly (unlikely for a typical web app), add it here
+    depends_on:
+      - backend # Ensures the backend starts before the frontend
+
+  # Example Database Service (e.g., PostgreSQL) - Uncomment and configure if needed
+  # database:
+  #   image: postgres:15-alpine
+  #   container_name: social-db
+  #   environment:
+  #     POSTGRES_DB: social_network_db
+  #     POSTGRES_USER: user
+  #     POSTGRES_PASSWORD: password
+  #   volumes:
+  #     - db_data:/var/lib/postgresql/data # Persist database data
+
+# Volumes for persistent data (e.g., database)
+# volumes:
+#   db_data:
