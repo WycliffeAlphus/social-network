@@ -12,16 +12,16 @@ import (
 )
 
 type Claims struct {
-	Username string `json:"username"`
-	Exp      int64  `json:"exp"`
+	UserID string `json:"user_id"`
+	Exp    int64  `json:"exp"`
 }
 
 var jwtSecret = []byte("changeme") // TODO: load from env
 
-// GenerateJWT creates a JWT token for a given username and expiry duration.
-func GenerateJWT(username string, expiry time.Duration) (string, error) {
+// GenerateJWT creates a JWT token for a given user ID and expiry duration.
+func GenerateJWT(userID string, expiry time.Duration) (string, error) {
 	exp := time.Now().Add(expiry).Unix()
-	claims := Claims{Username: username, Exp: exp}
+	claims := Claims{UserID: userID, Exp: exp}
 	claimsJSON, err := json.Marshal(claims)
 	if err != nil {
 		return "", err
