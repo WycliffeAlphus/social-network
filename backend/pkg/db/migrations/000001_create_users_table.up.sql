@@ -1,6 +1,6 @@
 
 CREATE TABLE users (
-    id VARCHAR(40) PRIMARY KEY,
+    id VARCHAR(40) PRIMARY KEY
     email VARCHAR(254) NOT NULL UNIQUE,    
     fname VARCHAR(30) NOT NULL,
     lname VARCHAR(30) NOT NULL,
