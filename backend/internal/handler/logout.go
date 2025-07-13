@@ -1,16 +1,29 @@
 package handler
 
 import (
+	"backend/pkg/db/sqlite"
 	"net/http"
 	"time"
 )
 
-// LogoutHandler handles user logout requests by clearing the session cookie.
+// LogoutHandler handles user logout requests by clearing the session cookie and deleting the session from the DB.
 func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed. Use POST for logout.", http.StatusMethodNotAllowed)
 		return
 	}
+
+	// Get session_token from cookie
+	cookie, err := r.Cookie("session_token")
+	if err == nil && cookie.Value != "" {
+		// Open DB connection
+		db, dbErr := sqlite.ConnectAndMigrate()
+		if dbErr == nil {
+			defer db.Close()
+			_ = sqlite.DeleteSession(db, cookie.Value) // Ignore error for now
+		}
+	}
+
 	expiresAt := time.Now().In(eat).Add(-1 * time.Hour)
 	http.SetCookie(w, &http.Cookie{
 		Name:     "session_token",
