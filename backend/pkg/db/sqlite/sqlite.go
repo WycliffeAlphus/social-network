@@ -6,10 +6,12 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/sqlite3"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/google/uuid"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -18,6 +20,47 @@ const DBFile = "./pkg/db/data/app.db"
 
 // MigrationsPath is the folder containing .sql migration files
 const MigrationsPath = "file://pkg/db/migrations"
+
+// Session represents a user session.
+type Session struct {
+	ID        string // UUID v4
+	UserID    string
+	CreatedAt time.Time
+	ExpiresAt time.Time
+}
+
+// InsertSession inserts a new session into the sessions table.
+func InsertSession(db *sql.DB, userID string, expiresAt time.Time) (string, error) {
+	sessionID := uuid.NewString()
+	_, err := db.Exec(
+		"INSERT INTO sessions (id, user_id, expires_at) VALUES (?, ?, ?)",
+		sessionID, userID, expiresAt,
+	)
+	if err != nil {
+		return "", err
+	}
+	return sessionID, nil
+}
+
+// GetSession retrieves a session by its ID.
+func GetSession(db *sql.DB, sessionID string) (*Session, error) {
+	var s Session
+	row := db.QueryRow(
+		"SELECT id, user_id, created_at, expires_at FROM sessions WHERE id = ?",
+		sessionID,
+	)
+	err := row.Scan(&s.ID, &s.UserID, &s.CreatedAt, &s.ExpiresAt)
+	if err != nil {
+		return nil, err
+	}
+	return &s, nil
+}
+
+// DeleteSession deletes a session by its ID.
+func DeleteSession(db *sql.DB, sessionID string) error {
+	_, err := db.Exec("DELETE FROM sessions WHERE id = ?", sessionID)
+	return err
+}
 
 // ConnectAndMigrate opens the SQLite DB and runs migrations
 func ConnectAndMigrate() (*sql.DB, error) {
