@@ -7,7 +7,7 @@ import (
 )
 
 func TestLogoutHandler_Success(t *testing.T) {
-	req := httptest.NewRequest(http.MethodPost, "/logout", nil)
+	req := httptest.NewRequest(http.MethodPost, "/api/logout", nil)
 	rec := httptest.NewRecorder()
 
 	// Set a session_token cookie
@@ -37,7 +37,7 @@ func TestLogoutHandler_Success(t *testing.T) {
 }
 
 func TestLogoutHandler_NoCookie(t *testing.T) {
-	req := httptest.NewRequest(http.MethodPost, "/logout", nil)
+	req := httptest.NewRequest(http.MethodPost, "/api/logout", nil)
 	rec := httptest.NewRecorder()
 
 	LogoutHandler(rec, req)
@@ -50,7 +50,7 @@ func TestLogoutHandler_NoCookie(t *testing.T) {
 }
 
 func TestLogoutHandler_MethodNotAllowed(t *testing.T) {
-	req := httptest.NewRequest(http.MethodGet, "/logout", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/logout", nil)
 	rec := httptest.NewRecorder()
 
 	LogoutHandler(rec, req)

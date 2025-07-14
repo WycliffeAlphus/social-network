@@ -14,7 +14,7 @@ func TestLoginHandler_InvalidCredentials(t *testing.T) {
 		Password: "wrongpass",
 	}
 	body, _ := json.Marshal(payload)
-	req := httptest.NewRequest(http.MethodPost, "/login", bytes.NewReader(body))
+	req := httptest.NewRequest(http.MethodPost, "/api/login", bytes.NewReader(body))
 	rec := httptest.NewRecorder()
 
 	LoginHandler(rec, req)
@@ -27,7 +27,7 @@ func TestLoginHandler_InvalidCredentials(t *testing.T) {
 }
 
 func TestLoginHandler_MethodNotAllowed(t *testing.T) {
-	req := httptest.NewRequest(http.MethodGet, "/login", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/login", nil)
 	rec := httptest.NewRecorder()
 
 	LoginHandler(rec, req)

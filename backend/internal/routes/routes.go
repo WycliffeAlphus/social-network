@@ -7,6 +7,6 @@ import (
 
 // RegisterRoutes sets up the HTTP routes for the API endpoints.
 func RegisterRoutes() {
-	http.HandleFunc("/login", handler.LoginHandler)
-	http.HandleFunc("/logout", handler.LogoutHandler)
+	http.HandleFunc("/api/login", handler.LoginHandler)
+	http.HandleFunc("/api/logout", handler.LogoutHandler)
 }
