@@ -13,8 +13,8 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get session_token from cookie
-	cookie, err := r.Cookie("session_token")
+	// Get social-network from cookie
+	cookie, err := r.Cookie("social-network")
 	if err == nil && cookie.Value != "" {
 		// Open DB connection
 		db, dbErr := sqlite.ConnectAndMigrate()
@@ -26,7 +26,7 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 
 	expiresAt := time.Now().In(eat).Add(-1 * time.Hour)
 	http.SetCookie(w, &http.Cookie{
-		Name:     "session_token",
+		Name:     "social-network",
 		Value:    "",
 		Path:     "/",
 		HttpOnly: true,

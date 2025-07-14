@@ -10,9 +10,9 @@ func TestLogoutHandler_Success(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "/api/logout", nil)
 	rec := httptest.NewRecorder()
 
-	// Set a session_token cookie
+	// Set a social-network cookie
 	req.AddCookie(&http.Cookie{
-		Name:  "session_token",
+		Name:  "social-network",
 		Value: "sometoken",
 	})
 
@@ -24,15 +24,15 @@ func TestLogoutHandler_Success(t *testing.T) {
 		t.Errorf("expected status 200, got %d", res.StatusCode)
 	}
 
-	// Check that the session_token cookie is cleared
+	// Check that the social-network cookie is cleared
 	found := false
 	for _, c := range res.Cookies() {
-		if c.Name == "session_token" && c.Value == "" {
+		if c.Name == "social-network" && c.Value == "" {
 			found = true
 		}
 	}
 	if !found {
-		t.Error("expected session_token cookie to be cleared")
+		t.Error("expected social-network cookie to be cleared")
 	}
 }
 
