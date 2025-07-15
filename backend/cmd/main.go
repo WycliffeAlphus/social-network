@@ -1,16 +1,30 @@
 package main
 
 import (
-	"fmt"
-	"net/http"
 	"backend/internal/routes"
+	"backend/pkg/db/sqlite"
+	"log"
+	"net/http"
 )
 
 func main() {
-	routes.RegisterRoutes()
-	fmt.Println("Starting server on :8080...")
-	err := http.ListenAndServe(":8080", nil)
+	// Connect to the SQLite database and apply migrations
+	db, err := sqlite.ConnectAndMigrate()
 	if err != nil {
-		fmt.Println("Server failed:", err)
+		log.Fatalf("Failed to connect to database: %v", err)
+	}
+
+	// Register all routes (handlers)
+	routes.RegisterRoutes(db)
+
+	// Serve uploaded files from the /uploads/ directory
+	// This allows accessing files at http://localhost:8080/uploads/<filename>
+	http.Handle("/uploads/", http.StripPrefix("/uploads/", http.FileServer(http.Dir("./uploads"))))
+
+	// Start the HTTP server
+	addr := ":8080"
+	log.Printf("Server started on %s", addr)
+	if err := http.ListenAndServe(addr, nil); err != nil {
+		log.Fatalf("Server failed: %v", err)
 	}
 }
