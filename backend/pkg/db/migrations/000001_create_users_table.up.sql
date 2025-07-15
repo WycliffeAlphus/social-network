@@ -1,4 +1,3 @@
-
 CREATE TABLE users (
     id VARCHAR(40) PRIMARY KEY,
     email VARCHAR(254) NOT NULL UNIQUE,    
@@ -11,5 +10,4 @@ CREATE TABLE users (
     password VARCHAR(255) NOT NULL,
     profileVisibility TEXT NOT NULL DEFAULT 'public' CHECK(profileVisibility IN ('public', 'private')),
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-
 );

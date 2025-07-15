@@ -1,13 +1,16 @@
 package main
 
 import (
-	"backend/pkg/db/sqlite"
 	"fmt"
+	"net/http"
+	"backend/internal/routes"
 )
 
 func main() {
-	_, err := sqlite.ConnectAndMigrate()
+	routes.RegisterRoutes()
+	fmt.Println("Starting server on :8080...")
+	err := http.ListenAndServe(":8080", nil)
 	if err != nil {
-		fmt.Println(err.Error())
+		fmt.Println("Server failed:", err)
 	}
 }

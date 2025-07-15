@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend # Path to your Go backend directory
+      dockerfile: Dockerfile
+    container_name: social-backend
+    ports:
+      - "8080:8080" # Map host port 8080 to container port 8080
+    environment:
+      - BACKEND_PORT=8080 # This is what your Go app should listen on
+      # Tell your Go app where the SQLite database file will be
+      # This path should match where your Go app expects the DB file inside the container
+      - SQLITE_DB_PATH=/app/data/social_network.db # Or whatever path your Go app expects
+    volumes:
+      # Mount a named volume to persist the SQLite database file
+      # The host path (left side) is managed by Docker.
+      # The container path (right side) is where your Go app will store the .db file.
+      - sqlite_data:/app/data # This creates /app/data inside the container and persists it
+    # No depends_on for a separate database service needed with SQLite
+
+  frontend:
+    build:
+      context: ./frontend # Path to the Next.js frontend directory
+      dockerfile: Dockerfile
+    container_name: social-frontend
+    ports:
+      - "3000:3000" # Map host port 3000 to container port 3000
+    environment:
+      # Next.js requires environment variables to be prefixed with NEXT_PUBLIC_ for client-side access
+      - NEXT_PUBLIC_BACKEND_URL=http://backend:8080 # How the frontend accesses the backend within the Docker network
+    depends_on:
+      - backend # Ensures the backend starts before the frontend
+
+# Define the named volume for SQLite data persistence
+volumes:
+  sqlite_data:
