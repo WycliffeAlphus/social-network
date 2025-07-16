@@ -12,15 +12,15 @@ import (
 )
 
 type RegistrationErrors struct {
-    Email       string
-    Nickname    string
-    Password    string
-    FirstName   string
-    LastName    string
-    DateOfBirth string
-    Avatar      string
-    AboutMe     string
-    Visibility  string
+	Email       string
+	Nickname    string
+	Password    string
+	FirstName   string
+	LastName    string
+	DateOfBirth string
+	Avatar      string
+	AboutMe     string
+	Visibility  string
 }
 
 // UserService provides methods for user-related operations
@@ -54,7 +54,7 @@ func (s *UserService) RegisterUser(user *model.User) (*RegistrationErrors, error
 	s.validateOptionalFields(user, errors)
 
 	// Clean and standardize input data
-	s.sanitizeInput(user, errors)
+	s.sanitizeInput(user)
 
 	// Check for existing users with same email or nickname
 	s.checkDuplicates(user, errors)
@@ -232,6 +232,13 @@ func (s *UserService) validatePassword(password string, errors *RegistrationErro
 // validateAge checks if user's age is within allowed range
 func (s *UserService) validateAge(dob time.Time, errors *RegistrationErrors) {
 	now := time.Now()
+
+	// Future date check
+	if dob.After(now) {
+		errors.DateOfBirth = "Date of birth cannot be in the future"
+		return
+	}
+
 	// Calculate age in years
 	age := int(now.Sub(dob).Hours() / 24 / 365.25)
 
@@ -243,13 +250,7 @@ func (s *UserService) validateAge(dob time.Time, errors *RegistrationErrors) {
 
 	// Maximum age check
 	if age > MaxAge {
-		errors.Password = fmt.Sprintf("User must be at most %d years old", MaxAge)
-		return
-	}
-
-	// Future date check
-	if dob.After(now) {
-		errors.DateOfBirth = "Date of birth cannot be in the future"
+		errors.DateOfBirth = fmt.Sprintf("User must be at most %d years old", MaxAge)
 		return
 	}
 }
@@ -310,7 +311,7 @@ func (s *UserService) isValidNickname(nickname string) bool {
 }
 
 // sanitizeInput cleans and standardizes user input
-func (s *UserService) sanitizeInput(user *model.User, errors *RegistrationErrors) {
+func (s *UserService) sanitizeInput(user *model.User) {
 	// Clean email: trim and lowercase
 	user.Email = strings.TrimSpace(strings.ToLower(user.Email))
 
@@ -344,13 +345,13 @@ func (s *UserService) checkDuplicates(user *model.User, errors *RegistrationErro
 }
 
 func (re *RegistrationErrors) HasErrors() bool {
-    return re.Email != "" || 
-           re.Nickname != "" || 
-           re.Password != "" || 
-           re.FirstName != "" || 
-           re.LastName != "" || 
-           re.DateOfBirth != "" || 
-           re.Avatar != "" || 
-           re.AboutMe != "" || 
-           re.Visibility != ""
+	return re.Email != "" ||
+		re.Nickname != "" ||
+		re.Password != "" ||
+		re.FirstName != "" ||
+		re.LastName != "" ||
+		re.DateOfBirth != "" ||
+		re.Avatar != "" ||
+		re.AboutMe != "" ||
+		re.Visibility != ""
 }
