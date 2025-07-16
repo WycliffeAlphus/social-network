@@ -131,6 +131,12 @@ export default function Register() {
                 if (data.Nickname) {
                     showFieldError('nickname', data.Nickname);
                 }
+                if (data.DateOfBirth) {
+                    showFieldError('dateOfBirth', data.DateOfBirth);
+                }
+                if (data.AboutMe) {
+                    showFieldError('aboutMe', data.AboutMe);
+                }
             }
 
             if (response.ok) {
