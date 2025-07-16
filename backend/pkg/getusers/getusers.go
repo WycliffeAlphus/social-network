@@ -7,8 +7,8 @@ import (
 )
 
 func GetUserByEmail(db *sql.DB, email string) (models.User, error) {
-	query := `SELECT id, email, password, first_name, last_name, date_of_birth, 
-		avatar_image, nickname, about_me, created_at 
+	query := `SELECT id, email, password, fname, lname, dob, 
+		imgurl, nickname, about, created_at 
 		FROM users WHERE email = ?`
 
 	row := db.QueryRow(query, email)
