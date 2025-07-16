@@ -4,11 +4,24 @@ import (
 	"backend/internal/model"
 	"backend/internal/repository"
 	"backend/internal/utils"
-	"errors"
+	"fmt"
+	"log"
 	"net/mail"
 	"strings"
 	"time"
 )
+
+type RegistrationErrors struct {
+    Email       string
+    Nickname    string
+    Password    string
+    FirstName   string
+    LastName    string
+    DateOfBirth string
+    Avatar      string
+    AboutMe     string
+    Visibility  string
+}
 
 // UserService provides methods for user-related operations
 type UserService struct {
@@ -22,38 +35,32 @@ const (
 )
 
 // RegisterUser handles new user registration with validation
-func (s *UserService) RegisterUser(user *model.User) error {
+func (s *UserService) RegisterUser(user *model.User) (*RegistrationErrors, error) {
+	errors := &RegistrationErrors{}
+
 	// Validate all required fields are present and valid
-	if err := s.validateRequiredFields(user); err != nil {
-		return err
-	}
+	s.validateRequiredFields(user, errors)
 
 	// Validate email format and structure
-	if err := s.validateEmail(user.Email); err != nil {
-		return err
-	}
+	s.validateEmail(user.Email, errors)
 
 	// Check password meets complexity requirements
-	if err := s.validatePassword(user.Password); err != nil {
-		return err
-	}
+	s.validatePassword(user.Password, errors)
 
 	// Verify user's age is within allowed range
-	if err := s.validateAge(user.DOB); err != nil {
-		return err
-	}
+	s.validateAge(user.DOB, errors)
 
 	// Validate optional fields if provided
-	if err := s.validateOptionalFields(user); err != nil {
-		return err
-	}
+	s.validateOptionalFields(user, errors)
 
 	// Clean and standardize input data
-	s.sanitizeInput(user)
+	s.sanitizeInput(user, errors)
 
 	// Check for existing users with same email or nickname
-	if err := s.checkDuplicates(user); err != nil {
-		return err
+	s.checkDuplicates(user, errors)
+
+	if errors.HasErrors() {
+		return errors, nil
 	}
 
 	// Set default values for new user
@@ -65,64 +72,72 @@ func (s *UserService) RegisterUser(user *model.User) error {
 	// Securely hash password before storage
 	hashed, err := utils.HashPassword(user.Password)
 	if err != nil {
-		return err
+		log.Println("error while hashing password during registration", err)
 	}
 	user.Password = hashed // Replace plaintext with hash
 
 	// Save validated user to database
-	return s.Repo.CreateUser(user)
+	return nil, s.Repo.CreateUser(user)
 }
 
 // validateRequiredFields checks all mandatory registration fields
-func (s *UserService) validateRequiredFields(user *model.User) error {
+func (s *UserService) validateRequiredFields(user *model.User, errors *RegistrationErrors) {
 	// Check email is provided and not empty
 	if strings.TrimSpace(user.Email) == "" {
-		return errors.New("email is required")
+		errors.Email = "Email is required"
+		return
 	}
 	// Check password is provided and not empty
 	if strings.TrimSpace(user.Password) == "" {
-		return errors.New("password is required")
+		errors.Password = "Password is required"
+		return
 	}
 	// Check first name is provided and not empty
 	if strings.TrimSpace(user.FirstName) == "" {
-		return errors.New("first name is required")
+		errors.FirstName = "First name is required"
+		return
 	}
 	// Check last name is provided and not empty
 	if strings.TrimSpace(user.LastName) == "" {
-		return errors.New("last name is required")
+		errors.LastName = "Last name is required"
+		return
 	}
 	// Check date of birth is provided
 	if user.DOB.IsZero() {
-		return errors.New("date of birth is required")
+		errors.DateOfBirth = "Date of birth is required"
+		return
 	}
-	return nil
 }
 
 // validateEmail performs comprehensive email validation
-func (s *UserService) validateEmail(email string) error {
+func (s *UserService) validateEmail(email string, errors *RegistrationErrors) {
 	// Normalize email by trimming and lowercasing
 	email = strings.TrimSpace(strings.ToLower(email))
 
 	// Use standard library email parser
 	_, err := mail.ParseAddress(email)
 	if err != nil {
-		return errors.New("invalid email format")
+		errors.Email = "Invalid email format"
+		return
 	}
 
 	// Check maximum email length
 	if len(email) > 254 {
-		return errors.New("email too long (max 254 characters)")
+		errors.Email = "Email too long (max 254 characters)"
+		return
 	}
 
 	// Basic email structure validation
 	if !strings.Contains(email, "@") {
-		return errors.New("invalid email format")
+		errors.Email = "Invalid email format"
+		return
 	}
 
 	// Split into local and domain parts
 	parts := strings.Split(email, "@")
 	if len(parts) != 2 {
-		return errors.New("invalid email format")
+		errors.Email = "Invalid email format"
+		return
 	}
 
 	localPart := parts[0]
@@ -130,36 +145,40 @@ func (s *UserService) validateEmail(email string) error {
 
 	// Validate local part length
 	if len(localPart) == 0 || len(localPart) > 64 {
-		return errors.New("invalid email format")
+		errors.Email = "Invalid email format"
+		return
 	}
 
 	// Validate domain part length
 	if len(domain) == 0 || len(domain) > 255 {
-		return errors.New("invalid email format")
+		errors.Email = "Invalid email format"
+		return
 	}
 
 	// Domain must contain a dot
 	if !strings.Contains(domain, ".") {
-		return errors.New("invalid email format")
+		errors.Email = "Invalid email format"
+		return
 	}
 
 	// Domain edge character validation
 	if strings.HasPrefix(domain, ".") || strings.HasSuffix(domain, ".") ||
 		strings.HasPrefix(domain, "-") || strings.HasSuffix(domain, "-") {
-		return errors.New("invalid email format")
+		errors.Email = "Invalid email format"
+		return
 	}
-
-	return nil
 }
 
 // validatePassword enforces password strength rules
-func (s *UserService) validatePassword(password string) error {
+func (s *UserService) validatePassword(password string, errors *RegistrationErrors) {
 	// Check password length requirements
 	if len(password) < 8 {
-		return errors.New("password must be at least 8 characters long")
+		errors.Password = "Password must be at least 8 characters long"
+		return
 	}
-	if len(password) > 128 {
-		return errors.New("password too long (max 128 characters)")
+	if len(password) > 16 {
+		errors.Password = "Password too long (max 16 characters)"
+		return
 	}
 
 	// Track character type requirements
@@ -193,80 +212,87 @@ func (s *UserService) validatePassword(password string) error {
 
 	// Return specific error for missing character types
 	if !hasUpper {
-		return errors.New("password must contain at least one uppercase letter")
+		errors.Password = "Password must contain at least one uppercase letter"
+		return
 	}
 	if !hasLower {
-		return errors.New("password must contain at least one lowercase letter")
+		errors.Password = "Password must contain at least one lowercase letter"
+		return
 	}
 	if !hasNumber {
-		return errors.New("password must contain at least one number")
+		errors.Password = "Password must contain at least one number"
+		return
 	}
 	if !hasSpecial {
-		return errors.New("password must contain at least one special character")
+		errors.Password = "Password must contain at least one special character"
+		return
 	}
-
-	return nil
 }
 
 // validateAge checks if user's age is within allowed range
-func (s *UserService) validateAge(dob time.Time) error {
+func (s *UserService) validateAge(dob time.Time, errors *RegistrationErrors) {
 	now := time.Now()
 	// Calculate age in years
 	age := int(now.Sub(dob).Hours() / 24 / 365.25)
 
 	// Minimum age check
 	if age < MinAge {
-		return errors.New("user must be at least 13 years old")
+		errors.DateOfBirth = fmt.Sprintf("User must be at least %d years old", MinAge)
+		return
 	}
 
 	// Maximum age check
 	if age > MaxAge {
-		return errors.New("invalid date of birth")
+		errors.Password = fmt.Sprintf("User must be at most %d years old", MaxAge)
+		return
 	}
 
 	// Future date check
 	if dob.After(now) {
-		return errors.New("date of birth cannot be in the future")
+		errors.DateOfBirth = "Date of birth cannot be in the future"
+		return
 	}
-
-	return nil
 }
 
 // validateOptionalFields validates non-required user fields
-func (s *UserService) validateOptionalFields(user *model.User) error {
+func (s *UserService) validateOptionalFields(user *model.User, errors *RegistrationErrors) {
 	// Validate nickname if provided
 	if user.Nickname != "" {
 		nickname := strings.TrimSpace(user.Nickname)
 		// Length validation
 		if len(nickname) > 30 {
-			return errors.New("nickname too long (max 30 characters)")
+			errors.Nickname = "Nickname too long (max 30 characters)"
+			return
 		}
 		if len(nickname) < 3 {
-			return errors.New("nickname must be at least 3 characters long")
+			errors.Nickname = "Nickname must be at least 3 characters long"
+			return
 		}
 
 		// Character validation
 		if !s.isValidNickname(nickname) {
-			return errors.New("nickname can only contain letters, numbers, and underscores")
+			errors.Nickname = "Nickname can only contain letters, numbers, and underscores"
+			return
 		}
 	}
 
 	// Profile visibility validation
 	if user.ProfileVisibility != "" && user.ProfileVisibility != "public" && user.ProfileVisibility != "private" {
-		return errors.New("profile visibility must be 'public' or 'private'")
+		errors.Visibility = "Profile visibility must be 'public' or 'private'"
+		return
 	}
 
 	// About section length check
 	if len(user.About) > 1000 {
-		return errors.New("about section too long (max 1000 characters)")
+		errors.AboutMe = "About section too long (max 1000 characters)"
+		return
 	}
 
 	// Image URL length check
 	if user.ImgURL != "" && len(user.ImgURL) > 255 {
-		return errors.New("image URL too long (max 255 characters)")
+		errors.Avatar = "Image URL too long (max 255 characters)"
+		return
 	}
-
-	return nil
 }
 
 // isValidNickname checks nickname contains only allowed characters
@@ -284,7 +310,7 @@ func (s *UserService) isValidNickname(nickname string) bool {
 }
 
 // sanitizeInput cleans and standardizes user input
-func (s *UserService) sanitizeInput(user *model.User) {
+func (s *UserService) sanitizeInput(user *model.User, errors *RegistrationErrors) {
 	// Clean email: trim and lowercase
 	user.Email = strings.TrimSpace(strings.ToLower(user.Email))
 
@@ -299,20 +325,32 @@ func (s *UserService) sanitizeInput(user *model.User) {
 }
 
 // checkDuplicates verifies email and nickname uniqueness
-func (s *UserService) checkDuplicates(user *model.User) error {
+func (s *UserService) checkDuplicates(user *model.User, errors *RegistrationErrors) {
 	// Check for existing email
 	emailExists := repository.GetUserByEmail(s.Repo.DB, user.Email)
 	if emailExists {
-		return errors.New("email already exists")
+		errors.Email = "Email already exists"
+		return
 	}
 
 	// Check for existing nickname if provided
 	if user.Nickname != "" {
 		nicknameExists := repository.GetUserByNickname(s.Repo.DB, user.Nickname)
 		if nicknameExists {
-			return errors.New("nickname already exists")
+			errors.Nickname = "Nickname already exists"
+			return
 		}
 	}
+}
 
-	return nil
+func (re *RegistrationErrors) HasErrors() bool {
+    return re.Email != "" || 
+           re.Nickname != "" || 
+           re.Password != "" || 
+           re.FirstName != "" || 
+           re.LastName != "" || 
+           re.DateOfBirth != "" || 
+           re.Avatar != "" || 
+           re.AboutMe != "" || 
+           re.Visibility != ""
 }

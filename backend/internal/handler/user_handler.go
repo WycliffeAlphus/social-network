@@ -101,7 +101,15 @@ func (h *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
 	user.DOB = dob
 
 	// Call service to save user
-	if err := h.Service.RegisterUser(&user); err != nil {
+	validationErrors, err := h.Service.RegisterUser(&user)
+	if validationErrors != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(validationErrors)
+		return
+	}
+
+	if err != nil {
 		fmt.Println("DB Error:", err) // log it for devs
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]interface{}{
