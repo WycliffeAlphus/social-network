@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"strings"
 	"time"
-	"fmt"
 	"backend/pkg/db/sqlite"
 	"backend/pkg/getusers"
 	"backend/pkg/models"
@@ -48,7 +47,6 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer db.Close()
-fmt.Println(req)
 	email := strings.ToLower(req.Email)
 
 	// check if email is in db
@@ -63,7 +61,6 @@ fmt.Println(req)
 	}
 
 	var user models.User
-	fmt.Println(count)
 	if count > 0 {
 		var getUserErr error
 		user, getUserErr = getusers.GetUserByEmail(db, email)
