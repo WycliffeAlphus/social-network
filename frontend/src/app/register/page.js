@@ -237,6 +237,19 @@ export default function Register() {
                         </p>
                     </div>
                 </div>
+                 <div>
+                    <label className="block mb-1">Password <span className="text-red-500">*</span></label>
+                    <input
+                        type="password"
+                        name="password"
+                        value={formData.password}
+                        onChange={handleChange}
+                        className="w-full p-2 border rounded"
+                        id="password"
+                        required
+                    />
+                    <div id="password-error" className="text-red-500"></div>
+                    </div>
                 <div>
                     <label className="block mb-1">Avatar Image</label>
                     {preview && (

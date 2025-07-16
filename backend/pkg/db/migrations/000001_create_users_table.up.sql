@@ -5,7 +5,7 @@ CREATE TABLE users (
     lname VARCHAR(30) NOT NULL,
     dob DATE NOT NULL,
     imgurl VARCHAR(255),
-    nickname VARCHAR(30) UNIQUE,
+    nickname VARCHAR(30),
     about TEXT,
     password VARCHAR(255) NOT NULL,
     profileVisibility TEXT NOT NULL DEFAULT 'public' CHECK(profileVisibility IN ('public', 'private')),
