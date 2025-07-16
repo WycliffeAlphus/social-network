@@ -12,39 +12,47 @@ export default function Login() {
     const router = useRouter()
 
     const handleSubmit = async (e) => {
-        e.preventDefault()
-        setError('')
+    e.preventDefault()
+    setError('')
 
-        try {
-            const response = await fetch('http://localhost:8080/api/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ emailOrNickname, password }),
-                credentials: 'include',
-            })
+    const formData = new FormData(e.target)
+    const actualEmailOrNickname = formData.get('emailOrNickname')?.toString() || emailOrNickname
+    const actualPassword = formData.get('password')?.toString() || password
 
-            if (!response.ok) {
-                const data = await response.json();
+    try {
+        const response = await fetch('http://localhost:8080/api/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                emailOrNickname: actualEmailOrNickname,
+                password: actualPassword,
+            }),
+            credentials: 'include',
+        })
 
-                if (data.LoginId) {
-                    showFieldError('email-or-nickname', data.LoginId);
-                    return
-                }
-                if (data.Password) {
-                    showFieldError('login-password', data.Password);
-                }
+        if (!response.ok) {
+            const data = await response.json()
+
+            if (data.LoginId) {
+                showFieldError('email-or-nickname', data.LoginId)
+                return
             }
-
-            if (response.ok) {
-                router.push('/') // redirect to home page after login
+            if (data.Password) {
+                showFieldError('login-password', data.Password)
             }
-        } catch (err) {
-            setError('Invalid credentials')
-            console.error('Login error:', err)
         }
+
+        if (response.ok) {
+            router.push('/')
+        }
+    } catch (err) {
+        setError('Invalid credentials')
+        console.error('Login error:', err)
     }
+}
+
 
     return (
         <div className="container mx-auto p-4 max-w-md">
@@ -59,6 +67,7 @@ export default function Login() {
                         onChange={(e) => setEmailOrNickname(e.target.value)}
                         className="w-full p-2 border rounded"
                         id="email-or-nickname"
+                        name = "emailOrNickname"
                         required
                     />
                     <div id="email-or-nickname-error" className="text-red-500"></div>
@@ -71,6 +80,7 @@ export default function Login() {
                         onChange={(e) => setPassword(e.target.value)}
                         className="w-full p-2 border rounded"
                         id="login-password"
+                        name = "password"
                         required
                     />
                     <div id="login-password-error" className="text-red-500"></div>

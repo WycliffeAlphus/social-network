@@ -9,6 +9,7 @@ export default function Register() {
     const [formData, setFormData] = useState({
         email: '',
         password: '',
+        confirmPassword: '', 
         firstName: '',
         lastName: '',
         dateOfBirth: '',
@@ -102,20 +103,24 @@ export default function Register() {
             showFieldError('password', 'Please meet all password requirements');
             return;
         }
+        if (formData.password !== formData.confirmPassword) {
+    showFieldError('confirmPassword', 'Passwords do not match');
+    return;
+}
 
         try {
             const formDataToSend = new FormData()
 
             // append all form data to FormData object
             Object.entries(formData).forEach(([key, value]) => {
-                if (value !== null && value !== undefined) {
-                    if (key === 'avatarImage' && value instanceof File) {
-                        formDataToSend.append(key, value)
-                    } else {
-                        formDataToSend.append(key, value)
-                    }
+            if (key !== 'confirmPassword' && value !== null && value !== undefined) {
+                if (key === 'avatarImage' && value instanceof File) {
+                    formDataToSend.append(key, value)
+                } else {
+                    formDataToSend.append(key, value)
                 }
-            })
+            }
+        })
 
             const response = await fetch('http://localhost:8080/api/register', {
                 method: 'POST',
@@ -130,6 +135,12 @@ export default function Register() {
                 }
                 if (data.Nickname) {
                     showFieldError('nickname', data.Nickname);
+                }
+                if (data.DateOfBirth) {
+                    showFieldError('dateOfBirth', data.DateOfBirth);
+                }
+                if (data.AboutMe) {
+                    showFieldError('aboutMe', data.AboutMe);
                 }
             }
 
@@ -230,6 +241,20 @@ export default function Register() {
                             • Must have at least one of the special characters (!@#$%^&*(),.?":&#123;&#125;|&lt;&gt;)
                         </p>
                     </div>
+                </div>
+                {/* confirm password */}
+                <div>
+                    <label className="block mb-1">Confirm Password <span className="text-red-500">*</span></label>
+                    <input
+                        type="password"
+                        name="confirmPassword"
+                        value={formData.confirmPassword}
+                        onChange={handleChange}
+                        className="w-full p-2 border rounded"
+                        id="confirmPassword"
+                        required
+                    />
+                    <div id="confirmPassword-error" className="text-red-500"></div>
                 </div>
                 <div>
                     <label className="block mb-1">Avatar Image</label>

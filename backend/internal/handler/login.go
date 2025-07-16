@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"strings"
 	"time"
-
 	"backend/pkg/db/sqlite"
 	"backend/pkg/getusers"
 	"backend/pkg/models"
@@ -17,7 +16,7 @@ import (
 var eat = time.FixedZone("EAT", 3*60*60) // East Africa Time (UTC+3)
 
 type LoginRequest struct {
-	Email    string `json:"email"`
+	Email    string `json:"emailOrNickname"`
 	Password string `json:"password"`
 }
 
@@ -48,7 +47,6 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer db.Close()
-
 	email := strings.ToLower(req.Email)
 
 	// check if email is in db
