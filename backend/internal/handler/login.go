@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 	"time"
-
+	"fmt"
 	"backend/pkg/db/sqlite"
 	"backend/pkg/getusers"
 	"backend/pkg/models"
@@ -17,7 +17,7 @@ import (
 var eat = time.FixedZone("EAT", 3*60*60) // East Africa Time (UTC+3)
 
 type LoginRequest struct {
-	Email    string `json:"email"`
+	Email    string `json:"emailOrNickname"`
 	Password string `json:"password"`
 }
 
@@ -48,7 +48,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer db.Close()
-
+fmt.Println(req)
 	email := strings.ToLower(req.Email)
 
 	// check if email is in db
@@ -63,6 +63,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var user models.User
+	fmt.Println(count)
 	if count > 0 {
 		var getUserErr error
 		user, getUserErr = getusers.GetUserByEmail(db, email)
