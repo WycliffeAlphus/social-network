@@ -1,6 +1,7 @@
 package main
 
 import (
+	"backend/internal/middlewares"
 	"backend/internal/routes"
 	"backend/pkg/db/sqlite"
 	"log"
@@ -21,10 +22,12 @@ func main() {
 	// This allows accessing files at http://localhost:8080/uploads/<filename>
 	http.Handle("/uploads/", http.StripPrefix("/uploads/", http.FileServer(http.Dir("./uploads"))))
 
+	handlersWithCors := middlewares.EnableCors(http.DefaultServeMux)
+
 	// Start the HTTP server
 	addr := ":8080"
 	log.Printf("Server started on %s", addr)
-	if err := http.ListenAndServe(addr, nil); err != nil {
+	if err := http.ListenAndServe(addr, handlersWithCors); err != nil {
 		log.Fatalf("Server failed: %v", err)
 	}
 }
