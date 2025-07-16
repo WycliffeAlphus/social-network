@@ -301,15 +301,15 @@ func (s *UserService) sanitizeInput(user *model.User) {
 // checkDuplicates verifies email and nickname uniqueness
 func (s *UserService) checkDuplicates(user *model.User) error {
 	// Check for existing email
-	existingUser, err := s.Repo.GetUserByEmail(user.Email)
-	if err == nil && existingUser != nil {
+	emailExists := repository.GetUserByEmail(s.Repo.DB, user.Email)
+	if emailExists {
 		return errors.New("email already exists")
 	}
 
 	// Check for existing nickname if provided
 	if user.Nickname != "" {
-		existingUser, err := s.Repo.GetUserByNickname(user.Nickname)
-		if err == nil && existingUser != nil {
+		nicknameExists := repository.GetUserByNickname(s.Repo.DB, user.Nickname)
+		if nicknameExists {
 			return errors.New("nickname already exists")
 		}
 	}
