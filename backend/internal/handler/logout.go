@@ -2,6 +2,8 @@ package handler
 
 import (
 	"backend/pkg/db/sqlite"
+	"fmt"
+	"log"
 	"net/http"
 	"time"
 )
@@ -16,21 +18,28 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	// Get social-network from cookie
 	cookie, err := r.Cookie("social-network")
 	if err == nil && cookie.Value != "" {
+		log.Printf("Attempting to delete session with ID: '%s'", cookie.Value)
 		// Open DB connection
 		db, dbErr := sqlite.ConnectAndMigrate()
 		if dbErr == nil {
 			defer db.Close()
-			_ = sqlite.DeleteSession(db, cookie.Value) // Ignore error for now
+			fmt.Println("cookie value: ", cookie.Value)
+			delErr := sqlite.DeleteSession(db, cookie.Value)
+			if delErr != nil {
+				log.Printf("Failed to delete session from DB: %v", delErr)
+			} else {
+				log.Printf("Session deleted successfully from DB.")
+			}
 		}
 	}
 
-	expiresAt := time.Now().In(eat).Add(-1 * time.Hour)
+	expiresAt := time.Now().Add(-1 * time.Hour)
 	http.SetCookie(w, &http.Cookie{
 		Name:     "social-network",
 		Value:    "",
 		Path:     "/",
 		HttpOnly: true,
-		Secure:   false, // Set to true in production
+		Secure:   false, // Set to false for local dev
 		SameSite: http.SameSiteStrictMode,
 		Expires:  expiresAt,
 	})
