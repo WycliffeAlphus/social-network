@@ -57,25 +57,3 @@ func TestAuthMiddleware_EmptySessionCookie(t *testing.T) {
 		t.Errorf("Expected body '%s', got '%s'", expectedBody, rr.Body.String())
 	}
 }
-
-func TestOptionalAuth_NoSessionCookie(t *testing.T) {
-	var db *sql.DB = nil
-
-	testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("anonymous"))
-	})
-
-	optionalAuthHandler := OptionalAuth(db)(testHandler)
-	req := httptest.NewRequest("GET", "/test", nil)
-	rr := httptest.NewRecorder()
-	optionalAuthHandler.ServeHTTP(rr, req)
-
-	if rr.Code != http.StatusOK {
-		t.Errorf("Expected status 200, got %d", rr.Code)
-	}
-
-	if rr.Body.String() != "anonymous" {
-		t.Errorf("Expected 'anonymous', got %s", rr.Body.String())
-	}
-}

@@ -25,7 +25,7 @@ func RegisterRoutes(db *sql.DB) {
 	http.HandleFunc("/api/logout", handler.LogoutHandler)
 
 	// Routes with optional authentication
-	http.Handle("/api/public-dashboard", middlewares.OptionalAuth(db)(http.HandlerFunc(handler.PublicDashboardHandler)))
+	http.HandleFunc("/api/public-dashboard", handler.PublicDashboardHandler)
 
 	// Protected routes (authentication required)
 	authMiddleware := middlewares.AuthMiddleware(db)
