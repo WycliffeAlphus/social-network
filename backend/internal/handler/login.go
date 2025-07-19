@@ -1,14 +1,14 @@
 package handler
 
 import (
+	"backend/pkg/db/sqlite"
+	"backend/pkg/getusers"
+	"backend/pkg/models"
 	"encoding/json"
 	"log"
 	"net/http"
 	"strings"
 	"time"
-	"backend/pkg/db/sqlite"
-	"backend/pkg/getusers"
-	"backend/pkg/models"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -16,7 +16,7 @@ import (
 var eat = time.FixedZone("EAT", 3*60*60) // East Africa Time (UTC+3)
 
 type LoginRequest struct {
-	Email    string `json:"emailOrNickname"`
+	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
@@ -105,7 +105,6 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 				"email":     user.Email,
 				"firstName": user.FirstName,
 				"lastName":  user.LastName,
-				"avatar":    user.AvatarImage,
 			},
 		}
 

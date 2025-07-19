@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { showFieldError } from '@/lib/auth'
 
 export default function Login() {
-    const [emailOrNickname, setEmailOrNickname] = useState('')
+    const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [error, setError] = useState('')
     const router = useRouter()
@@ -16,7 +16,7 @@ export default function Login() {
     setError('')
 
     const formData = new FormData(e.target)
-    const actualEmailOrNickname = formData.get('emailOrNickname')?.toString() || emailOrNickname
+    const actualEmail = formData.get('email')?.toString() || email
     const actualPassword = formData.get('password')?.toString() || password
 
     try {
@@ -26,7 +26,7 @@ export default function Login() {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                emailOrNickname: actualEmailOrNickname,
+                email: actualEmail,
                 password: actualPassword,
             }),
             credentials: 'include',
@@ -35,8 +35,8 @@ export default function Login() {
         if (!response.ok) {
             const data = await response.json()
 
-            if (data.LoginId) {
-                showFieldError('email-or-nickname', data.LoginId)
+            if (data.Email) {
+                showFieldError('email', data.Email)
                 return
             }
             if (data.Password) {
@@ -60,17 +60,17 @@ export default function Login() {
             {error && <p className="text-red-500 mb-4">{error}</p>}
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                    <label className="block mb-1">Email or Nickname</label>
+                    <label className="block mb-1">Email</label>
                     <input
                         type="text"
-                        value={emailOrNickname}
-                        onChange={(e) => setEmailOrNickname(e.target.value)}
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
                         className="w-full p-2 border rounded"
-                        id="email-or-nickname"
-                        name = "emailOrNickname"
+                        id="email"
+                        name = "email"
                         required
                     />
-                    <div id="email-or-nickname-error" className="text-red-500"></div>
+                    <div id="email-error" className="text-red-500"></div>
                 </div>
                 <div>
                     <label className="block mb-1">Password</label>
