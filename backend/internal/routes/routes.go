@@ -28,8 +28,7 @@ func RegisterRoutes(db *sql.DB) {
 	http.HandleFunc("/api/public-dashboard", handler.PublicDashboardHandler)
 
 	// Protected routes (authentication required)
-	authMiddleware := middlewares.AuthMiddleware(db)
-	http.Handle("/api/profile", authMiddleware(http.HandlerFunc(handler.ProfileHandler)))
-	http.Handle("/api/profile/update", authMiddleware(http.HandlerFunc(handler.UpdateProfileHandler)))
-	http.Handle("/api/dashboard", authMiddleware(http.HandlerFunc(handler.DashboardHandler)))
+	http.Handle("/api/profile", middlewares.AuthMiddleware(db, handler.ProfileHandler))
+	http.Handle("/api/profile/update", middlewares.AuthMiddleware(db, handler.UpdateProfileHandler))
+	http.Handle("/api/dashboard", middlewares.AuthMiddleware(db, handler.DashboardHandler))
 }
