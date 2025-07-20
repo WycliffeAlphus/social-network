@@ -31,12 +31,6 @@ func WithSessionID(ctx context.Context, sessionID string) context.Context {
 	return context.WithValue(ctx, SessionIDContextKey, sessionID)
 }
 
-// GetSessionID retrieves the session ID from the context
-func GetSessionID(ctx context.Context) (string, bool) {
-	sessionID, ok := ctx.Value(SessionIDContextKey).(string)
-	return sessionID, ok
-}
-
 // MustGetUser retrieves the user from context and panics if not found
 // This should only be used in handlers that are protected by auth middleware
 func MustGetUser(ctx context.Context) *model.User {
@@ -50,7 +44,7 @@ func MustGetUser(ctx context.Context) *model.User {
 // MustGetSessionID retrieves the session ID from context and panics if not found
 // This should only be used in handlers that are protected by auth middleware
 func MustGetSessionID(ctx context.Context) string {
-	sessionID, ok := GetSessionID(ctx)
+	sessionID, ok := ctx.Value(SessionIDContextKey).(string)
 	if !ok {
 		panic("session ID not found in context - ensure auth middleware is applied")
 	}
