@@ -33,9 +33,9 @@ func FollowUser(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		// fetch profile_visibility of the followed user
+		// fetch profileVisibility of the followed user
 		var profileVisibility string
-		err := db.QueryRow("SELECT profile_visibility FROM users WHERE id = ?", request.FollowedUserID).Scan(&profileVisibility)
+		err := db.QueryRow("SELECT profileVisibility FROM users WHERE id = ?", request.FollowedUserID).Scan(&profileVisibility)
 		if err != nil {
 			http.Error(w, "User not found", http.StatusNotFound)
 			return
