@@ -9,6 +9,8 @@ import (
 )
 
 func main() {
+	sqlite.CreateMigrationFile()
+
 	// Connect to the SQLite database and apply migrations
 	db, err := sqlite.ConnectAndMigrate()
 	if err != nil {
