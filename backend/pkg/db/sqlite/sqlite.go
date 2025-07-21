@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"time"
 
 	"github.com/golang-migrate/migrate/v4"
@@ -34,6 +35,13 @@ func CreateMigrationFile() {
 	if len(os.Args) == 4 && os.Args[1] == "migrate" && os.Args[2] == "create" {
 		fileName := os.Args[3]
 		migrationsDir := "pkg/db/migrations"
+
+		// Validate file name format (lowercase with underscores)
+		validName := regexp.MustCompile(`^[a-z]+(_[a-z]+)*$`).MatchString
+		if !validName(fileName) {
+			fmt.Println("Error: Migration name must use lowercase letters and underscores only (e.g. 'add_followers_table')")
+			os.Exit(1)
+		}
 
 		cmd := exec.Command("migrate", "create", "-ext", "sql", "-dir", migrationsDir, "-seq", fileName)
 		cmd.Stdout = os.Stdout
