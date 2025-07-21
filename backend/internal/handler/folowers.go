@@ -16,7 +16,7 @@ func FollowUser(db *sql.DB) http.HandlerFunc {
 		}
 
 		// get userID from context
-		currentUserID := context.MustGetSessionID(r.Context())
+		currentUserID := context.MustGetUser(r.Context()).ID
 
 		var request struct {
 			FollowedUserID string `json:"userId"`

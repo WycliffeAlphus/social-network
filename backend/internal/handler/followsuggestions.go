@@ -11,7 +11,7 @@ import (
 func GetFollowSuggestions(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// get userID from context
-		currentUserID := context.MustGetSessionID(r.Context())
+		currentUserID := context.MustGetUser(r.Context()).ID
 
 		// query to get users that the current user is not following
 		rows, err := db.Query(`
