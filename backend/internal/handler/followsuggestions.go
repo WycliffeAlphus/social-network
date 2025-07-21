@@ -15,7 +15,7 @@ func GetFollowSuggestions(db *sql.DB) http.HandlerFunc {
 
 		// query to get users that the current user is not following
 		rows, err := db.Query(`
-        SELECT u.id, u.first_name, u.last_name, u.avatar_image,
+        SELECT u.id, u.fname, u.lname, u.imgurl,
 			EXISTS (
                    SELECT 1 FROM followers f 
                    WHERE f.follower_id = u.id AND f.followed_id = ?
@@ -63,7 +63,7 @@ func GetFollowSuggestions(db *sql.DB) http.HandlerFunc {
 		}
 
 		var visibility string
-		err = db.QueryRow("SELECT profile_visibility FROM users WHERE id = ?", currentUserID).Scan(&visibility)
+		err = db.QueryRow("SELECT profileVisibility FROM users WHERE id = ?", currentUserID).Scan(&visibility)
 		if err != nil {
 			log.Printf("Error fetching privacy setting: %v", err)
 			http.Error(w, "Failed to fetch user data", http.StatusInternalServerError)
