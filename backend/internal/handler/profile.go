@@ -2,6 +2,8 @@ package handler
 
 import (
 	"backend/internal/context"
+	"backend/pkg/db/sqlite"
+	"backend/pkg/getusers"
 	"encoding/json"
 	"net/http"
 )
@@ -15,7 +17,21 @@ func ProfileHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get user from context (added by auth middleware)
-	user := context.MustGetUser(r.Context())
+	user := *context.MustGetUser(r.Context())
+	db, err := sqlite.ConnectAndMigrate()
+	if err != nil {
+		http.Error(w, "Database connection error", http.StatusInternalServerError)
+		return
+	}
+	user.ProfileVisibility = "loggedInUser"
+	id := r.URL.Query().Get("id")
+	if id != "" {
+		user, err = getusers.GetUserByID(db, id)
+		if err != nil {
+			http.Error(w, "User not found", http.StatusNotFound)
+			return
+		}
+	}
 
 	// Return user profile (excluding sensitive information like password)
 	response := map[string]interface{}{
