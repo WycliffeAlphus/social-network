@@ -26,7 +26,7 @@ func GetFollowSuggestions(db *sql.DB) http.HandlerFunc {
             SELECT 1 FROM followers f 
             WHERE f.follower_id = ? AND f.followed_id = u.id
         )
-        LIMIT 7
+        LIMIT 3
     `, currentUserID, currentUserID, currentUserID)
 
 		if err != nil {
