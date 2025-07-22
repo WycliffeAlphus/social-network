@@ -20,8 +20,8 @@ func TestWithUser(t *testing.T) {
 	ctxWithUser := WithUser(ctx, user)
 
 	// Verify user was added
-	retrievedUser, ok := GetUser(ctxWithUser)
-	if !ok {
+	retrievedUser := MustGetUser(ctxWithUser)
+	if retrievedUser == nil {
 		t.Fatal("Expected user to be found in context")
 	}
 
@@ -38,8 +38,8 @@ func TestGetUser(t *testing.T) {
 	ctx := context.Background()
 
 	// Test with no user in context
-	_, ok := GetUser(ctx)
-	if ok {
+	retrievedUser1 := MustGetUser(ctx)
+	if retrievedUser1 != nil {
 		t.Error("Expected no user in empty context")
 	}
 
@@ -50,13 +50,13 @@ func TestGetUser(t *testing.T) {
 	}
 	ctxWithUser := WithUser(ctx, user)
 
-	retrievedUser, ok := GetUser(ctxWithUser)
-	if !ok {
+	retrievedUser2 := MustGetUser(ctxWithUser)
+	if retrievedUser2 == nil {
 		t.Fatal("Expected user to be found in context")
 	}
 
-	if retrievedUser.ID != user.ID {
-		t.Errorf("Expected user ID %s, got %s", user.ID, retrievedUser.ID)
+	if retrievedUser2.ID != user.ID {
+		t.Errorf("Expected user ID %s, got %s", user.ID, retrievedUser2.ID)
 	}
 }
 
@@ -68,8 +68,8 @@ func TestWithSessionID(t *testing.T) {
 	ctxWithSession := WithSessionID(ctx, sessionID)
 
 	// Verify session ID was added
-	retrievedSessionID, ok := GetSessionID(ctxWithSession)
-	if !ok {
+	retrievedSessionID := MustGetSessionID(ctxWithSession)
+	if retrievedSessionID == "" {
 		t.Fatal("Expected session ID to be found in context")
 	}
 
@@ -82,8 +82,8 @@ func TestGetSessionID(t *testing.T) {
 	ctx := context.Background()
 
 	// Test with no session ID in context
-	_, ok := GetSessionID(ctx)
-	if ok {
+	retrievedSessionID1 := MustGetSessionID(ctx)
+	if len(retrievedSessionID1) > 1 {
 		t.Error("Expected no session ID in empty context")
 	}
 
@@ -91,13 +91,13 @@ func TestGetSessionID(t *testing.T) {
 	sessionID := "test-session-id"
 	ctxWithSession := WithSessionID(ctx, sessionID)
 
-	retrievedSessionID, ok := GetSessionID(ctxWithSession)
-	if !ok {
+	retrievedSessionID2 := MustGetSessionID(ctxWithSession)
+	if retrievedSessionID2 == "" {
 		t.Fatal("Expected session ID to be found in context")
 	}
 
-	if retrievedSessionID != sessionID {
-		t.Errorf("Expected session ID %s, got %s", sessionID, retrievedSessionID)
+	if retrievedSessionID2 != sessionID {
+		t.Errorf("Expected session ID %s, got %s", sessionID, retrievedSessionID2)
 	}
 }
 
@@ -160,13 +160,13 @@ func TestContextKeyCollisions(t *testing.T) {
 	ctx = WithSessionID(ctx, sessionID)
 
 	// Verify both can be retrieved independently
-	retrievedUser, userOk := GetUser(ctx)
-	retrievedSessionID, sessionOk := GetSessionID(ctx)
+	retrievedUser := MustGetUser(ctx)
+	retrievedSessionID := MustGetSessionID(ctx)
 
-	if !userOk {
+	if retrievedUser == nil {
 		t.Error("Expected user to be found in context")
 	}
-	if !sessionOk {
+	if retrievedSessionID == "" {
 		t.Error("Expected session ID to be found in context")
 	}
 
