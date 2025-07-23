@@ -1,3 +1,9 @@
+// followsuggestions_test.go
+//
+// This test file verifies the GetFollowSuggestions handler.
+// It ensures the handler returns HTTP 200 when a user is present in the context and the test database is properly set up.
+// The test sets up in-memory users and followers tables and injects a mock user into the request context.
+
 package handler
 
 import (

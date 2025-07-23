@@ -1,3 +1,9 @@
+// folowers_test.go
+//
+// This test file covers basic validation for the follow, accept, and decline follow request handlers.
+// It checks that the handlers correctly handle invalid HTTP methods and invalid request bodies,
+// and that they expect a user to be present in the request context (as set by authentication middleware).
+
 package handler
 
 import (
