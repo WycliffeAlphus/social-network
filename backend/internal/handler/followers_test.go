@@ -117,12 +117,12 @@ func TestExtractUserIDFromPath(t *testing.T) {
 		endpoint string
 		expected string
 	}{
-		{"/users/user123/followers", "followers", "user123"},
-		{"/users/user456/following", "following", "user456"},
-		{"/users/user789/follow", "follow", "user789"},
-		{"/users/user101/followers/count", "followers/count", "user101"},
+		{"/api/users/user123/followers", "followers", "user123"},
+		{"/api/users/user456/following", "following", "user456"},
+		{"/api/users/user789/follow", "follow", "user789"},
+		{"/api/users/user101/followers/count", "followers/count", "user101"},
 		{"/invalid/path", "followers", ""},
-		{"/users/followers", "followers", ""},
+		{"/api/users/followers", "followers", ""},
 	}
 
 	for _, test := range tests {
@@ -139,10 +139,10 @@ func TestExtractFollowerIDFromPath(t *testing.T) {
 		path     string
 		expected string
 	}{
-		{"/users/me/follow-requests/user123/accept", "user123"},
-		{"/users/me/follow-requests/user456/reject", "user456"},
+		{"/api/users/me/follow-requests/user123/accept", "user123"},
+		{"/api/users/me/follow-requests/user456/reject", "user456"},
 		{"/invalid/path", ""},
-		{"/users/me/follow-requests/accept", ""},
+		{"/api/users/me/follow-requests/accept", ""},
 	}
 
 	for _, test := range tests {
