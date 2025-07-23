@@ -91,7 +91,7 @@ func AcceptFollowRequest(db *sql.DB) http.HandlerFunc {
 		}
 
 		// get userID from context (this is the user accepting the request)
-		currentUserID := context.MustGetSessionID(r.Context())
+		currentUserID := context.MustGetUser(r.Context()).ID
 
 		var request struct {
 			FollowerID string `json:"followerId"`
@@ -150,7 +150,7 @@ func DeclineFollowRequest(db *sql.DB) http.HandlerFunc {
 		}
 
 		// get userID from context (this is the user declining the request)
-		currentUserID := context.MustGetSessionID(r.Context())
+		currentUserID := context.MustGetUser(r.Context()).ID
 
 		var request struct {
 			FollowerID string `json:"followerId"`
