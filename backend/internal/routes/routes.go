@@ -24,12 +24,10 @@ func RegisterRoutes(db *sql.DB) {
 	http.HandleFunc("/api/login", handler.LoginHandler)
 	http.HandleFunc("/api/logout", handler.LogoutHandler)
 
-	// Routes with optional authentication
-	http.Handle("/api/public-dashboard", middlewares.OptionalAuth(db)(http.HandlerFunc(handler.PublicDashboardHandler)))
-
 	// Protected routes (authentication required)
-	authMiddleware := middlewares.AuthMiddleware(db)
-	http.Handle("/api/profile", authMiddleware(http.HandlerFunc(handler.ProfileHandler)))
-	http.Handle("/api/profile/update", authMiddleware(http.HandlerFunc(handler.UpdateProfileHandler)))
-	http.Handle("/api/dashboard", authMiddleware(http.HandlerFunc(handler.DashboardHandler)))
+	http.Handle("/api/profile", middlewares.AuthMiddleware(db, handler.ProfileHandler))
+	http.Handle("/api/profile/update", middlewares.AuthMiddleware(db, handler.UpdateProfileHandler))
+	http.Handle("/api/dashboard", middlewares.AuthMiddleware(db, handler.DashboardHandler))
+	http.HandleFunc("/api/users/available", middlewares.AuthMiddleware(db, handler.GetFollowSuggestions(db)))
+	http.HandleFunc("/api/users/follow", middlewares.AuthMiddleware(db, handler.FollowUser(db)))
 }
