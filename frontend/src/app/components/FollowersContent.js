@@ -22,6 +22,8 @@ export default function FollowersContent({ userId = 'me' }) {
       if (response.ok) {
         const data = await response.json();
         setFollowers(data.data || []);
+      } else if (response.status === 401) {
+        setError('Please log in to view your followers.');
       } else if (response.status === 403) {
         setError('You do not have permission to view this user\'s followers.');
       } else {
@@ -153,10 +155,10 @@ export default function FollowersContent({ userId = 'me' }) {
         <div className="text-center py-12">
           <UserIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
           <p className="text-center text-gray-600 text-lg">
-            {userId === 'me' ? 'You have no followers yet.' : 'This user has no followers.'}
+            {userId === 'me' ? 'No followers currently' : 'This user has no followers'}
           </p>
           <p className="text-center text-gray-500 text-sm mt-2">
-            {userId === 'me' ? 'Share your profile to gain followers!' : ''}
+            {userId === 'me' ? 'When people follow you, they will appear here' : ''}
           </p>
         </div>
       )}

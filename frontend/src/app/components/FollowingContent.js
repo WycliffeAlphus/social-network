@@ -22,6 +22,8 @@ export default function FollowingContent({ userId = 'me' }) {
       if (response.ok) {
         const data = await response.json();
         setFollowing(data.data || []);
+      } else if (response.status === 401) {
+        setError('Please log in to view who you are following.');
       } else if (response.status === 403) {
         setError('You do not have permission to view this user\'s following list.');
       } else {
@@ -173,10 +175,10 @@ export default function FollowingContent({ userId = 'me' }) {
         <div className="text-center py-12">
           <UserIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
           <p className="text-center text-gray-600 text-lg">
-            {userId === 'me' ? 'You are not following anyone yet.' : 'This user is not following anyone.'}
+            {userId === 'me' ? 'Not following anyone currently' : 'This user is not following anyone'}
           </p>
           <p className="text-center text-gray-500 text-sm mt-2">
-            {userId === 'me' ? 'Discover and follow interesting people!' : ''}
+            {userId === 'me' ? 'People you follow will appear here' : ''}
           </p>
         </div>
       )}
