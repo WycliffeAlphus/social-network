@@ -6,6 +6,7 @@ import (
 	"backend/pkg/db/sqlite"
 	"backend/pkg/getusers"
 	"database/sql"
+	"encoding/json"
 	"log"
 	"net/http"
 	"time"
@@ -61,32 +62,18 @@ func AuthMiddleware(db *sql.DB, next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		// Convert pkg/models.User to internal/model.User
 		modelUser := &model.User{
 			ID:                user.ID,
 			Email:             user.Email,
 			FirstName:         user.FirstName,
 			LastName:          user.LastName,
-			DOB:               user.DateOfBirth,
-			ImgURL:            user.AvatarImage.String,
-			Nickname:          user.Nickname.String,
-			About:             user.AboutMe.String,
+			DOB:               user.DOB,
+			ImgURL:            user.ImgURL,
+			Nickname:          user.Nickname,
+			About:             user.About,
 			ProfileVisibility: user.ProfileVisibility,
 			CreatedAt:         user.CreatedAt,
 		}
-			// Convert pkg/models.User to internal/model.User
-			modelUser := &model.User{
-				ID:                user.ID,
-				Email:             user.Email,
-				FirstName:         user.FirstName,
-				LastName:          user.LastName,
-				DOB:               user.DOB,
-				ImgURL:            user.ImgURL,
-				Nickname:          user.Nickname,
-				About:             user.About,
-				ProfileVisibility: user.ProfileVisibility,
-				CreatedAt:         user.CreatedAt,
-			}
 
 		// Add user and session ID to context
 		ctx := context.WithUser(r.Context(), modelUser)
@@ -95,10 +82,6 @@ func AuthMiddleware(db *sql.DB, next http.HandlerFunc) http.HandlerFunc {
 		// Continue with the request
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
-			// Continue with the request
-			next.ServeHTTP(w, r.WithContext(ctx))
-		})
-	}
 }
 
 // RequireAuth is a convenience function that returns a 401 JSON response
