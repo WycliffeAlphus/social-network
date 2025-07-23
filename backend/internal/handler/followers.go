@@ -31,6 +31,16 @@ func (h *FollowersHandler) GetFollowers(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	// Handle "me" by resolving to current user's ID
+	if userID == "me" {
+		if user, ok := context.GetUser(r.Context()); ok {
+			userID = user.ID
+		} else {
+			http.Error(w, "Authentication required to view your own followers", http.StatusUnauthorized)
+			return
+		}
+	}
+
 	// Get requesting user ID from context (may be empty for anonymous users)
 	var requestingUserID string
 	if user, ok := context.GetUser(r.Context()); ok {
@@ -72,6 +82,16 @@ func (h *FollowersHandler) GetFollowing(w http.ResponseWriter, r *http.Request) 
 	if userID == "" {
 		http.Error(w, "Invalid user ID", http.StatusBadRequest)
 		return
+	}
+
+	// Handle "me" by resolving to current user's ID
+	if userID == "me" {
+		if user, ok := context.GetUser(r.Context()); ok {
+			userID = user.ID
+		} else {
+			http.Error(w, "Authentication required to view your own following list", http.StatusUnauthorized)
+			return
+		}
 	}
 
 	// Get requesting user ID from context (may be empty for anonymous users)
@@ -189,6 +209,16 @@ func (h *FollowersHandler) GetFollowerCounts(w http.ResponseWriter, r *http.Requ
 	if userID == "" {
 		http.Error(w, "Invalid user ID", http.StatusBadRequest)
 		return
+	}
+
+	// Handle "me" by resolving to current user's ID
+	if userID == "me" {
+		if user, ok := context.GetUser(r.Context()); ok {
+			userID = user.ID
+		} else {
+			http.Error(w, "Authentication required to view your own follower counts", http.StatusUnauthorized)
+			return
+		}
 	}
 
 	// Get counts
