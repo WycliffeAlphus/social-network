@@ -7,6 +7,8 @@ import { usePathname, useRouter } from 'next/navigation'; // Import useRouter to
 
 // Import the new content components
 import RequestsContent from '../components/RequestsContent';
+import FollowersContent from '../components/FollowersContent';
+import FollowingContent from '../components/FollowingContent';
 
 export default function FriendsDashboardPage() {
   const pathname = usePathname();
@@ -25,6 +27,10 @@ export default function FriendsDashboardPage() {
     switch (activeTab) {
       case 'requests':
         return <RequestsContent />;
+      case 'followers':
+        return <FollowersContent userId="me" />;
+      case 'following':
+        return <FollowingContent userId="me" />;
       default:
         return <RequestsContent />; // Fallback to requests
     }
@@ -56,7 +62,7 @@ export default function FriendsDashboardPage() {
               </li>
               <li>
                 <Link
-                  href="/friends/"
+                  href="/friends/followers"
                   className={`pb-2 block ${
                     activeTab === 'followers' ? 'border-b-2 border-blue-600 text-blue-600 font-semibold' : 'text-gray-600 hover:text-blue-500'
                   }`}
@@ -66,7 +72,7 @@ export default function FriendsDashboardPage() {
               </li>
               <li>
                 <Link
-                  href="/friends/"
+                  href="/friends/following"
                   className={`pb-2 block ${
                     activeTab === 'following' ? 'border-b-2 border-blue-600 text-blue-600 font-semibold' : 'text-gray-600 hover:text-blue-500'
                   }`}
