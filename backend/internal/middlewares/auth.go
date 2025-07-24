@@ -77,7 +77,7 @@ func AuthMiddleware(db *sql.DB, next http.HandlerFunc) http.HandlerFunc {
 
 		// Add user and session ID to context
 		ctx := context.WithUser(r.Context(), modelUser)
-		ctx = context.WithSessionID(ctx, sessionID)
+		ctx = context.WithSessionID(ctx, session.UserID)
 
 		// Continue with the request
 		next.ServeHTTP(w, r.WithContext(ctx))
