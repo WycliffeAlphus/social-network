@@ -21,3 +21,55 @@ body {
 .input-error {
     border: 1px solid red !important;
 }
+
+.profileCard {
+  text-align: center;
+  padding: 20px;
+}
+
+.profileCard img {
+  width: 128px;
+  height: 128px;
+  border-radius: 50%;
+}
+
+.stats {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 10px;
+}
+
+.followerCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid #eee;
+  padding: 10px;
+  border-radius: 10px;
+  margin-bottom: 10px;
+}
+
+.followerCard img {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  margin-right: 10px;
+}
+
+.follow {
+  background: #3b82f6;
+  color: white;
+  padding: 5px 10px;
+  border: none;
+  border-radius: 8px;
+}
+
+.following {
+  background: #e5e7eb;
+  color: black;
+  padding: 5px 10px;
+  border: none;
+  border-radius: 8px;
+}
+
