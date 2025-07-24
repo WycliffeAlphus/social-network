@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import SearchBar from "./searchbar";
 import {
   HomeIcon, BellIcon, ChatBubbleLeftIcon,
-  UserIcon, UserGroupIcon,PlusIcon
+  UserIcon, UserGroupIcon, PlusIcon
 } from '@heroicons/react/24/solid';
 
 export default function Sidebar() {
@@ -60,8 +60,19 @@ export default function Sidebar() {
             </Link>
           </li>
           <li className="p-4 border-b border-gray-100/20">
+            <Link href="/friends" className="flex w-full pb-4 items-center">
+              <div className="relative w-6 h-6 mr-2">
+                <UserGroupIcon className="h-5 w-5 text-white" />
+              </div>
+              Friends
+            </Link>
+          </li>
+          <li className="p-4 border-b border-gray-100/20">
             <Link href="/groups" className="flex w-full  pb-4 items-center">
-              <UserGroupIcon className="h-6 w-6 mr-2" /> Groups
+              <div className="w-7 h-7 flex items-center justify-center rounded-full border-2 border-white mr-1">
+                <UserGroupIcon className="h-5 w-5 text-white" />
+              </div>
+              Groups
             </Link>
           </li>
           <li className="p-4 border-b border-gray-100/20">
