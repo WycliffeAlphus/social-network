@@ -1,9 +1,9 @@
 package handler
 
 import (
+	"backend/internal/model"
 	"backend/pkg/db/sqlite"
 	"backend/pkg/getusers"
-	"backend/pkg/models"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -60,7 +60,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		errs.Email = "We did not find an account with that email"
 	}
 
-	var user models.User
+	var user model.User
 	if count > 0 {
 		var getUserErr error
 		user, getUserErr = getusers.GetUserByEmail(db, email)

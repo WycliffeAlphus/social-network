@@ -2,6 +2,8 @@ package handler
 
 import (
 	"backend/internal/context"
+	"backend/pkg/db/sqlite"
+	"backend/pkg/getusers"
 	"encoding/json"
 	"net/http"
 )
@@ -15,8 +17,33 @@ func ProfileHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get user from context (added by auth middleware)
-	user := context.MustGetUser(r.Context())
-
+	user := *context.MustGetUser(r.Context())
+	userId := user.ID
+	db, err := sqlite.ConnectAndMigrate()
+	if err != nil {
+		http.Error(w, "Database connection error", http.StatusInternalServerError)
+		return
+	}
+	user.ProfileVisibility = "public" // Default to public visibility if its the owner's profile
+	id := r.URL.Query().Get("id")
+	if id != "" {
+		user, err = getusers.GetUserByID(db, id)
+		if err != nil {
+			http.Error(w, "User not found", http.StatusNotFound)
+			return
+		}
+	}
+if user.ProfileVisibility == "private" {
+	//check if user is following the profile owner
+	following, err := getusers.IsFollowing(db, userId, id)
+	if err != nil {
+		http.Error(w, "Error checking following status", http.StatusInternalServerError)
+		return
+	}
+	if following {
+		user.ProfileVisibility = "public" // Temporarily set to public if following
+	} 
+	} 
 	// Return user profile (excluding sensitive information like password)
 	response := map[string]interface{}{
 		"status": "success",
