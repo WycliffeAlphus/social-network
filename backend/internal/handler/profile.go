@@ -2,29 +2,11 @@ package handler
 
 import (
 	"backend/internal/context"
-	"backend/internal/model"
 	"backend/pkg/db/sqlite"
 	"backend/pkg/getusers"
-	"backend/pkg/models"
 	"encoding/json"
 	"net/http"
 )
-
-// convertModelsUserToInternalUser converts a models.User to internal/model.User
-func convertModelsUserToInternalUser(modelsUser models.User) model.User {
-	return model.User{
-		ID:                modelsUser.ID,
-		Email:             modelsUser.Email,
-		FirstName:         modelsUser.FirstName,
-		LastName:          modelsUser.LastName,
-		DOB:               modelsUser.DateOfBirth,
-		ImgURL:            modelsUser.AvatarImage.String,
-		Nickname:          modelsUser.Nickname.String,
-		About:             modelsUser.AboutMe.String,
-		ProfileVisibility: modelsUser.ProfileVisibility,
-		CreatedAt:         modelsUser.CreatedAt,
-	}
-}
 
 // ProfileHandler handles requests to get the current user's profile
 // This is a protected route that requires authentication
@@ -36,7 +18,6 @@ func ProfileHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Get user from context (added by auth middleware)
 	user := *context.MustGetUser(r.Context())
-	userId := user.ID
 	db, err := sqlite.ConnectAndMigrate()
 	if err != nil {
 		http.Error(w, "Database connection error", http.StatusInternalServerError)
@@ -45,22 +26,10 @@ func ProfileHandler(w http.ResponseWriter, r *http.Request) {
 	user.ProfileVisibility = "public" // Default to public visibility if its the owner's profile
 	id := r.URL.Query().Get("id")
 	if id != "" {
-		modelsUser, err := getusers.GetUserByID(db, id)
+		user, err = getusers.GetUserByID(db, id)
 		if err != nil {
 			http.Error(w, "User not found", http.StatusNotFound)
 			return
-		}
-		user = convertModelsUserToInternalUser(modelsUser)
-	}
-	if user.ProfileVisibility == "private" {
-		//check if user is following the profile owner
-		following, err := getusers.IsFollowing(db, userId, id)
-		if err != nil {
-			http.Error(w, "Error checking following status", http.StatusInternalServerError)
-			return
-		}
-		if following {
-			user.ProfileVisibility = "public" // Temporarily set to public if following
 		}
 	}
 	// Return user profile (excluding sensitive information like password)
