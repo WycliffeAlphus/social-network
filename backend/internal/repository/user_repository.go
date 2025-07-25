@@ -62,3 +62,32 @@ func GetUserByNickname(db *sql.DB, nickname string) bool {
 
 	return false
 }
+
+// GetByID retrieves a user by their ID
+func (r *UserRepository) GetByID(userID string) (*model.User, error) {
+	query := `SELECT id, email, fname, lname, dob, imgurl, nickname, about, password, profileVisibility
+			  FROM users WHERE id = ?`
+
+	var user model.User
+	err := r.DB.QueryRow(query, userID).Scan(
+		&user.ID,
+		&user.Email,
+		&user.FirstName,
+		&user.LastName,
+		&user.DOB,
+		&user.ImgURL,
+		&user.Nickname,
+		&user.About,
+		&user.Password,
+		&user.ProfileVisibility,
+	)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil // User not found
+		}
+		return nil, err
+	}
+
+	return &user, nil
+}
