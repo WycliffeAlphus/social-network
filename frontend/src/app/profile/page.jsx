@@ -7,6 +7,7 @@ import {
 } from '@heroicons/react/24/solid';
 import Navbar from '../components/navbar';
 import Sidebar from '../components/sidebar';
+import FollowersFollowingSection from '../components/FollowersFollowingSection';
 
 export default function Profile() {
     const searchParams = useSearchParams();
@@ -79,12 +80,43 @@ export default function Profile() {
                                         </div>
                                     </div>
                                 </div>
+
+                                {/* Followers/Following Section for Private Profile */}
+                                <FollowersFollowingSection userId={profile.id} />
                             </div>
                         ) : (
                             <div>
-                                <h1>{profile.first_name} {profile.last_name}</h1>
-                                <p>{profile.about}</p>
-                                {/* Add more public profile content here */}
+                                <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+                                    <div className="flex items-center space-x-6 mb-4">
+                                        <div className="w-20 h-20 rounded-full overflow-hidden bg-gray-200">
+                                            {profile.img_url ? (
+                                                <img
+                                                    src={profile.img_url}
+                                                    alt={`${profile.first_name} ${profile.last_name}`}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full bg-blue-500 flex items-center justify-center text-white text-2xl font-bold">
+                                                    {profile.first_name.charAt(0)}{profile.last_name.charAt(0)}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div>
+                                            <h1 className="text-3xl font-bold text-gray-900">
+                                                {profile.first_name} {profile.last_name}
+                                            </h1>
+                                            {profile.nickname && (
+                                                <p className="text-gray-600">@{profile.nickname}</p>
+                                            )}
+                                            {profile.about && (
+                                                <p className="text-gray-700 mt-2">{profile.about}</p>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Followers/Following Section for Public Profile */}
+                                <FollowersFollowingSection userId={profile.id} />
                             </div>
                         )}
                     </div>

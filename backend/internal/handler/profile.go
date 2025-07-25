@@ -18,7 +18,6 @@ func ProfileHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Get user from context (added by auth middleware)
 	user := *context.MustGetUser(r.Context())
-	userId := user.ID
 	db, err := sqlite.ConnectAndMigrate()
 	if err != nil {
 		http.Error(w, "Database connection error", http.StatusInternalServerError)
@@ -33,17 +32,6 @@ func ProfileHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-if user.ProfileVisibility == "private" {
-	//check if user is following the profile owner
-	following, err := getusers.IsFollowing(db, userId, id)
-	if err != nil {
-		http.Error(w, "Error checking following status", http.StatusInternalServerError)
-		return
-	}
-	if following {
-		user.ProfileVisibility = "public" // Temporarily set to public if following
-	} 
-	} 
 	// Return user profile (excluding sensitive information like password)
 	response := map[string]interface{}{
 		"status": "success",

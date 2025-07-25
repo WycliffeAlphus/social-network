@@ -1,8 +1,8 @@
 package context
 
 import (
-	"context"
 	"backend/internal/model"
+	"context"
 )
 
 // ContextKey is a custom type for context keys to avoid collisions
