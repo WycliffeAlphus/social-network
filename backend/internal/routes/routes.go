@@ -7,6 +7,7 @@ import (
 	"backend/internal/service"
 	"database/sql"
 	"net/http"
+	"strings"
 )
 
 // RegisterRoutes sets up the HTTP routes for the API endpoints.
@@ -28,8 +29,21 @@ func RegisterRoutes(db *sql.DB) {
 	http.Handle("/api/profile", middlewares.AuthMiddleware(db, handler.ProfileHandler))
 	http.Handle("/api/profile/update", middlewares.AuthMiddleware(db, handler.UpdateProfileHandler))
 	http.Handle("/api/dashboard", middlewares.AuthMiddleware(db, handler.DashboardHandler))
-	http.HandleFunc("/api/users/available", middlewares.AuthMiddleware(db, handler.GetFollowSuggestions(db)))
-	http.HandleFunc("/api/users/follow", middlewares.AuthMiddleware(db, handler.FollowUser(db)))
-	http.HandleFunc("/api/follow/accept", middlewares.AuthMiddleware(db, handler.AcceptFollowRequest(db)))
-	http.HandleFunc("/api/follow/decline", middlewares.AuthMiddleware(db, handler.DeclineFollowRequest(db)))
+	// Follower routes - only GET endpoints for followers and following lists
+	http.HandleFunc("/api/users/", func(w http.ResponseWriter, r *http.Request) {
+		path := r.URL.Path
+
+		// Routes that require authentication (for viewing lists)
+		if strings.HasSuffix(path, "/followers") && r.Method == http.MethodGet {
+			middlewares.AuthMiddleware(db, handler.GetFollowers(db))(w, r)
+			return
+		}
+
+		if strings.HasSuffix(path, "/following") && r.Method == http.MethodGet {
+			middlewares.AuthMiddleware(db, handler.GetFollowing(db))(w, r)
+			return
+		}
+
+		http.NotFound(w, r)
+	})
 }
