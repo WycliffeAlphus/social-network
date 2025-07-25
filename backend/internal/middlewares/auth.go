@@ -6,6 +6,7 @@ import (
 	"backend/pkg/db/sqlite"
 	"backend/pkg/getusers"
 	"database/sql"
+	"encoding/json"
 	"log"
 	"net/http"
 	"time"
@@ -61,7 +62,6 @@ func AuthMiddleware(db *sql.DB, next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		// Convert pkg/models.User to internal/model.User
 		modelUser := &model.User{
 			ID:                user.ID,
 			Email:             user.Email,
@@ -81,5 +81,15 @@ func AuthMiddleware(db *sql.DB, next http.HandlerFunc) http.HandlerFunc {
 
 		// Continue with the request
 		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+// RequireAuth is a convenience function that returns a 401 JSON response
+func RequireAuth(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusUnauthorized)
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"status":  "error",
+		"message": "Authentication required",
 	})
 }
