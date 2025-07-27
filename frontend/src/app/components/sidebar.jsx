@@ -50,7 +50,7 @@ export default function Sidebar() {
             </Link> <SearchBar/>
           </li>
           <li className="p-4 border-b border-gray-100/20">
-            <Link href="/profile?id=8c82ec90-389e-4e35-a102-f40ff1e3504b" className="flex w-full  pb-4 items-center">
+            <Link href="/profile" className="flex w-full  pb-4 items-center">
               <UserIcon className="h-6 w-6 mr-2" /> Profile
             </Link>
           </li>
