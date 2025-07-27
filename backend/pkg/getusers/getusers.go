@@ -72,7 +72,3 @@ func GetUserByID(db *sql.DB, userID string) (model.User, error) {
 
 	return user, nil
 }
-<<<<<<< HEAD
-=======
-	
->>>>>>> main
