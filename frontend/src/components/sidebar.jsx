@@ -10,7 +10,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 
 export default function Sidebar({ data }) {
-  console.log(data)
+  // console.log(data)
   const [showCreateOptions, setShowCreateOptions] = useState(false);
   const [showAccountOptions, setShowAccountOptions] = useState(false);
   const createOptionsRef = useRef(null);

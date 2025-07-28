@@ -17,9 +17,12 @@ export default function FollowingPage() {
                     method: 'GET',
                     credentials: 'include'
                 })
+
                 if (!response.ok) throw new Error('Failed to fetch following')
+
                 const data = await response.json()
-                setFollowing(Array.isArray(data?.Users) ? data.Users : [])
+                console.log(data)
+                setFollowing(Array.isArray(data?.users) ? data.users : [])
             } catch (err) {
                 setError(err.message || 'Failed to load following')
             } finally {
@@ -33,26 +36,39 @@ export default function FollowingPage() {
     if (error) return <div className="flex justify-center py-8 text-red-500">Error: {error}</div>
 
     return (
-        <div className="max-w-2xl mx-auto py-8 px-4">
+        <div className="min-h-screen max-w-2xl mx-auto py-8 px-4 border-x mr-[20px] border-gray-400">
             <h1 className="text-2xl font-bold mb-6">Following</h1>
             <div className="space-y-4">
                 {following.length > 0 ? (
                     following.map(user => (
-                        <div key={user.ID} className="flex items-center gap-4 p-3 hover:bg-gray-100 rounded-lg">
-                            <div className="w-12 h-12 rounded-full bg-gray-200 overflow-hidden flex items-center justify-center">
-                                <span className="text-lg font-medium">
-                                    {user.ID.substring(0, 2).toUpperCase()}
-                                </span>
-                            </div>
+                        <Link
+                            key={user.id}
+                            href={`/profile/${user.id}`}
+                            className="group flex items-center gap-4 p-3 rounded-lg transition-colors"
+                        >
+                            {user.imgurl ? (
+                                <img
+                                    src={user.imgurl}
+                                    alt={`${user.fname} ${user.lname}`}
+                                    className="w-12 h-12 rounded-full object-cover"
+                                />
+                            ) : (
+                                <div className="w-12 h-12 rounded-full bg-gray-200 overflow-hidden flex items-center justify-center">
+                                    <span className="text-lg text-black font-medium">
+                                        {user.fname?.charAt(0).toUpperCase()}
+                                        {user.lname?.charAt(0).toUpperCase()}
+                                    </span>
+                                </div>
+                            )}
                             <div>
-                                <Link href={`/profile/${user.ID}`} className="font-medium hover:underline">
-                                    User ID: {user.ID}
-                                </Link>
-                                {user.Status && (
-                                    <p className="text-sm text-gray-500">Status: {user.Status}</p>
+                                <span className="font-medium group-hover:text-[#4169e1]">
+                                    {user.fname} {user.lname}
+                                </span>
+                                {user.status && (
+                                    <p className="text-sm text-gray-500">Status: {user.status}</p>
                                 )}
                             </div>
-                        </div>
+                        </Link>
                     ))
                 ) : (
                     <p>Not following anyone yet</p>

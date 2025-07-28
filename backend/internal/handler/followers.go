@@ -279,10 +279,11 @@ func GetFollowing(db *sql.DB) http.HandlerFunc {
 
 		// query to get all users being followed by the requested user
 		query := `
-			SELECT followed_id, created_at 
-			FROM followers 
-			WHERE follower_id = ? AND status = 'accepted'
-			ORDER BY created_at DESC
+    		SELECT u.id, u.fname, u.lname, u.imgurl
+    		FROM followers f
+    		JOIN users u ON f.followed_id = u.id
+    		WHERE f.follower_id = ? AND f.status = 'accepted'
+    		ORDER BY f.created_at DESC
 		`
 
 		rows, err := db.Query(query, requestedID)
@@ -295,7 +296,7 @@ func GetFollowing(db *sql.DB) http.HandlerFunc {
 		var following []model.UserInfo
 		for rows.Next() {
 			var user model.UserInfo
-			err := rows.Scan(&user.ID)
+			err := rows.Scan(&user.ID, &user.FName, &user.LName, &user.ImgURL)
 			if err != nil {
 				http.Error(w, "Failed to scan following user: "+err.Error(), http.StatusInternalServerError)
 				return
@@ -312,6 +313,8 @@ func GetFollowing(db *sql.DB) http.HandlerFunc {
 			CurrentUserId: currentUserId,
 			RequestedID:   requestedID,
 		}
+
+		// fmt.Println(response)
 
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(response)

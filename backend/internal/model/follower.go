@@ -3,6 +3,9 @@ package model
 // UserInfo represents basic user information in the response
 type UserInfo struct {
 	ID     string `json:"id"`
+	FName  string `json:"fname"`
+	LName  string `json:"lname"`
+	ImgURL string `json:"imgurl"`
 	Status string `json:"status,omitempty"` // only relevant for followers
 }
 
