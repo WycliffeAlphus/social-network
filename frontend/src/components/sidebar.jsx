@@ -67,7 +67,7 @@ export default function Sidebar({ data }) {
           </Link>
         </li>
         <li className="p-4 border-gray-100/20">
-          <Link href="/profile" className="flex w-full pb-4 items-center items-center justify-center md:justify-start">
+          <Link href={`/profile/${data.current_user_id}`} className="flex w-full pb-4 items-center items-center justify-center md:justify-start">
             <UserIcon className="h-6 w-6 mr-2" />
             <span className="hidden xl:inline">Profile</span>
           </Link>

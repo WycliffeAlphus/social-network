@@ -26,6 +26,8 @@ export default function ClientLayout({ children }) {
     fetchUser()
   }, [])
 
+  if (!data) return <div>Loading...</div>
+
   return (
     <div className="h-screen px-[1%] md:px-[12%] 2xl:px-[18%]">
       <div className="flex min-h-screen">
