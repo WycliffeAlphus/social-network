@@ -23,7 +23,7 @@ export default function FollowingPage() {
                 if (!response.ok) throw new Error('Failed to fetch following')
 
                 const data = await response.json()
-                console.log(data)
+                // console.log(data)
                 setFollowing(Array.isArray(data?.users) ? data.users : [])
             } catch (err) {
                 setError(err.message || 'Failed to load following')
@@ -70,9 +70,6 @@ export default function FollowingPage() {
                                     <span className="font-medium group-hover:text-[#4169e1]">
                                         {user.fname} {user.lname}
                                     </span>
-                                    {user.status && (
-                                        <p className="text-sm text-gray-500">Status: {user.status}</p>
-                                    )}
                                 </div>
                             </Link>
                         ))

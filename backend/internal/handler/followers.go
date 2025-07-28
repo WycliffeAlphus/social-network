@@ -218,10 +218,11 @@ func GetFollowers(db *sql.DB) http.HandlerFunc {
 
 		// query to get all followers (people who follow the requested user id)
 		query := `
-			SELECT follower_id, status, created_at 
-			FROM followers 
-			WHERE followed_id = ? 
-			ORDER BY created_at DESC
+			SELECT u.id, u.fname, u.lname, u.imgurl, status
+			FROM followers f
+			JOIN users u ON f.follower_id = u.id
+			WHERE f.followed_id = ? AND f.status = 'accepted'
+			ORDER BY f.created_at DESC
 		`
 
 		rows, err := db.Query(query, requestedID)
@@ -233,13 +234,13 @@ func GetFollowers(db *sql.DB) http.HandlerFunc {
 
 		var followers []model.UserInfo
 		for rows.Next() {
-			var follower model.UserInfo
-			err := rows.Scan(&follower.ID, &follower.Status)
+			var user model.UserInfo
+			err := rows.Scan(&user.ID, &user.FName, &user.LName, &user.ImgURL, &user.Status)
 			if err != nil {
 				http.Error(w, "Failed to scan follower: "+err.Error(), http.StatusInternalServerError)
 				return
 			}
-			followers = append(followers, follower)
+			followers = append(followers, user)
 		}
 		if err = rows.Err(); err != nil {
 			http.Error(w, "Error iterating followers: "+err.Error(), http.StatusInternalServerError)
