@@ -2,6 +2,8 @@ package handler
 
 import (
 	"backend/internal/context"
+	"backend/internal/model"
+	"backend/pkg/extractid"
 	"database/sql"
 	"encoding/json"
 	"log"
@@ -194,5 +196,124 @@ func DeclineFollowRequest(db *sql.DB) http.HandlerFunc {
 
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(map[string]string{"message": "Follow request declined"})
+	}
+}
+
+// GetFollowers handles GET /users/:id/followers
+func GetFollowers(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		currentUserId := context.MustGetUser(r.Context()).ID
+
+		// Extract user ID from URL path
+		requestedID := extractid.ExtractUserIDFromPath(r.URL.Path, "followers")
+		if requestedID == "" {
+			http.Error(w, "Invalid user ID", http.StatusBadRequest)
+			return
+		}
+
+		// query to get all followers (people who follow the requested user id)
+		query := `
+			SELECT follower_id, status, created_at 
+			FROM followers 
+			WHERE followed_id = ? 
+			ORDER BY created_at DESC
+		`
+
+		rows, err := db.Query(query, requestedID)
+		if err != nil {
+			http.Error(w, "Failed to query followers: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer rows.Close()
+
+		var followers []model.UserInfo
+		for rows.Next() {
+			var follower model.UserInfo
+			err := rows.Scan(&follower.ID, &follower.Status)
+			if err != nil {
+				http.Error(w, "Failed to scan follower: "+err.Error(), http.StatusInternalServerError)
+				return
+			}
+			followers = append(followers, follower)
+		}
+		if err = rows.Err(); err != nil {
+			http.Error(w, "Error iterating followers: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		// fmt.Println(followers)
+
+		response := model.FollowersResponse{
+			Users:         followers,
+			CurrentUserId: currentUserId,
+			RequestedID:   requestedID,
+		}
+
+		// Return response
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(response)
+	}
+}
+
+// GetFollowing handles GET /users/:id/following
+func GetFollowing(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		currentUserId := context.MustGetUser(r.Context()).ID
+
+		// Extract user ID from URL path
+		requestedID := extractid.ExtractUserIDFromPath(r.URL.Path, "following")
+		if requestedID == "" {
+			http.Error(w, "Invalid user ID", http.StatusBadRequest)
+			return
+		}
+
+		// query to get all users being followed by the requested user
+		query := `
+			SELECT followed_id, created_at 
+			FROM followers 
+			WHERE follower_id = ? AND status = 'accepted'
+			ORDER BY created_at DESC
+		`
+
+		rows, err := db.Query(query, requestedID)
+		if err != nil {
+			http.Error(w, "Failed to query following: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer rows.Close()
+
+		var following []model.UserInfo
+		for rows.Next() {
+			var user model.UserInfo
+			err := rows.Scan(&user.ID)
+			if err != nil {
+				http.Error(w, "Failed to scan following user: "+err.Error(), http.StatusInternalServerError)
+				return
+			}
+			following = append(following, user)
+		}
+		if err = rows.Err(); err != nil {
+			http.Error(w, "Error iterating following: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		response := model.FollowersResponse{
+			Users:         following,
+			CurrentUserId: currentUserId,
+			RequestedID:   requestedID,
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(response)
 	}
 }

@@ -1,0 +1,14 @@
+package model
+
+// UserInfo represents basic user information in the response
+type UserInfo struct {
+	ID     string `json:"id"`
+	Status string `json:"status,omitempty"` // only relevant for followers
+}
+
+// FollowersResponse represents the response for followers/following lists
+type FollowersResponse struct {
+	Users         []UserInfo `json:"users"`
+	CurrentUserId string     `json:"current_user_id"`
+	RequestedID   string     `json:"requested_id"`
+}

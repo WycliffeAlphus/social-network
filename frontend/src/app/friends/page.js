@@ -1,12 +1,12 @@
 "use client"; // Essential for using useRouter, usePathname, and conditional rendering
 
-import Navbar from "../components/navbar"; 
-import Sidebar from "../components/sidebar"; 
+import Navbar from "../../components/navbar"; 
+import Sidebar from "../../components/sidebar"; 
 import Link from "next/link";
 import { usePathname, useRouter } from 'next/navigation'; // Import useRouter to programmatically redirect
 
 // Import the new content components
-import RequestsContent from '../components/RequestsContent';
+import RequestsContent from '../../components/RequestsContent';
 
 export default function FriendsDashboardPage() {
   const pathname = usePathname();
