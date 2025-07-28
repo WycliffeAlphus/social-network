@@ -7,12 +7,35 @@ import {
   HomeIcon, BellIcon, ChatBubbleLeftIcon,
   UserIcon, UserGroupIcon, PlusIcon
 } from '@heroicons/react/24/solid';
+import { useEffect, useState } from "react";
 
 export default function Sidebar() {
   const router = useRouter();
   const pathname = router.pathname;
 
   const isGroupsPage = pathname === "/groups";
+
+  const [userId, setUserId] = useState(null);
+
+    useEffect(() => {
+        async function fetchUser() {
+            try {
+                const res = await fetch("http://localhost:8080/api/profile/current", {
+                    method: 'GET',
+                    credentials: 'include'
+                })
+                if (res.ok) {
+                    const data = await res.json()
+                    console.log(data.current_user_id)
+                    setUserId(data.current_user_id)
+                }
+            } catch (error) {
+                console.error("error fetching user: ", error)
+            }
+        }
+
+        fetchUser()
+    }, [])
 
   return (
     <aside className="w-1/5 bg-blue-900 text-white min-h-full">
@@ -50,7 +73,7 @@ export default function Sidebar() {
             </Link> <SearchBar/>
           </li>
           <li className="p-4 border-b border-gray-100/20">
-            <Link href="/profile" className="flex w-full  pb-4 items-center">
+            <Link href={`/profile/${userId&&userId}`} className="flex w-full  pb-4 items-center">
               <UserIcon className="h-6 w-6 mr-2" /> Profile
             </Link>
           </li>
