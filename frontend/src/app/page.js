@@ -1,16 +1,22 @@
-import Navbar from "../components/navbar";
-import Sidebar from "../components/sidebar";
+"use client"
 
 export default function Home() {
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
-      <div className="flex flex-1">
-        <Sidebar />
-        <main className="flex-1 p-4">
-        </main>
-      </div>
-      <footer className="p-4 bg-gray-900">Footer content</footer>
+    <div className="flex min-h-screen">
+      <main className="flex-1 border-x mr-[20px] border-gray-400">
+        <div className="p-4 border-t lg:border-0 border-gray-400">
+          <div>Lorem Ipsum dummy content</div>
+          <div>Lorem Ipsum dummy content</div>
+          <div>Lorem Ipsum dummy content</div>
+          <div>Lorem Ipsum dummy content</div>
+          <div>Lorem Ipsum dummy content</div>
+          <div>Lorem Ipsum dummy content</div>
+          <div>Lorem Ipsum dummy content</div>
+          <div>Lorem Ipsum dummy content</div>
+          <div>Lorem Ipsum dummy content</div>
+          <div>Lorem Ipsum dummy content</div>
+        </div>
+      </main>
     </div>
   );
 }
