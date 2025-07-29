@@ -1,88 +1,97 @@
 "use client"; // Essential for using useRouter, usePathname, and conditional rendering
 
-import Navbar from "../../components/navbar"; 
-import Sidebar from "../../components/sidebar"; 
+import FollowSuggestion from "@/components/followsuggestions";
+import Rightbar from "@/components/rightbar";
 import Link from "next/link";
-import { usePathname, useRouter } from 'next/navigation'; // Import useRouter to programmatically redirect
+import { useEffect, useState } from "react";
 
-// Import the new content components
-import RequestsContent from '../../components/RequestsContent';
+export default function FollowRequestsPage() {
+  const [followRequests, setFollowRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-export default function FriendsDashboardPage() {
-  const pathname = usePathname();
-  const router = useRouter(); // Initialize useRouter
+  useEffect(() => {
+    const fetchFollowRequests = async () => {
+      try {
+        const response = await fetch('http://localhost:8080/api/follow-requests', {
+          method: 'GET',
+          credentials: 'include'
+        });
+        if (!response.ok) {
+          throw new Error('Failed to fetch follow requests');
+        }
+        const data = await response.json();
+        console.log(Array.isArray(data))
+        console.log(data)
+        setFollowRequests(data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  // Determine the active tab based on the current URL
-  // If at /friends, default to 'requests'
-  const activeTab = pathname.startsWith('/friends/followers')
-    ? 'followers'
-    : pathname.startsWith('/friends/following')
-      ? 'following'
-      : 'requests'; // Default to 'requests' if /friends or /friends/requests
+    fetchFollowRequests();
+  }, []);
 
-  // Function to render the correct content component
-  const renderContent = () => {
-    switch (activeTab) {
-      case 'requests':
-        return <RequestsContent />;
-      default:
-        return <RequestsContent />; // Fallback to requests
-    }
-  };
-
+  if (loading) return <div className="flex justify-center py-8">Loading...</div>
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
-      <div className="flex flex-1">
-        <Sidebar />
-        <main className="flex-1 p-6 bg-gray-100 text-gray-800">
-          <h1 className="text-3xl font-bold mb-6 text-blue-800">My Connections</h1>
+    <div className="flex min-h-screen">
+      <main className="flex-1 border-x mr-[20px] border-gray-400">
+        <div className="lg:hidden">
+          <FollowSuggestion />
+        </div>
+        <div className="p-4 border-t lg:border-0 border-gray-400">
+          <h1 className="text-xl font-bold mb-4">Follow Requests</h1>
 
-          {/* Sub-navigation for Friends sections */}
-          <nav className="mb-6 border-b border-gray-300">
-            <ul className="flex space-x-6">
-              <li>
-                <Link
-                  href="/friends/requests"
-                  className={`pb-2 block ${
-                    activeTab === 'requests'
-                      ? 'border-b-2 border-blue-600 text-blue-600 font-semibold'
-                      : 'text-gray-600 hover:text-blue-500'
-                  }`}
-                >
-                  Requests
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/friends/"
-                  className={`pb-2 block ${
-                    activeTab === 'followers' ? 'border-b-2 border-blue-600 text-blue-600 font-semibold' : 'text-gray-600 hover:text-blue-500'
-                  }`}
-                >
-                  Followers
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/friends/"
-                  className={`pb-2 block ${
-                    activeTab === 'following' ? 'border-b-2 border-blue-600 text-blue-600 font-semibold' : 'text-gray-600 hover:text-blue-500'
-                  }`}
-                >
-                  Following
-                </Link>
-              </li>
-            </ul>
-          </nav>
-
-          {/* Render the dynamically selected content component */}
-          {renderContent()}
-
-        </main>
-      </div>
-      <footer className="p-4 bg-gray-900 text-white text-center">Footer content</footer>
+          {error ? (
+            <div className="text-red-500 p-4">{error}</div>
+          ) : followRequests.length === 0 ? (
+            <div className="text-gray-500 p-4">No pending follow requests</div>
+          ) : (
+            <div className="space-y-4">
+              {followRequests.map((request) => (
+                <div key={request.follower_id} className="flex items-center justify-between p-3">
+                  <Link
+                    href={`/profile/${request.follower_id}`}
+                    className="group flex items-center gap-3 p-3 w-fit"
+                  >
+                    {request.follower_avatar ? (
+                      <img
+                        src={request.follower_avatar}
+                        alt={`${request.follower_fname} ${request.follower_lname}`}
+                        className="w-12 h-12 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 rounded-full bg-gray-200 overflow-hidden flex items-center justify-center">
+                        <span className="text-lg text-black font-medium">
+                          {request.follower_fname?.charAt(0).toUpperCase()}
+                          {request.follower_lname?.charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                    )}
+                    <div>
+                      <span className="font-medium group-hover:text-[#4169e1]">
+                        {request.follower_fname} {request.follower_lname}
+                      </span>
+                    </div>
+                  </Link>
+                  <div className="flex space-x-2">
+                    <button className="px-4 py-1 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition">
+                      Accept
+                    </button>
+                    <button className="px-4 py-1 bg-gray-200 text-gray-800 rounded-full hover:bg-gray-300 transition">
+                      Decline
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </main>
+      <Rightbar />
     </div>
   );
 }

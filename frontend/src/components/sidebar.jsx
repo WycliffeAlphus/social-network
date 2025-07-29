@@ -43,7 +43,7 @@ export default function Sidebar({ data }) {
           </Link>
         </li>
         <li className="p-4 border-gray-100/20">
-          <Link href="/profile" className="flex w-full pb-4 items-center items-center justify-center md:justify-start">
+          <Link href="/follow-requests" className="flex w-full pb-4 items-center items-center justify-center md:justify-start">
             <UserPlusIcon className="h-6 w-6 mr-2" />
             <span className="hidden xl:inline">Follow requests</span>
           </Link>
