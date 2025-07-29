@@ -2,14 +2,21 @@
 
 import { useEffect, useState } from "react";
 import Sidebar from "../components/sidebar";
+import { usePathname } from "next/navigation";
 
 export default function ClientLayout({ children }) {
   const [data, setData] = useState(null);
+  const pathname = usePathname();
 
   useEffect(() => {
+    // don't fetch user if on auth pages
+    if (pathname === '/login' || pathname === '/register') {
+      return;
+    }
+
     async function fetchUser() {
       try {
-        const res = await fetch("http://localhost:8080/api/profile/current", {
+        const res = await fetch("http://localhost:8080/api/profile/currentuser", {
           method: 'GET',
           credentials: 'include'
         })
@@ -25,6 +32,11 @@ export default function ClientLayout({ children }) {
 
     fetchUser()
   }, [])
+
+  // don't show layout for auth pages
+  if (pathname === '/login' || pathname === '/register') {
+    return <>{children}</>
+  }
 
   if (!data) return <div>Loading...</div>
 
