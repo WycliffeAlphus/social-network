@@ -1,6 +1,7 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import ClientLayout from "./client-layout";
+import ProtectedRoute from "@/components/protectedroutes";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -23,7 +24,9 @@ export default function RootLayout({ children }) {
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen`}
       >
-        <ClientLayout>{children}</ClientLayout>
+        <ProtectedRoute>
+          <ClientLayout>{children}</ClientLayout>
+        </ProtectedRoute>
       </body>
     </html>
   );
