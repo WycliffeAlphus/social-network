@@ -8,7 +8,7 @@ import (
 // JSONResponse structure for consistent API responses
 type JSONResponse struct {
 	Message string      `json:"message"`
-	Data    interface{} `json:"data,omitempty"`
+	Data    any `json:"data,omitempty"`
 	Error   string      `json:"error,omitempty"`
 }
 
@@ -44,3 +44,6 @@ func RespondWithError(w http.ResponseWriter, status int, message string) {
 		http.Error(w, "Failed to encode error response", http.StatusInternalServerError)
 	}
 }
+
+
+
