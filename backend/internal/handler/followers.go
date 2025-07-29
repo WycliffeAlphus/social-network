@@ -321,3 +321,58 @@ func GetFollowing(db *sql.DB) http.HandlerFunc {
 		json.NewEncoder(w).Encode(response)
 	}
 }
+
+func GetFollowRequests(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		currentUserId := context.MustGetUser(r.Context()).ID
+
+		query := `
+		SELECT 
+			f.follower_id,
+			u.fname
+			u.lname
+			f.imgurl
+		FROM followers f
+		JOIN users u ON f.follower_id = u.id
+		WHERE f.followed_id = ? AND f.status = 'pending'
+		ORDER BY f.created_at DESC
+	`
+
+		rows, err := db.Query(query, currentUserId)
+		if err != nil {
+			log.Println("error querying follow requests: ", err)
+			http.Error(w, "An error occured. Please check back later", http.StatusInternalServerError)
+			return
+		}
+		defer rows.Close()
+
+		var requests []model.FollowRequest
+		for rows.Next() {
+			var req model.FollowRequest
+			err := rows.Scan(
+				&req.FollowerID,
+				&req.FollowerFname,
+				&req.FollowerLname,
+				&req.FollowerAvatar,
+			)
+			if err != nil {
+				log.Println("error scanning follow request: ", err)
+				http.Error(w, "An error occurred processing your request", http.StatusInternalServerError)
+				return
+			}
+			requests = append(requests, req)
+		}
+
+		if err = rows.Err(); err != nil {
+			log.Println("error after scanning rows: ", err)
+			http.Error(w, "An error occurred processing your request", http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(requests); err != nil {
+			log.Println("error encoding response: ", err)
+			http.Error(w, "An error occurred processing your request", http.StatusInternalServerError)
+		}
+	}
+}

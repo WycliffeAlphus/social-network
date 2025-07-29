@@ -15,3 +15,10 @@ type FollowersResponse struct {
 	CurrentUserId string     `json:"current_user_id"`
 	RequestedID   string     `json:"requested_id"`
 }
+
+type FollowRequest struct {
+	FollowerID     string `json:"follower_id"`
+	FollowerFname  string `json:"follower_fname"`
+	FollowerLname  string `json:"follower_lname"`
+	FollowerAvatar string `json:"follower_avatar"`
+}
