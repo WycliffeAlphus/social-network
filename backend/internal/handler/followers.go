@@ -324,14 +324,19 @@ func GetFollowing(db *sql.DB) http.HandlerFunc {
 
 func GetFollowRequests(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
 		currentUserId := context.MustGetUser(r.Context()).ID
 
 		query := `
 		SELECT 
 			f.follower_id,
-			u.fname
-			u.lname
-			f.imgurl
+			u.fname,
+			u.lname,
+			u.imgurl
 		FROM followers f
 		JOIN users u ON f.follower_id = u.id
 		WHERE f.followed_id = ? AND f.status = 'pending'
@@ -367,6 +372,10 @@ func GetFollowRequests(db *sql.DB) http.HandlerFunc {
 			log.Println("error after scanning rows: ", err)
 			http.Error(w, "An error occurred processing your request", http.StatusInternalServerError)
 			return
+		}
+
+		if requests == nil {
+			requests = []model.FollowRequest{}
 		}
 
 		w.Header().Set("Content-Type", "application/json")
