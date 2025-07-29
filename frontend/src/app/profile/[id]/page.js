@@ -51,13 +51,13 @@ export default function Profile({ params }) {
         const newVisibility = profileVisibility === 'public' ? 'private' : 'public'
 
         try {
-            const response = await fetch(`http://localhost:8080/api/profile/${id}/visibility`, {
+            const response = await fetch(`http://localhost:8080/api/profile/update`, {
                 method: 'PUT',
                 credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ visibility: newVisibility }),
+                body: JSON.stringify({ "profile_visibility": newVisibility }),
             })
 
             if (response.ok) {
@@ -142,13 +142,13 @@ export default function Profile({ params }) {
                         <div className="flex items-center gap-4 mb-4">
                             <div className="flex items-center gap-2">
                                 <span className="text-sm text-gray-600">
-                                    Set account to public
+                                    Set account to {profileVisibility === 'public' ?  'Private': 'Public'}
                                 </span>
                                 <label className="relative inline-flex items-center cursor-pointer">
                                     <input
                                         type="checkbox"
                                         className="sr-only peer"
-                                        checked={profileVisibility === 'public'}
+                                        checked={profileVisibility=== 'public'}
                                         onChange={handleToggleVisibility}
                                     />
                                     <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full
