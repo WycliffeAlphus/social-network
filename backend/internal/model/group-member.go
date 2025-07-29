@@ -5,7 +5,7 @@ import "time"
 type GroupMember struct {
 	ID        uint       `json:"id"`
 	GroupID   uint       `json:"group_id"`
-	UserID    uint       `json:"user_id"`
+	UserID    string     `json:"user_id"`
 	Role      string     `json:"role"`
 	Status    string     `json:"status"`
 	JoinedAt  time.Time  `json:"joined_at"`
