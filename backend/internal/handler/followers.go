@@ -325,6 +325,7 @@ func GetFollowing(db *sql.DB) http.HandlerFunc {
 	}
 }
 
+// GetFollowRequests handles GET /users/:id/follow-requests
 func GetFollowRequests(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
