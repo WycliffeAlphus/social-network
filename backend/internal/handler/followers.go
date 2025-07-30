@@ -78,7 +78,10 @@ func FollowUser(db *sql.DB) http.HandlerFunc {
 		}
 
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(map[string]string{"message": message})
+		json.NewEncoder(w).Encode(map[string]string{
+			"message": message,
+			"status":  status,
+		})
 	}
 }
 
@@ -383,5 +386,49 @@ func GetFollowRequests(db *sql.DB) http.HandlerFunc {
 			log.Println("error encoding response: ", err)
 			http.Error(w, "An error occurred processing your request", http.StatusInternalServerError)
 		}
+	}
+}
+
+// GetFollowStatus checks the follow status between two users
+func GetFollowStatus(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		currentUserID := context.MustGetUser(r.Context()).ID
+
+		// Extract user ID from URL path
+		requestedID := extractid.ExtractUserIDFromPath(r.URL.Path, "follow-status")
+		if requestedID == "" {
+			http.Error(w, "Invalid user ID", http.StatusBadRequest)
+			return
+		}
+
+		// Check if current user is following the requested user
+		var status string
+		err := db.QueryRow(`
+			SELECT status 
+			FROM followers 
+			WHERE follower_id = ? AND followed_id = ?
+		`, currentUserID, requestedID).Scan(&status)
+
+		if err != nil {
+			if err == sql.ErrNoRows {
+				status = "not_following"
+			} else {
+				log.Printf("Error checking follow status: %v", err)
+				http.Error(w, "Internal server error", http.StatusInternalServerError)
+				return
+			}
+		}
+
+		response := map[string]string{
+			"status": status,
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(response)
 	}
 }
