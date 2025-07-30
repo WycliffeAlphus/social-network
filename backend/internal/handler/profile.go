@@ -24,7 +24,7 @@ func ProfileHandler(db *sql.DB) http.HandlerFunc {
 
 		// handle "current" user special case
 		switch requestedID {
-		case "current":
+		case "currentuser":
 			requestedID = currentUserId
 		case "":
 			http.Error(w, "Invalid user ID", http.StatusBadRequest)
