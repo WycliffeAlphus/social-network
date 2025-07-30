@@ -142,7 +142,7 @@ export default function Profile({ params }) {
                         <div className="flex items-center gap-4 mb-4">
                             <div className="flex items-center gap-2">
                                 <span className="text-sm text-gray-600">
-                                    Set account to {profileVisibility === 'public' ?  'Private': 'Public'}
+                                    Set account to public
                                 </span>
                                 <label className="relative inline-flex items-center cursor-pointer">
                                     <input
