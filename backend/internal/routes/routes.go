@@ -37,6 +37,6 @@ func RegisterRoutes(db *sql.DB) {
 	http.HandleFunc("/api/following/", middlewares.AuthMiddleware(db, handler.GetFollowing(db)))
 
 	// This uses the initialized groupHandler instance and its CreateGroup method.
-	http.HandleFunc("POST /api/groups", middlewares.AuthMiddleware(db, groupHandler.CreateGroup))
+	http.HandleFunc("/api/groups", middlewares.AuthMiddleware(db, groupHandler.CreateGroup))
 	http.HandleFunc("/api/follow-requests", middlewares.AuthMiddleware(db, handler.GetFollowRequests(db)))
 }
