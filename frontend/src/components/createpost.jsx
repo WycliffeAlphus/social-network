@@ -82,11 +82,11 @@ export default function CreatePost({ onClose }) {
                             id="public"
                             name="privacy"
                             type="radio"
-                            className="h-4 w-4 text-indigo-600"
+                            className="h-4 w-4 text-indigo-600 pointer-events-none"
                             checked={selectedPrivacy === 'public'}
                             onChange={() => { }}
                         />
-                        <label htmlFor="public" className="text-sm ml-3 flex-grow">
+                        <label htmlFor="public" className="text-sm ml-3 flex-grow pointer-events-none">
                             <span className="dark:text-white text-gray-700">Public</span>
                             <span className="block text-gray-500">All users will be able to see this post</span>
                         </label>
@@ -101,11 +101,11 @@ export default function CreatePost({ onClose }) {
                             id="followers"
                             name="privacy"
                             type="radio"
-                            className="h-4 w-4 text-indigo-600"
+                            className="h-4 w-4 text-indigo-600 pointer-events-none"
                             checked={selectedPrivacy === 'followers'}
                             onChange={() => { }}
                         />
-                        <label htmlFor="followers" className="text-sm ml-3 flex-grow">
+                        <label htmlFor="followers" className="text-sm ml-3 flex-grow pointer-events-none">
                             <span className="dark:text-white text-gray-700">Almost private</span>
                             <span className="block text-gray-500">Only your followers will be able to see this post</span>
                         </label>
@@ -120,11 +120,11 @@ export default function CreatePost({ onClose }) {
                             id="private"
                             name="privacy"
                             type="radio"
-                            className="h-4 w-4 text-indigo-600"
+                            className="h-4 w-4 text-indigo-600 pointer-events-none"
                             checked={selectedPrivacy === 'private'}
                             onChange={() => { }}
                         />
-                        <label htmlFor="private" className="text-sm ml-3 flex-grow">
+                        <label htmlFor="private" className="text-sm ml-3 flex-grow pointer-events-none">
                             <span className="dark:text-white text-gray-700">Private</span>
                             <span className="block text-gray-500">Only specific followers you choose will see this post</span>
                         </label>
