@@ -44,7 +44,7 @@ func FollowUser(db *sql.DB) http.HandlerFunc {
 		}
 
 		// determine status based on visibility
-		status := "pending"
+		status := "requested"
 		if profileVisibility == "public" {
 			status = "accepted"
 		}
@@ -112,7 +112,7 @@ func AcceptFollowRequest(db *sql.DB) http.HandlerFunc {
 		err := db.QueryRow(`
 			SELECT EXISTS(
 				SELECT 1 FROM followers 
-				WHERE follower_id = ? AND followed_id = ? AND status = 'pending'
+				WHERE follower_id = ? AND followed_id = ? AND status = 'requested'
 			)`, request.FollowerID, currentUserID).Scan(&exists)
 
 		if err != nil {
@@ -130,7 +130,7 @@ func AcceptFollowRequest(db *sql.DB) http.HandlerFunc {
 		_, err = db.Exec(`
 			UPDATE followers 
 			SET status = 'accepted' 
-			WHERE follower_id = ? AND followed_id = ? AND status = 'pending'
+			WHERE follower_id = ? AND followed_id = ? AND status = 'requested'
 		`, request.FollowerID, currentUserID)
 
 		if err != nil {
@@ -171,7 +171,7 @@ func DeclineFollowRequest(db *sql.DB) http.HandlerFunc {
 		err := db.QueryRow(`
 			SELECT EXISTS(
 				SELECT 1 FROM followers 
-				WHERE follower_id = ? AND followed_id = ? AND status = 'pending'
+				WHERE follower_id = ? AND followed_id = ? AND status = 'requested'
 			)`, request.FollowerID, currentUserID).Scan(&exists)
 
 		if err != nil {
@@ -188,7 +188,7 @@ func DeclineFollowRequest(db *sql.DB) http.HandlerFunc {
 		// Delete the follow request
 		_, err = db.Exec(`
 			DELETE FROM followers 
-			WHERE follower_id = ? AND followed_id = ? AND status = 'pending'
+			WHERE follower_id = ? AND followed_id = ? AND status = 'requested'
 		`, request.FollowerID, currentUserID)
 
 		if err != nil {
@@ -343,7 +343,7 @@ func GetFollowRequests(db *sql.DB) http.HandlerFunc {
 			u.imgurl
 		FROM followers f
 		JOIN users u ON f.follower_id = u.id
-		WHERE f.followed_id = ? AND f.status = 'pending'
+		WHERE f.followed_id = ? AND f.status = 'requested'
 		ORDER BY f.created_at DESC
 	`
 

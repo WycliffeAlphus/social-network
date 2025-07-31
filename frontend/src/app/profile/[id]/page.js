@@ -128,8 +128,8 @@ export default function Profile({ params }) {
         if (followStatus === 'accepted') {
             buttonLabel = "Following";
             buttonClass = "border border-gray-400 hover:bg-gray-400 hover:text-black text-gray-800 px-4 py-2 rounded";
-        } else if (followStatus === 'pending') {
-            buttonLabel = "Pending";
+        } else if (followStatus === 'requested') {
+            buttonLabel = "Requested";
             buttonClass = "bg-gray-300 text-gray-600 px-4 py-2 rounded cursor-not-allowed";
             isDisabled = true;
         }
@@ -138,6 +138,9 @@ export default function Profile({ params }) {
             <div className="flex flex-col items-center justify-center h-screen">
                 <h1 className="text-2xl font-bold mb-4">Private Profile</h1>
                 <p className="text-gray-600 mb-6">{profileData.first_name} {profileData.last_name}'s profile is private. Follow them to view their profile.</p>
+                {followStatus === 'requested' && (
+                    <p className="text-sm text-gray-500 mb-4">This account is private</p>
+                )}
                 <button 
                     onClick={() => !isDisabled && handleFollow()}
                     disabled={isDisabled}

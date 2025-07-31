@@ -95,8 +95,8 @@ export default function FollowSuggestion() {
                         if (followStatus === 'accepted') {
                             buttonLabel = "Following"
                             buttonClass = "border border-gray-400 hover:bg-gray-400 hover:text-black"
-                        } else if (followStatus === 'pending') {
-                            buttonLabel = "Pending"
+                        } else if (followStatus === 'requested') {
+                            buttonLabel = "Requested"
                             buttonClass = "bg-gray-300 text-gray-600 cursor-not-allowed"
                             isDisabled = true
                         } else if (otherUser.followsMe && visibility !== "private") {
@@ -117,6 +117,11 @@ export default function FollowSuggestion() {
                                         <p className="text-sm text-gray-500">
                                             {otherUser.firstName} {otherUser.lastName}
                                         </p>
+                                        {followStatus === 'requested' && (
+                                            <p className="text-xs text-gray-400 mt-1">
+                                                This account is private
+                                            </p>
+                                        )}
                                     </div>
                                 </div>
                                 <button
