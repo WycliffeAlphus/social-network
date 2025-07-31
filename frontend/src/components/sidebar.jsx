@@ -52,6 +52,19 @@ export default function Sidebar({ data }) {
     }
   };
 
+  useEffect(() => {
+    if (showCreatePosts) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'auto';
+    }
+
+    // Cleanup function to reset overflow when component unmounts
+    return () => {
+      document.body.style.overflow = 'auto';
+    };
+  }, [showCreatePosts]);
+
   return (
     <>
       <aside className="sticky w-[5rem] xl:w-[12rem] pt-[3rem] top-0 text-white h-[100vh] overflow-y-auto">
