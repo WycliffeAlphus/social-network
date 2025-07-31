@@ -126,7 +126,7 @@ func UpdateProfileHandler(db *sql.DB) http.HandlerFunc {
 		}
 		fmt.Println(user.ProfileVisibility)
 		// Update user profile in the database
-		if err := sqlite.UpdateUserProfile(db, currentUserId, user); err != nil {
+		if err := sqlite.UpdateUserVisibility(db, currentUserId, user); err != nil {
 			log.Println("Error updating user profile:", err)
 			http.Error(w, "Failed to update profile", http.StatusInternalServerError)
 			return
