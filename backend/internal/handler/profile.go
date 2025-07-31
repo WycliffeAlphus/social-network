@@ -51,7 +51,7 @@ func ProfileHandler(db *sql.DB) http.HandlerFunc {
 		followsMeQuery := `
 				SELECT EXISTS (
                    SELECT 1 FROM followers f 
-                   WHERE f.follower_id = ? AND f.followed_id = ?
+                   WHERE f.follower_id = ? AND f.followed_id = ? AND status = 'accepted'
                 ) AS follows_me
 		`
 		followsMeCheckErr := db.QueryRow(followsMeQuery, currentUserId, requestedID).Scan(&followsMe)
