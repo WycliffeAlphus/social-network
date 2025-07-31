@@ -202,6 +202,63 @@ func DeclineFollowRequest(db *sql.DB) http.HandlerFunc {
 	}
 }
 
+// CancelFollowRequest allows a user to cancel their own follow request.
+// Only the user who sent the request can cancel it.
+func CancelFollowRequest(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		// get userID from context (this is the user canceling the request)
+		currentUserID := context.MustGetUser(r.Context()).ID
+
+		var request struct {
+			UserID string `json:"userId"`
+		}
+
+		if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+			http.Error(w, "Invalid request body", http.StatusBadRequest)
+			return
+		}
+
+		// Verify that the follow request exists and is requested
+		var exists bool
+		err := db.QueryRow(`
+			SELECT EXISTS(
+				SELECT 1 FROM followers 
+				WHERE follower_id = ? AND followed_id = ? AND status = 'requested'
+			)`, currentUserID, request.UserID).Scan(&exists)
+
+		if err != nil {
+			log.Printf("Error checking follow request: %v", err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
+
+		if !exists {
+			http.Error(w, "Follow request not found or already processed", http.StatusNotFound)
+			return
+		}
+
+		// Delete the follow request
+		_, err = db.Exec(`
+			DELETE FROM followers 
+			WHERE follower_id = ? AND followed_id = ? AND status = 'requested'
+		`, currentUserID, request.UserID)
+
+		if err != nil {
+			log.Printf("Error canceling follow request: %v", err)
+			http.Error(w, "Failed to cancel follow request", http.StatusInternalServerError)
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(map[string]string{"message": "Follow request canceled"})
+	}
+}
+
 // GetFollowers handles GET /users/:id/followers
 func GetFollowers(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {

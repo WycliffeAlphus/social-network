@@ -79,10 +79,29 @@ export default function Profile({ params }) {
             })
 
             if (response.ok) {
-                setFollowStatus('pending')
+                setFollowStatus('requested')
             }
         } catch (err) {
             console.error('Error following user:', err)
+        }
+    }
+
+    const handleCancelRequest = async () => {
+        try {
+            const response = await fetch('http://localhost:8080/api/follow/cancel', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ userId: id }),
+                credentials: 'include'
+            })
+
+            if (response.ok) {
+                setFollowStatus('not_following')
+            }
+        } catch (err) {
+            console.error('Error canceling follow request:', err)
         }
     }
 
@@ -130,8 +149,7 @@ export default function Profile({ params }) {
             buttonClass = "border border-gray-400 hover:bg-gray-400 hover:text-black text-gray-800 px-4 py-2 rounded";
         } else if (followStatus === 'requested') {
             buttonLabel = "Requested";
-            buttonClass = "bg-gray-300 text-gray-600 px-4 py-2 rounded cursor-not-allowed";
-            isDisabled = true;
+            buttonClass = "bg-gray-300 text-gray-600 hover:bg-gray-400 hover:text-black px-4 py-2 rounded";
         }
 
         return (
@@ -142,8 +160,13 @@ export default function Profile({ params }) {
                     <p className="text-sm text-gray-500 mb-4">This account is private</p>
                 )}
                 <button 
-                    onClick={() => !isDisabled && handleFollow()}
-                    disabled={isDisabled}
+                    onClick={() => {
+                        if (followStatus === 'requested') {
+                            handleCancelRequest()
+                        } else {
+                            handleFollow()
+                        }
+                    }}
                     className={buttonClass}
                 >
                     {buttonLabel}

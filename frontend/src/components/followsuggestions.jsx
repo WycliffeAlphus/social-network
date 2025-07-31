@@ -76,6 +76,25 @@ export default function FollowSuggestion() {
         }
     }
 
+    const handleCancelRequest = async (userId) => {
+        try {
+            const response = await fetch('http://localhost:8080/api/follow/cancel', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ userId }),
+                credentials: 'include'
+            })
+
+            if (response.ok) {
+                setFollowStatusMap(prev => ({ ...prev, [userId]: 'not_following' }))
+            }
+        } catch (err) {
+            console.error('Error canceling follow request:', err)
+        }
+    }
+
     if (loading) {
         return <div className="container mx-auto p-4">Loading...</div>
     }
@@ -97,8 +116,7 @@ export default function FollowSuggestion() {
                             buttonClass = "border border-gray-400 hover:bg-gray-400 hover:text-black"
                         } else if (followStatus === 'requested') {
                             buttonLabel = "Requested"
-                            buttonClass = "bg-gray-300 text-gray-600 cursor-not-allowed"
-                            isDisabled = true
+                            buttonClass = "bg-gray-300 text-gray-600 hover:bg-gray-400 hover:text-black"
                         } else if (otherUser.followsMe && visibility !== "private") {
                             buttonLabel = "Follow back"
                         }
@@ -125,8 +143,13 @@ export default function FollowSuggestion() {
                                     </div>
                                 </div>
                                 <button
-                                    onClick={() => !isDisabled && handleFollow(otherUser.id)}
-                                    disabled={isDisabled}
+                                    onClick={() => {
+                                        if (followStatus === 'requested') {
+                                            handleCancelRequest(otherUser.id)
+                                        } else {
+                                            handleFollow(otherUser.id)
+                                        }
+                                    }}
                                     className={`px-4 py-2 rounded-3xl text-white ${buttonClass}`}
                                 >
                                     {buttonLabel}
