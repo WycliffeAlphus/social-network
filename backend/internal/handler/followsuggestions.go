@@ -70,6 +70,10 @@ func GetFollowSuggestions(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
+		if users == nil {
+			users = []map[string]interface{}{}
+		}
+		
 		response := map[string]interface{}{
 			"users":      users,
 			"visibility": visibility,
