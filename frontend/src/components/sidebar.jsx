@@ -120,17 +120,17 @@ export default function Sidebar({ data }) {
             </button>
 
             {showCreateOptions && (
-              <div ref={createOptionsRef} className="fixed flex flex-col gap-2 shadow-[0_0_12px_rgba(65,105,225)] bg-black rounded-lg p-6">
+              <div ref={createOptionsRef} className="fixed flex flex-col gap-2 shadow-[0_0_12px_rgba(0,0,0,0.5),0_0_12px_rgba(255,255,255,0.5)] dark:bg-black bg-white rounded-lg p-6">
                 <p
                   onClick={() => {
                     setShowCreatePosts(true)
                     setShowCreateOptions(false)
                   }}
-                  className="cursor-pointer text-sm hover:text-blue-500 text-white"
+                  className="cursor-pointer text-sm hover:text-blue-500"
                 >
                   + New Post
                 </p>
-                <p className="cursor-pointer text-sm hover:text-blue-500 text-white">
+                <p className="cursor-pointer text-sm hover:text-blue-500">
                   + New Group
                 </p>
               </div>
@@ -158,7 +158,7 @@ export default function Sidebar({ data }) {
             </button>
 
             {showAccountOptions && (
-              <div ref={accountsRef} className="fixed flex flex-col gap-2 shadow-[0_0_12px_rgba(65,105,225)] bg-black rounded-lg p-6">
+              <div ref={accountsRef} className="fixed shadow-[0_0_12px_rgba(0,0,0,0.5),0_0_12px_rgba(255,255,255,0.5)] dark:bg-black bg-white rounded-lg p-6">
                 <p
                   className="cursor-pointer text-sm hover:text-red-700 text-red-600"
                   onClick={handleLogout}
