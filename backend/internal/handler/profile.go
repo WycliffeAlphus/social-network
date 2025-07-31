@@ -2,10 +2,13 @@ package handler
 
 import (
 	"backend/internal/context"
+	"backend/internal/model"
+	"backend/pkg/db/sqlite"
 	"backend/pkg/extractid"
 	"backend/pkg/getusers"
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 )
@@ -104,5 +107,31 @@ func ProfileHandler(db *sql.DB) http.HandlerFunc {
 
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(response)
+	}
+}
+
+func UpdateProfileHandler(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println("UpdateProfileHandler called")
+		if r.Method != http.MethodPut {
+			http.Error(w, "Method not allowed. Use PUT for updating profile.", http.StatusMethodNotAllowed)
+			return
+		}
+
+		currentUserId := context.MustGetUser(r.Context()).ID
+		var user model.User
+		if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
+			http.Error(w, "Invalid request payload", http.StatusBadRequest)
+			return
+		}
+		fmt.Println(user.ProfileVisibility)
+		// Update user profile in the database
+		if err := sqlite.UpdateUserVisibility(db, currentUserId, user); err != nil {
+			log.Println("Error updating user profile:", err)
+			http.Error(w, "Failed to update profile", http.StatusInternalServerError)
+			return
+		}
+
+		w.WriteHeader(http.StatusNoContent)
 	}
 }

@@ -7,7 +7,7 @@ export default function FollowSuggestion() {
     const [loading, setLoading] = useState(true)
     const [availableUsers, setAvailableUsers] = useState([])
     const [visibility, setVisibility] = useState("public")
-    const [followingMap, setFollowingMap] = useState({})
+    const [followStatusMap, setFollowStatusMap] = useState({})
 
     useEffect(() => {
         const loadUser = async () => {
@@ -29,9 +29,30 @@ export default function FollowSuggestion() {
                 const data = await response.json()
                 setAvailableUsers(data.users)
                 setVisibility(data.visibility)
+                
+                // Fetch follow status for each user
+                await Promise.all(
+                    data.users.map(async (user) => {
+                        await fetchFollowStatus(user.id)
+                    })
+                )
             }
         } catch (err) {
             console.error('Error fetching available users:', err)
+        }
+    }
+
+    const fetchFollowStatus = async (userId) => {
+        try {
+            const response = await fetch(`http://localhost:8080/api/follow-status/${userId}`, {
+                credentials: 'include'
+            })
+            if (response.ok) {
+                const data = await response.json()
+                setFollowStatusMap(prev => ({ ...prev, [userId]: data.status }))
+            }
+        } catch (err) {
+            console.error('Error fetching follow status:', err)
         }
     }
 
@@ -47,11 +68,30 @@ export default function FollowSuggestion() {
             })
 
             if (response.ok) {
-                // update map to turn button to following
-                setFollowingMap((prev) => ({ ...prev, [userId]: true }))
+                const data = await response.json();
+                setFollowStatusMap(prev => ({ ...prev, [userId]: data.status }))
             }
         } catch (err) {
             console.error('Error following user:', err)
+        }
+    }
+
+    const handleCancelRequest = async (userId) => {
+        try {
+            const response = await fetch('http://localhost:8080/api/follow/cancel', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ userId }),
+                credentials: 'include'
+            })
+
+            if (response.ok) {
+                setFollowStatusMap(prev => ({ ...prev, [userId]: 'not_following' }))
+            }
+        } catch (err) {
+            console.error('Error canceling follow request:', err)
         }
     }
 
@@ -65,11 +105,18 @@ export default function FollowSuggestion() {
             <div className="space-y-4">
                 {availableUsers && availableUsers.length > 0 ? (
                     availableUsers.map((otherUser) => {
-
+                        const followStatus = followStatusMap[otherUser.id] || 'not_following'
+                        
                         let buttonLabel = "Follow";
+                        let buttonClass = "bg-blue-500 hover:bg-blue-600";
+                        let isDisabled = false;
 
-                        if (followingMap[otherUser.id]) {
+                        if (followStatus === 'accepted') {
                             buttonLabel = "Following"
+                            buttonClass = "border border-gray-400 hover:bg-gray-400 hover:text-black"
+                        } else if (followStatus === 'requested') {
+                            buttonLabel = "Requested"
+                            buttonClass = "bg-gray-300 text-gray-600 hover:bg-gray-400 hover:text-black"
                         } else if (otherUser.followsMe && visibility !== "private") {
                             buttonLabel = "Follow back"
                         }
@@ -88,16 +135,22 @@ export default function FollowSuggestion() {
                                         <p className="text-sm text-gray-500">
                                             {otherUser.firstName} {otherUser.lastName}
                                         </p>
+                                        {followStatus === 'requested' && (
+                                            <p className="text-xs text-gray-400 mt-1">
+                                                This account is private
+                                            </p>
+                                        )}
                                     </div>
                                 </div>
                                 <button
-                                    onClick={() => handleFollow(otherUser.id)}
-                                    className={`px-4 py-2 rounded-3xl text-white
-                                        ${buttonLabel === "Following"
-                                            ? "border border-gray-400 hover:bg-gray-400 hover:text-black"
-                                            : "bg-blue-500 hover:bg-blue-600"
+                                    onClick={() => {
+                                        if (followStatus === 'requested') {
+                                            handleCancelRequest(otherUser.id)
+                                        } else {
+                                            handleFollow(otherUser.id)
                                         }
-                                        `}
+                                    }}
+                                    className={`px-4 py-2 rounded-3xl text-white ${buttonClass}`}
                                 >
                                     {buttonLabel}
                                 </button>
