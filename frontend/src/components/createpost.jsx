@@ -1,6 +1,6 @@
 "use client"
 
-import { XMarkIcon } from "@heroicons/react/24/solid";
+import { PhotoIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
 
 export default function CreatePost({ onClose }) {
@@ -33,27 +33,6 @@ export default function CreatePost({ onClose }) {
                     className="mt-1 w-full py-1 px-3 border-b border-gray-700 focus:outline-none focus:border-b-blue-500"
                     required
                 />
-            </div>
-
-            {/* Image Upload */}
-            <div>
-                <label className="block text-sm text-gray-700 dark:text-white">Featured Image</label>
-                <div className="mt-1 flex items-center">
-                    <label htmlFor="image" className="cursor-pointer inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                        <svg className="-ml-1 mr-2 h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
-                        </svg>
-                        Upload a file
-                    </label>
-                    <input id="image" type="file" className="hidden" accept="image/*" />
-                    <p className="ml-4 text-xs text-gray-500">PNG, JPG, GIF up to 20MB</p>
-                </div>
-                <div id="imagePreview" className="hidden mt-4">
-                    <img id="previewImage" src="#" alt="Preview" className="max-h-60 rounded-lg" />
-                    <button type="button" className="mt-2 text-sm text-red-600 hover:text-red-800">
-                        Remove Image
-                    </button>
-                </div>
             </div>
 
             {/* Content */}
@@ -133,21 +112,21 @@ export default function CreatePost({ onClose }) {
 
                 {/* Follower Selector (shown only when private is selected) */}
                 {showFollowers && (
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                        <h3 className="text-sm text-gray-700 mb-3">Select which followers can see this post:</h3>
+                    <div className="shadow-[0_0_12px_rgba(0,0,0,0.5),0_0_12px_rgba(255,255,255,0.5)] dark:bg-black bg-white mt-3 p-4 rounded-lg">
+                        <h3 className="text-sm mb-3">Select which followers can see this post:</h3>
 
                         {/* Search */}
                         <div className="mb-4">
                             <input
                                 type="text"
                                 placeholder="Search followers..."
-                                className="w-full p-2 border rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                                className="w-full p-2 border border-gray-700 focus:border-blue-500 focus:outline-none rounded-lg"
                             />
                         </div>
 
                         {/* Follower List */}
                         <div className="max-h-48 overflow-y-auto space-y-2">
-                            <div className="flex items-center justify-between p-3 hover:bg-gray-100 rounded-lg">
+                            <div className="flex items-center justify-between p-3 rounded-lg">
                                 <div className="flex items-center">
                                     <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="Follower" className="h-8 w-8 rounded-full" />
                                     <span className="ml-3 text-sm ">Sarah Johnson</span>
@@ -155,7 +134,7 @@ export default function CreatePost({ onClose }) {
                                 <input type="checkbox" className="h-4 w-4 text-indigo-600 rounded" />
                             </div>
 
-                            <div className="flex items-center justify-between p-3 hover:bg-gray-100 rounded-lg">
+                            <div className="flex items-center justify-between p-3 rounded-lg">
                                 <div className="flex items-center">
                                     <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Follower" className="h-8 w-8 rounded-full" />
                                     <span className="ml-3 text-sm ">Michael Chen</span>
@@ -163,15 +142,7 @@ export default function CreatePost({ onClose }) {
                                 <input type="checkbox" className="h-4 w-4 text-indigo-600 rounded" />
                             </div>
 
-                            <div className="flex items-center justify-between p-3 hover:bg-gray-100 rounded-lg">
-                                <div className="flex items-center">
-                                    <img src="https://randomuser.me/api/portraits/women/68.jpg" alt="Follower" className="h-8 w-8 rounded-full" />
-                                    <span className="ml-3 text-sm ">Emma Wilson</span>
-                                </div>
-                                <input type="checkbox" className="h-4 w-4 text-indigo-600" />
-                            </div>
-
-                            <div className="flex items-center justify-between p-3 hover:bg-gray-100 rounded-lg">
+                            <div className="flex items-center justify-between p-3 rounded-lg">
                                 <div className="flex items-center">
                                     <img src="https://randomuser.me/api/portraits/men/75.jpg" alt="Follower" className="h-8 w-8 rounded-full" />
                                     <span className="ml-3 text-sm ">David Rodriguez</span>
@@ -185,6 +156,18 @@ export default function CreatePost({ onClose }) {
                         </div>
                     </div>
                 )}
+            </div>
+
+            {/* Image Upload */}
+            <div className="mt-6">
+                <label className="block text-sm text-gray-700 dark:text-white">Featured Image</label>
+                <div className="mt-1 flex items-center">
+                    <label htmlFor="image" className="cursor-pointer">
+                        <PhotoIcon className="h-5 w-5 text-blue-500" />
+                    </label>
+                    <input id="image" type="file" className="hidden" accept="image/*" />
+                    <p className="ml-3 text-xs text-gray-500">PNG, JPG, GIF up to 20MB</p>
+                </div>
             </div>
 
             {/* Form Actions - Centered Publish Button */}
