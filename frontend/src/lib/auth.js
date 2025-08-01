@@ -5,10 +5,18 @@ export const showFieldError = (fieldId, message) => {
     if (message) {
         errorElement.textContent = message;
         errorElement.style.display = 'block';
-        inputElement.classList.add('input-error');
+        if (fieldId != "title" && fieldId != "content") {
+            inputElement.classList.add('input-error');
+        } else {
+            inputElement.classList.add('input-error-bottom');
+        }
     } else {
         errorElement.textContent = '';
         errorElement.style.display = 'none';
-        inputElement.classList.remove('input-error');
+        if (fieldId != "title" && fieldId != "content") {
+            inputElement.classList.remove('input-error');
+        } else {
+            inputElement.classList.remove('input-error-bottom');
+        }
     }
 }
