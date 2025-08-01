@@ -1,20 +1,74 @@
 "use client"
 
+import { showFieldError } from "@/lib/auth";
 import { PhotoIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 export default function CreatePost({ onClose }) {
     const [showFollowers, setShowFollowers] = useState(false);
     const [selectedPrivacy, setSelectedPrivacy] = useState('public');
+    const [error, setError] = useState('')
+    const [formData, setFormData] = useState({
+        title: '',
+        content: '',
+        postPrivacy: '',
+        postImage: '',
+    })
+
+    // memoize required fields to avoid recreation on every render
+    const requiredFields = useMemo(() => [
+        'title', 'content', 'privacy'
+    ], [])
 
     const handlePrivacyChange = (privacy) => {
         setSelectedPrivacy(privacy);
         setShowFollowers(privacy === 'private');
+        setFormData(prev => ({ ...prev, postPrivacy: privacy }));
     };
+
+    const handleChange = (e) => {
+        const { name, value } = e.target
+        showFieldError(name, '');
+
+        if (requiredFields.includes(name) && !value) {
+            showFieldError(name, "This field is needed")
+        }
+
+        setFormData(prev => ({ ...prev, [name]: value }))
+        console.log(formData)
+    }
+
+    const handleSubmit = async (e) => {
+        e.preventDefault()
+        setError('')
+
+        try {
+            const formDataToSend = new FormData()
+
+            // append all form data to FormData object
+            Object.entries(formData).forEach(([key, value]) => {
+                if (value !== null && value !== undefined) {
+                    if (key === 'postImage' && value instanceof File) {
+                        formDataToSend.append(key, value)
+                    } else {
+                        // console.log(key, value)
+                        formDataToSend.append(key, value)
+                    }
+                }
+            })
+
+            console.log(Object.fromEntries(formDataToSend.entries()))
+        } catch (err) {
+            setError('Post creation failed. Please try again.')
+            console.error('Registration error:', err)
+        }
+    }
+
     return (
-        <form onClick={(e) => e.stopPropagation()} className="h-fit bg-white dark:bg-black max-w-[40rem] w-[80%] rounded-2xl p-6 space-y-3">
+        <form onSubmit={handleSubmit} onClick={(e) => e.stopPropagation()} className="h-fit bg-white dark:bg-black max-w-[40rem] w-[80%] rounded-2xl p-6 space-y-3">
             {/* Page Header */}
             <div className="flex justify-between">
+                {error && <p className="text-red-500 mb-4">{error}</p>}
                 <h1 className="text-xl font-bold text-gray-800 dark:text-white">Wassup</h1>
                 <button
                     onClick={onClose}
@@ -29,10 +83,14 @@ export default function CreatePost({ onClose }) {
                 <input
                     type="text"
                     id="title"
+                    name="title"
+                    value={formData.title}
+                    onChange={handleChange}
                     placeholder="What's your post about?"
                     className="mt-1 w-full py-1 px-3 border-b border-gray-700 focus:outline-none focus:border-b-blue-500"
                     required
                 />
+                <div id="title-error" className="text-red-500"></div>
             </div>
 
             {/* Content */}
@@ -40,11 +98,14 @@ export default function CreatePost({ onClose }) {
                 <label htmlFor="content" className="block text-sm text-gray-700 dark:text-white">Post Content</label>
                 <textarea
                     id="content"
-                    rows="8"
+                    name="content"
+                    value={formData.content}
+                    onChange={handleChange}
                     className="mt-1 w-full max-h-[9rem] min-h-[9rem] p-3 border-b border-gray-700 focus:outline-none focus:border-b-blue-500"
                     placeholder="Write your post content here..."
                     required
                 ></textarea>
+                <div id="content-error" className="text-red-500"></div>
             </div>
 
             {/* Privacy Settings */}
@@ -59,11 +120,12 @@ export default function CreatePost({ onClose }) {
                     >
                         <input
                             id="public"
-                            name="privacy"
+                            name="postPrivacy"
                             type="radio"
                             className="h-4 w-4 text-indigo-600 pointer-events-none"
                             checked={selectedPrivacy === 'public'}
-                            onChange={() => { }}
+                            value="public"
+                            onChange={() => handlePrivacyChange('public')}
                         />
                         <label htmlFor="public" className="text-sm ml-3 flex-grow pointer-events-none">
                             <span className="dark:text-white text-gray-700">Public</span>
@@ -73,18 +135,19 @@ export default function CreatePost({ onClose }) {
 
                     {/* Followers Only Option */}
                     <div
-                        className={`flex items-center px-3 py-1 border rounded-lg cursor-pointer ${selectedPrivacy === 'followers' ? 'border-blue-500' : 'border-gray-700 hover:border-blue-500'}`}
-                        onClick={() => handlePrivacyChange('followers')}
+                        className={`flex items-center px-3 py-1 border rounded-lg cursor-pointer ${selectedPrivacy === 'almostprivate' ? 'border-blue-500' : 'border-gray-700 hover:border-blue-500'}`}
+                        onClick={() => handlePrivacyChange('almostprivate')}
                     >
                         <input
-                            id="followers"
-                            name="privacy"
+                            id="almostprivate"
+                            name="postPrivacy"
                             type="radio"
                             className="h-4 w-4 text-indigo-600 pointer-events-none"
-                            checked={selectedPrivacy === 'followers'}
-                            onChange={() => { }}
+                            checked={selectedPrivacy === 'almostprivate'}
+                            value="almostprivate"
+                            onChange={() => handlePrivacyChange('almostprivate')}
                         />
-                        <label htmlFor="followers" className="text-sm ml-3 flex-grow pointer-events-none">
+                        <label htmlFor="almostprivate" className="text-sm ml-3 flex-grow pointer-events-none">
                             <span className="dark:text-white text-gray-700">Almost private</span>
                             <span className="block text-gray-500">Only your followers will be able to see this post</span>
                         </label>
@@ -97,11 +160,12 @@ export default function CreatePost({ onClose }) {
                     >
                         <input
                             id="private"
-                            name="privacy"
+                            name="postPrivacy"
                             type="radio"
                             className="h-4 w-4 text-indigo-600 pointer-events-none"
                             checked={selectedPrivacy === 'private'}
-                            onChange={() => { }}
+                            value="private"
+                            onChange={() => handlePrivacyChange('private')}
                         />
                         <label htmlFor="private" className="text-sm ml-3 flex-grow pointer-events-none">
                             <span className="dark:text-white text-gray-700">Private</span>
@@ -126,12 +190,12 @@ export default function CreatePost({ onClose }) {
 
                         {/* Follower List */}
                         <div className="max-h-48 overflow-y-auto space-y-2">
-                            <div className="flex items-center justify-between p-3 rounded-lg">
-                                <div className="flex items-center">
+                            <div className="group flex items-center justify-between px-3">
+                                <label htmlFor="1" className="cursor-pointer flex items-center flex-1">
                                     <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="Follower" className="h-8 w-8 rounded-full" />
-                                    <span className="ml-3 text-sm ">Sarah Johnson</span>
-                                </div>
-                                <input type="checkbox" className="h-4 w-4 text-indigo-600 rounded" />
+                                    <span className="ml-3 text-sm group-hover:text-blue-500">Sarah Johnson</span>
+                                </label>
+                                <input id="1" type="checkbox" className="cursor-pointer h-4 w-4 text-indigo-600 rounded" />
                             </div>
 
                             <div className="flex items-center justify-between p-3 rounded-lg">
@@ -174,7 +238,7 @@ export default function CreatePost({ onClose }) {
             <div className="flex justify-center">
                 <button
                     type="submit"
-                    className="py-2 px-4 border border-transparent rounded-3xl shadow-sm text-base text-white bg-blue-500 hover:bg-blue-600"
+                    className="cursor-pointer py-2 px-4 border border-transparent rounded-3xl shadow-sm text-base text-white bg-blue-500 hover:bg-blue-600"
                 >
                     Post
                 </button>
