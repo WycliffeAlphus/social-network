@@ -179,15 +179,6 @@ export default function CreatePost({ onClose }) {
                     <div className="shadow-[0_0_12px_rgba(0,0,0,0.5),0_0_12px_rgba(255,255,255,0.5)] dark:bg-black bg-white mt-3 p-4 rounded-lg">
                         <h3 className="text-sm mb-3">Select which followers can see this post:</h3>
 
-                        {/* Search */}
-                        <div className="mb-4">
-                            <input
-                                type="text"
-                                placeholder="Search followers..."
-                                className="w-full p-2 border border-gray-700 focus:border-blue-500 focus:outline-none rounded-lg"
-                            />
-                        </div>
-
                         {/* Follower List */}
                         <div className="max-h-48 overflow-y-auto space-y-2">
                             <div className="group flex items-center justify-between px-3">
