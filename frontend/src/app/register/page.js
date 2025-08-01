@@ -116,7 +116,7 @@ export default function Register() {
             if (key !== 'confirmPassword' && value !== null && value !== undefined) {
                 if (key === 'avatarImage' && value instanceof File) {
                     formDataToSend.append(key, value)
-                } else {
+                } else if (key !== 'avatarImage') {
                     formDataToSend.append(key, value)
                 }
             }
