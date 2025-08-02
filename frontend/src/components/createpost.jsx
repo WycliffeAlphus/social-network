@@ -2,12 +2,16 @@
 
 import { showFieldError } from "@/lib/auth";
 import { PhotoIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 export default function CreatePost({ onClose }) {
     const [showFollowers, setShowFollowers] = useState(false);
     const [selectedPrivacy, setSelectedPrivacy] = useState('public');
     const [error, setError] = useState('')
+    const [loadingFollowers, setLoadingFollowers] = useState(false);
+    const [followersError, setFollowersError] = useState(null);
+    const [followers, setFollowers] = useState([]);
+    const [selectedFollowers, setSelectedFollowers] = useState([]);
     const [formData, setFormData] = useState({
         title: '',
         content: '',
@@ -19,6 +23,46 @@ export default function CreatePost({ onClose }) {
     const requiredFields = useMemo(() => [
         'title', 'content', 'privacy'
     ], [])
+
+    // fetch followers when private mode is selected
+    useEffect(() => {
+        if (showFollowers) {
+            fetchFollowers();
+        }
+    }, [showFollowers]);
+
+    const fetchFollowers = async () => {
+        setLoadingFollowers(true);
+        setFollowersError(null);
+
+        try {
+            const response = await fetch('http://localhost:8080/api/followers/currentuser', {
+                method: 'GET',
+                credentials: 'include'
+            });
+            if (!response.ok) {
+                throw new Error('Failed to fetch followers');
+            }
+            const data = await response.json();
+            console.log(data)
+            setFollowers(data.users || []);
+        } catch (err) {
+            setFollowersError(err.message);
+            console.error('Error fetching followers:', err);
+        } finally {
+            setLoadingFollowers(false);
+        }
+    };
+
+    const handleFollowerSelection = (followerId) => {
+        setSelectedFollowers(prev => {
+            if (prev.includes(followerId)) {
+                return prev.filter(id => id !== followerId);
+            } else {
+                return [...prev, followerId];
+            }
+        });
+    };
 
     const handlePrivacyChange = (privacy) => {
         setSelectedPrivacy(privacy);
@@ -45,13 +89,17 @@ export default function CreatePost({ onClose }) {
         try {
             const formDataToSend = new FormData()
 
+            // include selected followers if private mode
+            if (selectedPrivacy === 'private') {
+                formDataToSend.append('allowedFollowers', JSON.stringify(selectedFollowers));
+            }
+
             // append all form data to FormData object
             Object.entries(formData).forEach(([key, value]) => {
                 if (value !== null && value !== undefined) {
                     if (key === 'postImage' && value instanceof File) {
                         formDataToSend.append(key, value)
-                    } else {
-                        // console.log(key, value)
+                    } else if (key !== 'avatarImage') {
                         formDataToSend.append(key, value)
                     }
                 }
@@ -179,35 +227,38 @@ export default function CreatePost({ onClose }) {
                     <div className="shadow-[0_0_12px_rgba(0,0,0,0.5),0_0_12px_rgba(255,255,255,0.5)] dark:bg-black bg-white mt-3 p-4 rounded-lg">
                         <h3 className="text-sm mb-3">Select which followers can see this post:</h3>
 
+                        {loadingFollowers && <p className="text-sm text-gray-500">Loading followers...</p>}
+                        {followersError && <p className="text-sm text-red-500">{followersError}</p>}
+
                         {/* Follower List */}
                         <div className="max-h-48 overflow-y-auto space-y-2">
-                            <div className="group flex items-center justify-between px-3">
-                                <label htmlFor="1" className="cursor-pointer flex items-center flex-1">
-                                    <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="Follower" className="h-8 w-8 rounded-full" />
-                                    <span className="ml-3 text-sm group-hover:text-blue-500">Sarah Johnson</span>
-                                </label>
-                                <input id="1" type="checkbox" className="cursor-pointer h-4 w-4 text-indigo-600 rounded" />
-                            </div>
-
-                            <div className="flex items-center justify-between p-3 rounded-lg">
-                                <div className="flex items-center">
-                                    <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Follower" className="h-8 w-8 rounded-full" />
-                                    <span className="ml-3 text-sm ">Michael Chen</span>
+                            {followers.map(follower => (
+                                <div key={follower.id} className="group flex items-center justify-between px-7">
+                                    <label htmlFor={`${follower.id}`} className="cursor-pointer flex items-center flex-1">
+                                        <img
+                                            src={follower.ImgURL || "/default-avatar.png"}
+                                            alt="folloer image"
+                                            className="h-8 w-8 rounded-full"
+                                        />
+                                        <span className="ml-3 text-sm group-hover:text-blue-500">
+                                            {follower.fname} {follower.lname}
+                                        </span>
+                                    </label>
+                                    <input
+                                        id={`${follower.id}`}
+                                        type="checkbox"
+                                        checked={selectedFollowers.includes(follower.id)}
+                                        onChange={() => handleFollowerSelection(follower.id)}
+                                        className="cursor-pointer h-4 w-4 text-indigo-600 rounded"
+                                    />
                                 </div>
-                                <input type="checkbox" className="h-4 w-4 text-indigo-600 rounded" />
-                            </div>
-
-                            <div className="flex items-center justify-between p-3 rounded-lg">
-                                <div className="flex items-center">
-                                    <img src="https://randomuser.me/api/portraits/men/75.jpg" alt="Follower" className="h-8 w-8 rounded-full" />
-                                    <span className="ml-3 text-sm ">David Rodriguez</span>
-                                </div>
-                                <input type="checkbox" className="h-4 w-4 text-indigo-600 rounded" />
-                            </div>
+                            ))}
                         </div>
 
                         <div className="mt-4">
-                            <span className="text-xs text-gray-500">0 followers selected</span>
+                            <span className="text-xs text-gray-500">
+                                {selectedFollowers.length} {selectedFollowers.length === 1 ? 'follower' : 'followers'} selected
+                            </span>
                         </div>
                     </div>
                 )}
