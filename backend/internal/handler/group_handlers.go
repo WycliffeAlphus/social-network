@@ -2,10 +2,12 @@ package handler
 
 import (
 	"encoding/json"
+
 	"log"
 	"net/http"
 
 	"backend/internal/context"
+	"backend/internal/model"
 	"backend/internal/service"
 	"backend/internal/utils"
 )
@@ -20,6 +22,26 @@ type CreateGroupRequest struct {
 // GroupHandler holds the business logic service for groups.
 type GroupHandler struct {
 	Service *service.GroupService
+}
+
+func (h *GroupHandler) GetGroups(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		utils.RespondWithError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		return
+	}
+
+	groups, err := h.Service.GetAllGroups()
+	if err != nil {
+		log.Printf("Failed to retrieve groups: %v", err)
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to retrieve groups")
+		return
+	}
+
+	if groups == nil {
+		groups = []model.Group{}
+	}
+
+	utils.RespondWithJSON(w, http.StatusOK, groups)
 }
 
 // CreateGroup handles the POST /api/groups endpoint.
