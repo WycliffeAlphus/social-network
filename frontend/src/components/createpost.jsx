@@ -1,6 +1,7 @@
 "use client"
 
 import { showFieldError } from "@/lib/auth";
+import { validateAndPreviewFile } from "@/lib/filevalidater";
 import { PhotoIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { useEffect, useMemo, useState } from "react";
 
@@ -12,6 +13,7 @@ export default function CreatePost({ onClose }) {
     const [followersError, setFollowersError] = useState(null);
     const [followers, setFollowers] = useState([]);
     const [selectedFollowers, setSelectedFollowers] = useState([]);
+    const [preview, setPreview] = useState('') // for image preview
     const [formData, setFormData] = useState({
         title: '',
         content: '',
@@ -81,6 +83,23 @@ export default function CreatePost({ onClose }) {
         setFormData(prev => ({ ...prev, [name]: value }))
         console.log(formData)
     }
+
+    const handleFileChange = (e) => {
+        showFieldError('postImage', '');
+        const file = e.target.files[0];
+
+        if (!file) return;
+
+        const result = validateAndPreviewFile(file, setPreview);
+
+        if (!result.valid) {
+            showFieldError('postImage', result.error);
+            e.target.value = ''; // clear the file input
+            return;
+        }
+
+        setFormData(prev => ({ ...prev, postImage: file }));
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault()
@@ -268,12 +287,27 @@ export default function CreatePost({ onClose }) {
             <div className="mt-6">
                 <label className="block text-sm text-gray-700 dark:text-white">Featured Image</label>
                 <div className="mt-1 flex items-center">
-                    <label htmlFor="image" className="cursor-pointer">
+                    <label htmlFor="postImage" className="cursor-pointer">
                         <PhotoIcon className="h-5 w-5 text-blue-500" />
                     </label>
-                    <input id="image" type="file" className="hidden" accept="image/*" />
+                    <input
+                        id="postImage"
+                        name="postImage"
+                        type="file"
+                        className="hidden"
+                        accept="image/*"
+                        onChange={handleFileChange}
+                    />
                     <p className="ml-3 text-xs text-gray-500">PNG, JPG, GIF up to 20MB</p>
                 </div>
+                {preview && (
+                    <img
+                        src={preview}
+                        alt="Preview"
+                        className="w-35 mt-3 object-cover"
+                    />
+                )}
+                <div id="postImage-error" className="text-red-500"></div>
             </div>
 
             {/* Form Actions - Centered Publish Button */}
