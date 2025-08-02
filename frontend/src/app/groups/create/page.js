@@ -15,32 +15,43 @@ export default function CreateGroupPage() {
     setError(null); 
     setLoading(true); 
 
+    // Add client-side validation to prevent empty submissions
+    if (!groupName || !groupDescription) {
+        setError("Group Name and Description are required.");
+        setLoading(false);
+        return; 
+    }
+
     try {
       const response = await fetch("http://localhost:8080/api/groups", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          // If you're using cookies for authentication, they will be sent automatically by the browser.
-          // If you're using a token (e.g., JWT) in localStorage, you'd add it here:
-          // "Authorization": `Bearer ${localStorage.getItem('authToken')}`,
         },
         body: JSON.stringify({
           title: groupName,        
           description: groupDescription, 
         }),
+        // This is the key change for cookie-based authentication
+        credentials: 'include', 
       });
+
+      // Specific error handling for authentication and other issues
+      if (response.status === 401) {
+        throw new Error('You are not logged in. Please log in to create a group.');
+      }
 
       if (!response.ok) {
         // Handle HTTP errors
-        const errorData = await response.json(); // Assuming backend sends JSON error details
+        const errorData = await response.json(); 
+        console.error("Server error details:", errorData);
         throw new Error(errorData.message || "Failed to create group");
       }
 
-      const responseData = await response.json(); // Assuming your backend returns some data on success
+      const responseData = await response.json(); 
       console.log("Group created successfully:", responseData);
       alert("Group created successfully!");
 
-     
       setGroupName("");
       setGroupDescription("");
       router.push('/groups'); 
@@ -48,6 +59,10 @@ export default function CreateGroupPage() {
     } catch (err) {
       console.error("Error creating group:", err);
       setError(err.message || "An unexpected error occurred.");
+      // Redirect to login if a 401 error was caught
+      if (err.message.includes('You are not logged in')) {
+        router.push('/login');
+      }
     } finally {
       setLoading(false); 
     }
@@ -56,12 +71,11 @@ export default function CreateGroupPage() {
   return (
     <div className="flex min-h-screen justify-center items-center bg-gray-100">
       <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
-        {}
         <Link href="/" className="text-blue-500 hover:underline mb-4 block">
           &larr; Back to Home
         </Link>
 
-        <h1 className="text-2xl font-bold mb-6 text-center">Create New Group</h1>
+        <h1 className="text-2xl font-bold mb-6 text-center text-gray-900">Create New Group</h1>
 
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
@@ -95,14 +109,14 @@ export default function CreateGroupPage() {
               value={groupDescription}
               onChange={(e) => setGroupDescription(e.target.value)}
               required
-              disabled={loading} // Disable input while loading
+              disabled={loading}
             ></textarea>
           </div>
           <div className="flex items-center justify-between">
             <button
               type="submit"
               className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={loading} // Disable button while loading
+              disabled={loading}
             >
               {loading ? 'Creating...' : 'Create Group'}
             </button>
