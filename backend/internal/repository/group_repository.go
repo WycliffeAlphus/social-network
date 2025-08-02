@@ -7,12 +7,32 @@ import (
 )
 
 type GroupRepository struct {
-	DB *sql.DB // Still holds the main DB connection
+	DB *sql.DB 
 }
 
 // NewGroupRepository creates and returns a new instance of GroupRepository.
 func NewGroupRepository(db *sql.DB) *GroupRepository {
 	return &GroupRepository{DB: db}
+}
+
+// FindAll retrieves all groups from the database.
+func (r *GroupRepository) FindAll() ([]model.Group, error) {
+	rows, err := r.DB.Query("SELECT id, title, description, creator_id, privacy_setting, created_at FROM groups ORDER BY created_at DESC")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var groups []model.Group
+	for rows.Next() {
+		var group model.Group
+		if err := rows.Scan(&group.ID, &group.Title, &group.Description, &group.CreatorID, &group.PrivacySetting, &group.CreatedAt); err != nil {
+			return nil, err
+		}
+		groups = append(groups, group)
+	}
+
+	return groups, nil
 }
 
 // InsertGroup inserts a new group into the database using a transaction.
