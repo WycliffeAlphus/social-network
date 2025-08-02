@@ -8,6 +8,7 @@ import {
   UserPlusIcon
 } from '@heroicons/react/24/outline';
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function Sidebar({ data }) {
   // console.log(data)
@@ -15,6 +16,7 @@ export default function Sidebar({ data }) {
   const [showAccountOptions, setShowAccountOptions] = useState(false);
   const createOptionsRef = useRef(null);
   const accountsRef = useRef(null);
+  const router = useRouter();
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -32,6 +34,22 @@ export default function Sidebar({ data }) {
       document.removeEventListener("click", handleClickOutside)
     }
   }, [showCreateOptions, showAccountOptions])
+
+  const handleLogout = async () => {
+    try {
+      const response = await fetch("http://localhost:8080/api/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+      if (response.ok) {
+        router.push("/login");
+      } else {
+        alert("Logout failed.");
+      }
+    } catch (err) {
+      alert("Logout error: " + err.message);
+    }
+  };
 
   return (
     <aside className="sticky w-[5rem] xl:w-[12rem] pt-[3rem] top-0 text-white h-[100vh] overflow-y-auto">
@@ -120,7 +138,10 @@ export default function Sidebar({ data }) {
 
           {showAccountOptions && (
             <div ref={accountsRef} className="fixed flex flex-col gap-2 shadow-[0_0_12px_rgba(65,105,225)] bg-black rounded-lg p-6">
-              <p className="cursor-pointer text-sm hover:text-red-700 text-red-600">
+              <p
+                className="cursor-pointer text-sm hover:text-red-700 text-red-600"
+                onClick={handleLogout}
+              >
                 Log out
               </p>
             </div>

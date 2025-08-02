@@ -2,7 +2,7 @@
 CREATE TABLE followers (
     follower_id VARCHAR(40) NOT NULL,
     followed_id VARCHAR(40) NOT NULL,
-    status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending', 'accepted')),
+    status TEXT NOT NULL DEFAULT 'requested' CHECK(status IN ('requested', 'accepted')),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (follower_id, followed_id),
     FOREIGN KEY (follower_id) REFERENCES users(id) ON DELETE CASCADE,

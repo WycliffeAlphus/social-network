@@ -34,6 +34,54 @@ export default function FollowRequestsPage() {
     fetchFollowRequests();
   }, []);
 
+  const handleAccept = async (followerId) => {
+    try {
+      const response = await fetch('http://localhost:8080/api/follow/accept', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ followerId })
+      });
+
+      if (response.ok) {
+        // Remove the accepted request from the list
+        setFollowRequests(prev => prev.filter(request => request.follower_id !== followerId));
+      } else {
+        const errorData = await response.json();
+        alert(`Failed to accept request: ${errorData.message || 'Unknown error'}`);
+      }
+    } catch (err) {
+      console.error('Error accepting follow request:', err);
+      alert('Failed to accept follow request');
+    }
+  };
+
+  const handleDecline = async (followerId) => {
+    try {
+      const response = await fetch('http://localhost:8080/api/follow/decline', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ followerId })
+      });
+
+      if (response.ok) {
+        // Remove the declined request from the list
+        setFollowRequests(prev => prev.filter(request => request.follower_id !== followerId));
+      } else {
+        const errorData = await response.json();
+        alert(`Failed to decline request: ${errorData.message || 'Unknown error'}`);
+      }
+    } catch (err) {
+      console.error('Error declining follow request:', err);
+      alert('Failed to decline follow request');
+    }
+  };
+
   if (loading) return <div className="flex justify-center py-8">Loading...</div>
 
   return (
@@ -78,10 +126,16 @@ export default function FollowRequestsPage() {
                     </div>
                   </Link>
                   <div className="flex space-x-2">
-                    <button className="px-4 py-1 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition">
+                    <button 
+                      onClick={() => handleAccept(request.follower_id)}
+                      className="px-4 py-1 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition"
+                    >
                       Accept
                     </button>
-                    <button className="px-4 py-1 bg-gray-200 text-gray-800 rounded-full hover:bg-gray-300 transition">
+                    <button 
+                      onClick={() => handleDecline(request.follower_id)}
+                      className="px-4 py-1 bg-gray-200 text-gray-800 rounded-full hover:bg-gray-300 transition"
+                    >
                       Decline
                     </button>
                   </div>
