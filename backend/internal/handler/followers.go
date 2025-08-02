@@ -267,11 +267,14 @@ func GetFollowers(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
+		requestedID := extractid.ExtractUserIDFromPath(r.URL.Path, "followers")
 		currentUserId := context.MustGetUser(r.Context()).ID
 
-		// Extract user ID from URL path
-		requestedID := extractid.ExtractUserIDFromPath(r.URL.Path, "followers")
-		if requestedID == "" {
+		// handle "current" user special case
+		switch requestedID {
+		case "currentuser":
+			requestedID = currentUserId
+		case "":
 			http.Error(w, "Invalid user ID", http.StatusBadRequest)
 			return
 		}
