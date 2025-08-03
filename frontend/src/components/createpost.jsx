@@ -155,6 +155,7 @@ export default function CreatePost({ onClose }) {
 
             if (response.ok) {
                 router.push('/') // redirect to home after post creation
+                onClose()
             }
         } catch (err) {
             setError('Post creation failed. Please try again.')
