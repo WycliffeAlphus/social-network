@@ -1,4 +1,4 @@
-CREATE TABLE sessions (
+CREATE TABLE IF NOT EXISTS sessions (
     id VARCHAR(40) PRIMARY KEY,
     user_id VARCHAR(40) NOT NULL,
     expires_at DATETIME NOT NULL,

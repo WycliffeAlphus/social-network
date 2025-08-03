@@ -1,5 +1,5 @@
 -- Followers table
-CREATE TABLE followers (
+CREATE TABLE IF NOT EXISTS followers (
     follower_id VARCHAR(40) NOT NULL,
     followed_id VARCHAR(40) NOT NULL,
     status TEXT NOT NULL DEFAULT 'requested' CHECK(status IN ('requested', 'accepted')),
