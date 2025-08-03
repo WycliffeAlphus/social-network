@@ -3,6 +3,7 @@
 import { showFieldError } from "@/lib/auth";
 import { validateAndPreviewFile } from "@/lib/filevalidater";
 import { PhotoIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 export default function CreatePost({ onClose }) {
@@ -14,6 +15,7 @@ export default function CreatePost({ onClose }) {
     const [followers, setFollowers] = useState([]);
     const [selectedFollowers, setSelectedFollowers] = useState([]);
     const [preview, setPreview] = useState('') // for image preview
+    const router = useRouter()
     const [formData, setFormData] = useState({
         title: '',
         content: '',
@@ -125,6 +127,35 @@ export default function CreatePost({ onClose }) {
             })
 
             console.log(Object.fromEntries(formDataToSend.entries()))
+
+            const response = await fetch('http://localhost:8080/api/createpost', {
+                method: 'POST',
+                credentials: 'include',
+                body: formDataToSend,
+            })
+
+            if (!response.ok) {
+                console.log("something else")
+                const data = await response.json();
+                console.log(data)
+
+                if (data.titleerror) {
+                    showFieldError('title', data.titleerror);
+                }
+                if (data.contenterror) {
+                    showFieldError('content', data.contenterror);
+                }
+                if (data.privacyerror) {
+                    showFieldError('postPrivacy', data.privacyerror);
+                }
+                if (data.imageerror) {
+                    showFieldError('postImage', data.imageerror);
+                }
+            }
+
+            if (response.ok) {
+                router.push('/') // redirect to home after post creation
+            }
         } catch (err) {
             setError('Post creation failed. Please try again.')
             console.error('Registration error:', err)
