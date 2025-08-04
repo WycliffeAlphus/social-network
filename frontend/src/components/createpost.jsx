@@ -170,6 +170,7 @@ export default function CreatePost({ onClose }) {
                 {error && <p className="text-red-500 mb-4">{error}</p>}
                 <h1 className="text-xl font-bold text-gray-800 dark:text-white">Wassup</h1>
                 <button
+                    type="button"
                     onClick={onClose}
                     className="top-4 cursor-pointer right-4 p-1 rounded-full"
                 >
