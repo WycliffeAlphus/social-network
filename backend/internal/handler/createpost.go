@@ -6,7 +6,11 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"io"
+	"log"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/google/uuid"
@@ -55,6 +59,39 @@ func CreatePost(db *sql.DB) http.HandlerFunc {
 			}
 		}
 
+		// handle file upload
+		file, handler, err := r.FormFile("postImage")
+		if err == nil {
+			defer file.Close()
+
+			// generate a unique filename
+			ext := filepath.Ext(handler.Filename)
+			filename := uuid.New().String() + ext
+
+			// define where to save the file (create an "uploads" directory first)
+			filePath := filepath.Join("../frontend/public/uploads", "posts", filename)
+			os.MkdirAll(filepath.Dir(filePath), os.ModePerm)
+
+			// create the file
+			dst, err := os.Create(filePath)
+			if err != nil {
+				log.Println("error creating file destination for post image: ", err)
+				http.Error(w, "An error occured, please try again later: ", http.StatusInternalServerError)
+				return
+			}
+			defer dst.Close()
+
+			// copy the uploaded file to the destination
+			if _, err := io.Copy(dst, file); err != nil {
+				log.Println("failed to save post image to the destination file: ", err)
+				http.Error(w, "An error occured, please try again later: ", http.StatusInternalServerError)
+				return
+			}
+
+			relativePath := strings.TrimPrefix(filePath, "../frontend/public")
+			post.ImageUrl = sql.NullString{String: relativePath, Valid: true}
+		}
+
 		postErrors, hasErrors := validatePost(post)
 		if hasErrors {
 			w.WriteHeader(http.StatusBadRequest)
@@ -64,9 +101,9 @@ func CreatePost(db *sql.DB) http.HandlerFunc {
 
 		// insert the main post
 		_, postInsertErr := db.Exec(`
-            INSERT INTO posts (id, user_id, title, content, visibility, created_at)
-            VALUES (?, ?, ?, ?, ?, ?)`,
-			post.Id, post.UserId, post.Title, post.Content, post.Visibility, post.CreatedAt)
+            INSERT INTO posts (id, user_id, title, content, visibility, post_image, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)`,
+			post.Id, post.UserId, post.Title, post.Content, post.Visibility, post.ImageUrl, post.CreatedAt)
 		if postInsertErr != nil {
 			http.Error(w, "Failed to create post", http.StatusInternalServerError)
 			return
@@ -87,8 +124,8 @@ func CreatePost(db *sql.DB) http.HandlerFunc {
 
 		w.WriteHeader(http.StatusCreated)
 		json.NewEncoder(w).Encode(map[string]interface{}{
-            "success": true,
-        })
+			"success": true,
+		})
 	}
 }
 
