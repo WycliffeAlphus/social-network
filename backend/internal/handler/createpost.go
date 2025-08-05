@@ -12,15 +12,16 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 )
 
 type PostCreationErrors struct {
-	Title       string `json:"titleerror,omitempty"`
-	Content     string `json:"contenterror,omitempty"`
-	PostPrivacy string `json:"privacyerror,omitempty"`
-	PostImage   string `json:"imageerror,omitempty"`
+	Title            string `json:"titleerror,omitempty"`
+	Content          string `json:"contenterror,omitempty"`
+	PostPrivacy      string `json:"privacyerror,omitempty"`
+	PostImage        string `json:"imageerror,omitempty"`
 	AllowedFollowers string `json:"followerserror,omitempty"`
 }
 
@@ -50,6 +51,7 @@ func CreatePost(db *sql.DB) http.HandlerFunc {
 			Title:      r.FormValue("title"),
 			Content:    r.FormValue("content"),
 			Visibility: r.FormValue("postPrivacy"),
+			CreatedAt:  time.Now(),
 		}
 
 		if post.Visibility == "" {
