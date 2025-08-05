@@ -167,9 +167,9 @@ export default function CreatePost({ onClose }) {
 
     return (
         <form onSubmit={handleSubmit} onClick={(e) => e.stopPropagation()} className="h-fit bg-white dark:bg-black max-w-[40rem] w-[80%] rounded-2xl p-6 space-y-3">
+            {error && <p className="text-red-500 mb-4">{error}</p>}
             {/* Page Header */}
             <div className="flex justify-between">
-                {error && <p className="text-red-500 mb-4">{error}</p>}
                 <h1 className="text-xl font-bold text-gray-800 dark:text-white">Wassup</h1>
                 <button
                     type="button"
