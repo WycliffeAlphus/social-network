@@ -19,7 +19,7 @@ export default function CreatePost({ onClose }) {
     const [formData, setFormData] = useState({
         title: '',
         content: '',
-        postPrivacy: '',
+        postPrivacy: 'public',
         postImage: '',
     })
 
