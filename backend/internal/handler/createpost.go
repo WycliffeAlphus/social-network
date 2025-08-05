@@ -28,6 +28,7 @@ const (
 	MaxTitleLength   = 77
 	MinContentLength = 21
 	MaxContentLength = 777
+	maxUploadSize    = 20 * 1024 * 1024 // 20MB
 )
 
 func CreatePost(db *sql.DB) http.HandlerFunc {
@@ -60,12 +61,40 @@ func CreatePost(db *sql.DB) http.HandlerFunc {
 		}
 
 		// handle file upload
-		file, handler, err := r.FormFile("postImage")
+		file, header, err := r.FormFile("postImage")
 		if err == nil {
 			defer file.Close()
 
+			// validate file size
+			if header.Size > maxUploadSize {
+				postErrors.PostImage = "File too large (max 20MB)"
+				http.Error(w, "File too large (max 20MB)", http.StatusBadRequest)
+				return
+			}
+
+			// read the file bytes
+			buff := make([]byte, 512)
+			if _, err := file.Read(buff); err != nil {
+				http.Error(w, "Invalid file", http.StatusBadRequest)
+				return
+			}
+
+			// return the reader to the begining of the file
+			if _, err := file.Seek(0, 0); err != nil {
+				http.Error(w, "File error", http.StatusInternalServerError)
+				return
+			}
+
+			// validate file type
+			filetype := http.DetectContentType(buff)
+			if filetype != "image/jpeg" && filetype != "image/png" && filetype != "image/gif" {
+				postErrors.PostImage = "Only JPEG, PNG and GIF images are allowed"
+				http.Error(w, "Only JPEG, PNG and GIF images are allowed", http.StatusBadRequest)
+				return
+			}
+
 			// generate a unique filename
-			ext := filepath.Ext(handler.Filename)
+			ext := filepath.Ext(header.Filename)
 			filename := uuid.New().String() + ext
 
 			// define where to save the file (create an "uploads" directory first)
