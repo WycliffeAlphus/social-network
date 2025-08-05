@@ -52,11 +52,6 @@ func (h *GroupHandler) CreateGroup(w http.ResponseWriter, r *http.Request) {
 	// extract the ID
 	creatorID := user.ID
 
-	if creatorID == "0" {
-		utils.RespondWithError(w, http.StatusUnauthorized, "User ID not found or is invalid (0)")
-		return
-	}
-
 	var req CreateGroupRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		utils.RespondWithError(w, http.StatusBadRequest, "Invalid request payload: "+err.Error())
