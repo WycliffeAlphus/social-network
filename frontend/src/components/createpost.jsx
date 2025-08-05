@@ -48,7 +48,6 @@ export default function CreatePost({ onClose }) {
                 throw new Error('Failed to fetch followers');
             }
             const data = await response.json();
-            console.log(data)
             setFollowers(data.users || []);
         } catch (err) {
             setFollowersError(err.message);
@@ -83,7 +82,6 @@ export default function CreatePost({ onClose }) {
         }
 
         setFormData(prev => ({ ...prev, [name]: value }))
-        console.log(formData)
     }
 
     const handleFileChange = (e) => {
@@ -141,9 +139,7 @@ export default function CreatePost({ onClose }) {
             })
 
             if (!response.ok) {
-                console.log("something else")
                 const data = await response.json();
-                console.log(data)
 
                 if (data.titleerror) {
                     showFieldError('title', data.titleerror);
