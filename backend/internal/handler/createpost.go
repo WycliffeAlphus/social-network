@@ -52,6 +52,10 @@ func CreatePost(db *sql.DB) http.HandlerFunc {
 			Visibility: r.FormValue("postPrivacy"),
 		}
 
+		if post.Visibility == "" {
+			post.Visibility = "public"
+		}
+
 		allowedFollowersJSON := r.FormValue("allowedFollowers")
 		if allowedFollowersJSON != "" {
 			err := json.Unmarshal([]byte(allowedFollowersJSON), &post.AllowedFollowers)
