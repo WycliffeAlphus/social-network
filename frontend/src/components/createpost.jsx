@@ -107,6 +107,12 @@ export default function CreatePost({ onClose }) {
         e.preventDefault()
         setError('')
 
+        // ensure at least one follower is selected when post privacy is private
+        if (selectedPrivacy === 'private' && selectedFollowers.length === 0) {
+            showFieldError('private', "Please select at least one follower for private posts");
+            return;
+        }
+
         try {
             const formDataToSend = new FormData()
 
@@ -272,6 +278,7 @@ export default function CreatePost({ onClose }) {
                             <span className="block text-gray-500">Only specific followers you choose will see this post</span>
                         </label>
                     </div>
+                    <div id="private-error" className="text-red-500"></div>
                 </div>
 
                 {/* Follower Selector (shown only when private is selected) */}

@@ -21,6 +21,7 @@ type PostCreationErrors struct {
 	Content     string `json:"contenterror,omitempty"`
 	PostPrivacy string `json:"privacyerror,omitempty"`
 	PostImage   string `json:"imageerror,omitempty"`
+	AllowedFollowers string `json:"followerserror,omitempty"`
 }
 
 const (
@@ -179,6 +180,10 @@ func validatePost(post model.Post) (*PostCreationErrors, bool) {
 		errors.PostPrivacy = "Invalid privacy value. Must be 'public', 'almost private', or 'private'"
 	}
 
+	if visibility == "private" && len(post.AllowedFollowers) == 0 {
+		errors.AllowedFollowers = "Please select at least one follower for private posts"
+	}
+
 	hasErrors := errors.HasErrors()
 	return errors, hasErrors
 }
@@ -187,5 +192,6 @@ func (pe *PostCreationErrors) HasErrors() bool {
 	return pe.Title != "" ||
 		pe.Content != "" ||
 		pe.PostPrivacy != "" ||
-		pe.PostImage != ""
+		pe.PostImage != "" ||
+		pe.AllowedFollowers != ""
 }
