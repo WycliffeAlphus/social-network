@@ -50,11 +50,10 @@ export default function FollowRequestsPage() {
         setFollowRequests(prev => prev.filter(request => request.follower_id !== followerId));
       } else {
         const errorData = await response.json();
-        alert(`Failed to accept request: ${errorData.message || 'Unknown error'}`);
+        console.error(`Failed to accept request: ${errorData.message || 'Unknown error'}`);
       }
     } catch (err) {
       console.error('Error accepting follow request:', err);
-      alert('Failed to accept follow request');
     }
   };
 
@@ -74,11 +73,10 @@ export default function FollowRequestsPage() {
         setFollowRequests(prev => prev.filter(request => request.follower_id !== followerId));
       } else {
         const errorData = await response.json();
-        alert(`Failed to decline request: ${errorData.message || 'Unknown error'}`);
+        console.error(`Failed to decline request: ${errorData.message || 'Unknown error'}`);
       }
     } catch (err) {
       console.error('Error declining follow request:', err);
-      alert('Failed to decline follow request');
     }
   };
 

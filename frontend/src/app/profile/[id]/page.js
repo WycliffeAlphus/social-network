@@ -1,11 +1,11 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { use, useEffect, useState } from 'react'
 import ProfileHeader from '@/components/ProfileHeader'
 import ProfileDetails from '@/components/ProfileDetails'
 
 export default function Profile({ params }) {
-  const { id } = params
+  const { id } = use(params)
 
   const [profileData, setProfileData] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -49,43 +49,71 @@ export default function Profile({ params }) {
       const res = await fetch(`http://localhost:8080/api/follow-status/${id}`, {
         credentials: 'include',
       })
+      if (!res.ok) {
+        console.error('Failed to fetch follow status:', res.status, res.statusText)
+        return
+      }
       const data = await res.json()
       setFollowStatus(data.status)
     } catch (err) {
-      console.error('Failed to fetch follow status')
+      console.error('Failed to fetch follow status:', err)
     }
   }
 
   const handleFollow = async () => {
-    await fetch('http://localhost:8080/api/users/follow', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId: id }),
-      credentials: 'include',
-    })
-    setFollowStatus('requested')
-  }
+    try {
+      const res = await fetch('http://localhost:8080/api/users/follow', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: id }),
+        credentials: 'include',
+      });
+      if (res.ok) {
+        setFollowStatus('requested');
+      } else {
+        console.error('Failed to follow user');
+      }
+    } catch (error) {
+      console.error('Error following user:', error);
+    }
+  };
 
   const handleCancelRequest = async () => {
-    await fetch('http://localhost:8080/api/follow/cancel', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId: id }),
-      credentials: 'include',
-    })
-    setFollowStatus('not_following')
-  }
+    try {
+      const res = await fetch('http://localhost:8080/api/follow/cancel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: id }),
+        credentials: 'include',
+      });
+      if (res.ok) {
+        setFollowStatus('not_following');
+      } else {
+        console.error('Failed to cancel follow request');
+      }
+    } catch (error) {
+      console.error('Error cancelling follow request:', error);
+    }
+  };
 
   const handleToggleVisibility = async () => {
-    const newVisibility = profileVisibility === 'public' ? 'private' : 'public'
-    await fetch('http://localhost:8080/api/profile/update', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ profile_visibility: newVisibility }),
-    })
-    setProfileVisibility(newVisibility)
-  }
+    const newVisibility = profileVisibility === 'public' ? 'private' : 'public';
+    try {
+      const res = await fetch('http://localhost:8080/api/profile/update', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ profile_visibility: newVisibility }),
+      });
+      if (res.ok) {
+        setProfileVisibility(newVisibility);
+      } else {
+        console.error('Failed to update profile visibility');
+      }
+    } catch (error) {
+      console.error('Error updating profile visibility:', error);
+    }
+  };
 
   if (loading) return <div className="text-center py-10">Loading...</div>
   if (error) return <div className="text-center py-10 text-red-500">{error}</div>
