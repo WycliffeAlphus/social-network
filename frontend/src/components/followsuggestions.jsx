@@ -65,16 +65,18 @@ export default function FollowSuggestion() {
                 },
                 body: JSON.stringify({ userId }),
                 credentials: 'include'
-            })
+            });
 
             if (response.ok) {
                 const data = await response.json();
                 setFollowStatusMap(prev => ({ ...prev, [userId]: data.status }))
+            } else {
+                console.error('Failed to follow user');
             }
         } catch (err) {
             console.error('Error following user:', err)
         }
-    }
+    };
 
     const handleCancelRequest = async (userId) => {
         try {
@@ -85,15 +87,17 @@ export default function FollowSuggestion() {
                 },
                 body: JSON.stringify({ userId }),
                 credentials: 'include'
-            })
+            });
 
             if (response.ok) {
                 setFollowStatusMap(prev => ({ ...prev, [userId]: 'not_following' }))
+            } else {
+                console.error('Failed to cancel follow request');
             }
         } catch (err) {
             console.error('Error canceling follow request:', err)
         }
-    }
+    };
 
     if (loading) {
         return <div className="container mx-auto p-4">Loading...</div>

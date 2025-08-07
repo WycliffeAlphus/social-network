@@ -35,8 +35,9 @@ export default function ProtectedRoute({ children }) {
                     }
                 }
             } catch (error) {
-                console.error('Auth check failed:', error)
-                return null
+                console.error('Auth check failed:', error);
+                setIsLoading(false);
+                return null;
             }
 
             setIsLoading(false) // wait for auth verification to complete

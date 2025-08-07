@@ -1,30 +1,32 @@
 package routes
 
 import (
+	"database/sql"
+	"net/http"
+
 	"backend/internal/handler"
 	"backend/internal/middlewares"
 	"backend/internal/repository"
 	"backend/internal/service"
-	"database/sql"
-	"net/http"
 )
 
 // RegisterRoutes sets up the HTTP routes for the API endpoints.
 func RegisterRoutes(db *sql.DB) {
+	// Initialize User-related dependencies
 	userRepo := &repository.UserRepository{DB: db}
-
-	// Step 2: Create the part that handles the business rules and checks
 	userService := &service.UserService{Repo: userRepo}
-
-	// Step 3: Create the part that handles web requests from users
 	userHandler := &handler.UserHandler{Service: userService}
+
+	groupRepo := repository.NewGroupRepository(db)
+	groupService := service.NewGroupService(groupRepo)
+	groupHandler := &handler.GroupHandler{Service: groupService}
 
 	// Public routes (no authentication required)
 	http.HandleFunc("/api/register", userHandler.Register)
 	http.HandleFunc("/api/login", handler.LoginHandler)
 	http.HandleFunc("/api/logout", handler.LogoutHandler)
 
-	// Protected routes (authentication required)
+	// http.Handle("/api/profile/", middlewares.AuthMiddleware(db, userHandler.Profile))
 	http.Handle("/api/profile/", middlewares.AuthMiddleware(db, handler.ProfileHandler(db)))
 	http.Handle("/api/dashboard", middlewares.AuthMiddleware(db, handler.DashboardHandler))
 	http.HandleFunc("/api/users/available", middlewares.AuthMiddleware(db, handler.GetFollowSuggestions(db)))
@@ -35,6 +37,19 @@ func RegisterRoutes(db *sql.DB) {
 	http.HandleFunc("/api/follow-status/", middlewares.AuthMiddleware(db, handler.GetFollowStatus(db)))
 	http.HandleFunc("/api/followers/", middlewares.AuthMiddleware(db, handler.GetFollowers(db)))
 	http.HandleFunc("/api/following/", middlewares.AuthMiddleware(db, handler.GetFollowing(db)))
+
+	 groupsHandler := func(w http.ResponseWriter, r *http.Request) {
+        switch r.Method {
+        case http.MethodGet:
+            middlewares.AuthMiddleware(db, http.HandlerFunc(groupHandler.GetGroups)).ServeHTTP(w, r)
+        case http.MethodPost:
+            middlewares.AuthMiddleware(db, http.HandlerFunc(groupHandler.CreateGroup)).ServeHTTP(w, r)
+        default:
+            http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+        }
+    }
+
+    http.HandleFunc("/api/groups", groupsHandler)
 	http.HandleFunc("/api/follow-requests", middlewares.AuthMiddleware(db, handler.GetFollowRequests(db)))
 	http.HandleFunc("/api/profile/update", middlewares.AuthMiddleware(db, handler.UpdateProfileHandler(db)))
 	http.HandleFunc("/api/createpost", middlewares.AuthMiddleware(db, handler.CreatePost(db)))
