@@ -45,10 +45,10 @@ export default function Sidebar({ data }) {
       if (response.ok) {
         router.push("/login");
       } else {
-        alert("Logout failed.");
+        console.error("Logout failed.");
       }
     } catch (err) {
-      alert("Logout error: " + err.message);
+      console.error("Logout error: " + err.message);
     }
   };
 
