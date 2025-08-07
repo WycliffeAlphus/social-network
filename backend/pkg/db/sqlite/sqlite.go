@@ -54,7 +54,7 @@ func CreateMigrationFile() {
 		}
 
 		fmt.Println("Migration files created successfully")
-	} else if len(os.Args) > 1 && os.Args[1] != "migrate" && os.Args[2] != "create" {
+	} else if len(os.Args) > 1 && (os.Args[1] != "migrate" || os.Args[2] != "create") {
 		fmt.Println("Unrecognized CLI commands")
 		fmt.Println()
 		fmt.Println("Migration usage:")

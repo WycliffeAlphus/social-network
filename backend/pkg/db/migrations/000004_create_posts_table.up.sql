@@ -1,7 +1,10 @@
-CREATE TABLE IF NOT EXISTS sessions (
+CREATE TABLE IF NOT EXISTS posts (
     id VARCHAR(40) PRIMARY KEY,
     user_id VARCHAR(40) NOT NULL,
-    expires_at DATETIME NOT NULL,
+    title VARCHAR(77) NOT NULL,
+    content TEXT NOT NULL,
+    visibility VARCHAR(14) NOT NULL,
+    post_image VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );

@@ -4,12 +4,13 @@ import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { showFieldError } from '@/lib/auth'
 import Link from 'next/link'
+import { validateAndPreviewFile } from '@/lib/filevalidater'
 
 export default function Register() {
     const [formData, setFormData] = useState({
         email: '',
         password: '',
-        confirmPassword: '', 
+        confirmPassword: '',
         firstName: '',
         lastName: '',
         dateOfBirth: '',
@@ -65,32 +66,15 @@ export default function Register() {
 
     const handleFileChange = (e) => {
         showFieldError('image', '');
-        const file = e.target.files[0]
-        if (file) {
-            // validate file type
-            const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
-            if (!validTypes.includes(file.type)) {
-                showFieldError('image', 'Only JPEG, PNG, and GIF images are allowed');
-                e.target.value = ''; // clear the file input
-                return;
-            }
-
-            // validate file size (20MB max)
-            if (file.size > 20 * 1000 * 1000) {
-                showFieldError('image', 'Image must be 20MB or smaller');
-                e.target.value = '';
-                return;
-            }
-
-            setFormData(prev => ({ ...prev, avatarImage: file }))
-
-            // create selected image preview
-            const reader = new FileReader()
-            reader.onloadend = () => {
-                setPreview(reader.result)
-            }
-            reader.readAsDataURL(file)
+        const file = e.target.files[0];
+        if (!file) return;
+        const result = validateAndPreviewFile(file, setPreview);
+        if (!result.valid) {
+            showFieldError('image', result.error);
+            e.target.value = ''; // clear the file input
+            return;
         }
+        setFormData(prev => ({ ...prev, avatarImage: file }));
     }
 
     const handleSubmit = async (e) => {
@@ -104,23 +88,23 @@ export default function Register() {
             return;
         }
         if (formData.password !== formData.confirmPassword) {
-    showFieldError('confirmPassword', 'Passwords do not match');
-    return;
-}
+            showFieldError('confirmPassword', 'Passwords do not match');
+            return;
+        }
 
         try {
             const formDataToSend = new FormData()
 
             // append all form data to FormData object
             Object.entries(formData).forEach(([key, value]) => {
-            if (key !== 'confirmPassword' && value !== null && value !== undefined) {
-                if (key === 'avatarImage' && value instanceof File) {
-                    formDataToSend.append(key, value)
-                } else {
-                    formDataToSend.append(key, value)
+                if (key !== 'confirmPassword' && value !== null && value !== undefined) {
+                    if (key === 'avatarImage' && value instanceof File) {
+                        formDataToSend.append(key, value)
+                    } else if (key !== 'avatarImage') {
+                        formDataToSend.append(key, value)
+                    }
                 }
-            }
-        })
+            })
 
             const response = await fetch('http://localhost:8080/api/register', {
                 method: 'POST',

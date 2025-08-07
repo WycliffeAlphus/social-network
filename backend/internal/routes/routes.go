@@ -52,4 +52,5 @@ func RegisterRoutes(db *sql.DB) {
     http.HandleFunc("/api/groups", groupsHandler)
 	http.HandleFunc("/api/follow-requests", middlewares.AuthMiddleware(db, handler.GetFollowRequests(db)))
 	http.HandleFunc("/api/profile/update", middlewares.AuthMiddleware(db, handler.UpdateProfileHandler(db)))
+	http.HandleFunc("/api/createpost", middlewares.AuthMiddleware(db, handler.CreatePost(db)))
 }
