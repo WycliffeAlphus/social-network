@@ -10,27 +10,31 @@ import (
 func GetPosts(id string, db *sql.DB) (*[]model.Post, error) {
 	var posts []model.Post
 
-	rows, err := db.Query(`SELECT id, user_id, title, content, visibility, post_image, created_at FROM posts
-WHERE visibility = 'public'
+	rows, err := db.Query(`
+SELECT id, user_id, title, content, visibility, post_image, created_at 
+FROM posts
+WHERE visibility = 'public' 
+   OR user_id = ?
    OR (
         visibility = 'almostprivate'
         AND EXISTS (
             SELECT 1
             FROM followers
-            WHERE followers.followed_id = ?
-              OR followers.follower_id = ?
+            WHERE (followers.followed_id = ? OR followers.follower_id = ?)
               AND followers.status = 'accepted'
         )
-	OR(
-		visibility = 'private'
-		AND EXISTS(
-			SELECT 1 FROM private_posts 
-			WHERE private_posts.post_id = posts.id
-			AND private_posts.user_id = ?
-		)
+    )
+   OR (
+        visibility = 'private'
+        AND EXISTS (
+            SELECT 1 
+            FROM private_posts 
+            WHERE private_posts.post_id = posts.id
+              AND private_posts.user_id = ?
+        )
+    )
+ORDER BY created_at DESC`, id, id, id, id)
 
-	)
-    )`, id, id, id)
 
 	if err != nil {
 		return nil, err
@@ -50,6 +54,7 @@ WHERE visibility = 'public'
 			fmt.Println("User not found:", post.UserId)
 		}
 		post.Creator = user.FirstName + " " + user.LastName
+		post.CreatorImg = user.ImgURL
 		posts = append(posts, post)
 	}
 	return &posts, nil

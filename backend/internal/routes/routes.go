@@ -41,4 +41,6 @@ func RegisterRoutes(db *sql.DB) {
 	// Comment routes
 	http.HandleFunc("/api/posts/", middlewares.AuthMiddleware(db, handler.CommentHandler(db)))
 	http.HandleFunc("/api/feeds", middlewares.AuthMiddleware(db, handler.DashboardHandler(db)))
+	http.HandleFunc("/api/reaction", middlewares.AuthMiddleware(db, handler.HandleReaction(db)))
+
 }
