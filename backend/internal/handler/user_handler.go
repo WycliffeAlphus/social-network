@@ -3,13 +3,10 @@ package handler
 import (
 	"backend/internal/model"
 	"backend/internal/service"
+	"backend/internal/utils"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
-	"os"
-	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -38,39 +35,14 @@ func (h *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-
-	// Handle avatar upload
 	imgURL := ""
-	file, handler, err := r.FormFile("avatar")
-	if err == nil {
-		defer file.Close()
-
-		mimeType := handler.Header.Get("Content-Type")
-		if !strings.HasPrefix(mimeType, "image/") {
-			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(map[string]interface{}{
-				"status":  "error",
-				"message": "Only image uploads allowed",
-			})
-			return
-		}
-
-		filename := uuid.New().String() + filepath.Ext(handler.Filename)
-		filePath := "./uploads/" + filename
-
-		dst, err := os.Create(filePath)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(map[string]interface{}{
-				"status":  "error",
-				"message": "Failed to save image",
-			})
-			return
-		}
-		defer dst.Close()
-		io.Copy(dst, file)
-
-		imgURL = "/uploads/" + filename
+	imageUrl, err := utils.HandlePostImageUpload(r, maxUploadSize, "avatarImage")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	if imageUrl.Valid {
+		imgURL = imageUrl.String
 	}
 
 	// Parse fields

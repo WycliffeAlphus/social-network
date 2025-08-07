@@ -291,8 +291,8 @@ export default function CreatePost({ onClose }) {
                                 <div key={follower.id} className="group flex items-center justify-between px-7">
                                     <label htmlFor={`${follower.id}`} className="cursor-pointer flex items-center flex-1">
                                         <img
-                                            src={follower.ImgURL || "/default-avatar.png"}
-                                            alt="folloer image"
+                                            src={follower.ImgURL || "profile.jpg"}
+                                            alt="follower image"
                                             className="h-8 w-8 rounded-full"
                                         />
                                         <span className="ml-3 text-sm group-hover:text-blue-500">

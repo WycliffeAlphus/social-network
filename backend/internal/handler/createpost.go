@@ -3,14 +3,11 @@ package handler
 import (
 	"backend/internal/context"
 	"backend/internal/model"
+	"backend/internal/utils"
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"io"
-	"log"
 	"net/http"
-	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -40,9 +37,7 @@ func CreatePost(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		// get userID from context
 		currentUserID := context.MustGetUser(r.Context()).ID
-
 		postErrors := &PostCreationErrors{}
 
 		post := model.Post{
@@ -58,74 +53,23 @@ func CreatePost(db *sql.DB) http.HandlerFunc {
 			post.Visibility = "public"
 		}
 
-		allowedFollowersJSON := r.FormValue("allowedFollowers")
-		if allowedFollowersJSON != "" {
-			err := json.Unmarshal([]byte(allowedFollowersJSON), &post.AllowedFollowers)
+		if allowedJSON := r.FormValue("allowedFollowers"); allowedJSON != "" {
+			err := json.Unmarshal([]byte(allowedJSON), &post.AllowedFollowers)
 			if err != nil {
 				http.Error(w, "Invalid allowedFollowers format", http.StatusBadRequest)
 				return
 			}
 		}
 
-		// handle file upload
-		file, header, err := r.FormFile("postImage")
-		if err == nil {
-			defer file.Close()
-
-			// validate file size
-			if header.Size > maxUploadSize {
-				postErrors.PostImage = "File too large (max 20MB)"
-				http.Error(w, "File too large (max 20MB)", http.StatusBadRequest)
-				return
-			}
-
-			// read the file bytes
-			buff := make([]byte, 512)
-			if _, err := file.Read(buff); err != nil {
-				http.Error(w, "Invalid file", http.StatusBadRequest)
-				return
-			}
-
-			// return the reader to the begining of the file
-			if _, err := file.Seek(0, 0); err != nil {
-				http.Error(w, "File error", http.StatusInternalServerError)
-				return
-			}
-
-			// validate file type
-			filetype := http.DetectContentType(buff)
-			if filetype != "image/jpeg" && filetype != "image/png" && filetype != "image/gif" {
-				postErrors.PostImage = "Only JPEG, PNG and GIF images are allowed"
-				http.Error(w, "Only JPEG, PNG and GIF images are allowed", http.StatusBadRequest)
-				return
-			}
-
-			// generate a unique filename
-			ext := filepath.Ext(header.Filename)
-			filename := uuid.New().String() + ext
-
-			// define where to save the file (create an "uploads" directory first)
-			filePath := filepath.Join("../frontend/public/uploads", "posts", filename)
-			os.MkdirAll(filepath.Dir(filePath), os.ModePerm)
-
-			// create the file
-			dst, err := os.Create(filePath)
-			if err != nil {
-				log.Println("error creating file destination for post image: ", err)
-				http.Error(w, "An error occured, please try again later: ", http.StatusInternalServerError)
-				return
-			}
-			defer dst.Close()
-
-			// copy the uploaded file to the destination
-			if _, err := io.Copy(dst, file); err != nil {
-				log.Println("failed to save post image to the destination file: ", err)
-				http.Error(w, "An error occured, please try again later: ", http.StatusInternalServerError)
-				return
-			}
-
-			relativePath := strings.TrimPrefix(filePath, "../frontend/public")
-			post.ImageUrl = sql.NullString{String: relativePath, Valid: true}
+		//  handle image upload
+		imageUrl, err := utils.HandlePostImageUpload(r, maxUploadSize, "postImage")
+		if err != nil {
+			postErrors.PostImage = err.Error()
+			http.Error(w, postErrors.PostImage, http.StatusBadRequest)
+			return
+		}
+		if imageUrl.Valid {
+			post.ImageUrl = imageUrl
 		}
 
 		postErrors, hasErrors := validatePost(post)
@@ -135,22 +79,20 @@ func CreatePost(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		// insert the main post
 		_, postInsertErr := db.Exec(`
-            INSERT INTO posts (id, user_id, title, content, visibility, post_image, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?)`,
+			INSERT INTO posts (id, user_id, title, content, visibility, post_image, created_at)
+			VALUES (?, ?, ?, ?, ?, ?, ?)`,
 			post.Id, post.UserId, post.Title, post.Content, post.Visibility, post.ImageUrl, post.CreatedAt)
 		if postInsertErr != nil {
 			http.Error(w, "Failed to create post", http.StatusInternalServerError)
 			return
 		}
 
-		// handle private posts (visibility = "private")
 		if post.Visibility == "private" && len(post.AllowedFollowers) > 0 {
 			for _, followerID := range post.AllowedFollowers {
 				_, err := db.Exec(`
-                INSERT INTO private_posts (post_id, user_id, created_at)
-                VALUES (?, ?, ?)`, post.Id, followerID, post.CreatedAt)
+					INSERT INTO private_posts (post_id, user_id, created_at)
+					VALUES (?, ?, ?)`, post.Id, followerID, post.CreatedAt)
 				if err != nil {
 					http.Error(w, "Failed to add private post access", http.StatusInternalServerError)
 					return

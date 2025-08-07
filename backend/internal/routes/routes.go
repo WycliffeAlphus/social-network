@@ -28,7 +28,6 @@ func RegisterRoutes(db *sql.DB) {
 
 	// http.Handle("/api/profile/", middlewares.AuthMiddleware(db, userHandler.Profile))
 	http.Handle("/api/profile/", middlewares.AuthMiddleware(db, handler.ProfileHandler(db)))
-	http.Handle("/api/dashboard", middlewares.AuthMiddleware(db, handler.DashboardHandler))
 	http.HandleFunc("/api/users/available", middlewares.AuthMiddleware(db, handler.GetFollowSuggestions(db)))
 	http.HandleFunc("/api/users/follow", middlewares.AuthMiddleware(db, handler.FollowUser(db)))
 	http.HandleFunc("/api/follow/accept", middlewares.AuthMiddleware(db, handler.AcceptFollowRequest(db)))
@@ -53,4 +52,10 @@ func RegisterRoutes(db *sql.DB) {
 	http.HandleFunc("/api/follow-requests", middlewares.AuthMiddleware(db, handler.GetFollowRequests(db)))
 	http.HandleFunc("/api/profile/update", middlewares.AuthMiddleware(db, handler.UpdateProfileHandler(db)))
 	http.HandleFunc("/api/createpost", middlewares.AuthMiddleware(db, handler.CreatePost(db)))
+
+	// Comment routes
+	http.HandleFunc("/api/posts/", middlewares.AuthMiddleware(db, handler.CommentHandler(db)))
+	http.HandleFunc("/api/feeds", middlewares.AuthMiddleware(db, handler.DashboardHandler(db)))
+	http.HandleFunc("/api/reaction", middlewares.AuthMiddleware(db, handler.HandleReaction(db)))
+
 }
