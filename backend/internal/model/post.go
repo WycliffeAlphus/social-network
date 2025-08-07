@@ -14,7 +14,6 @@ type Post struct {
 	ImageUrl         sql.NullString `json:"imageurl"`
 	CreatedAt        time.Time      `json:"createdat"`
 	AllowedFollowers []string       `json:"allowedfollowers,omitempty"`
-	Comments         []string       `json:"comments,omitempty"`
 	Creator          string         `json:"creator,omitempty"`
 	CreatorImg       string         `json:"creatorimg,omitempty"`
 }
