@@ -66,3 +66,91 @@ func (r *GroupRepository) InsertGroupMember(tx *sql.Tx, member *model.GroupMembe
 	_, err = stmt.Exec(member.GroupID, member.UserID, member.Role, member.Status)
 	return err
 }
+
+// FindGroupByID retrieves a group by its ID.
+func (r *GroupRepository) FindGroupByID(groupID uint) (*model.Group, error) {
+	var group model.Group
+	err := r.DB.QueryRow(`
+		SELECT id, title, description, creator_id, privacy_setting, created_at, updated_at
+		FROM groups
+		WHERE id = ? AND deleted_at IS NULL
+	`, groupID).Scan(&group.ID, &group.Title, &group.Description, &group.CreatorID, &group.PrivacySetting, &group.CreatedAt, &group.UpdatedAt)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil // Group not found
+		}
+		return nil, err
+	}
+	return &group, nil
+}
+
+// CheckUserMembership checks if a user is already a member of a group.
+func (r *GroupRepository) CheckUserMembership(groupID uint, userID string) (bool, string, error) {
+	var status string
+	err := r.DB.QueryRow(`
+		SELECT status
+		FROM group_members
+		WHERE group_id = ? AND user_id = ? AND deleted_at IS NULL
+	`, groupID, userID).Scan(&status)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return false, "", nil // User is not a member
+		}
+		return false, "", err
+	}
+	return true, status, nil
+}
+
+// CreateJoinRequest creates a pending membership request for a user to join a group.
+func (r *GroupRepository) CreateJoinRequest(groupID uint, userID string) error {
+	_, err := r.DB.Exec(`
+		INSERT INTO group_members (group_id, user_id, role, status)
+		VALUES (?, ?, 'member', 'pending')
+	`, groupID, userID)
+	return err
+}
+
+// AcceptJoinRequest updates a pending join request to active status.
+func (r *GroupRepository) AcceptJoinRequest(groupID uint, userID string) error {
+	result, err := r.DB.Exec(`
+		UPDATE group_members
+		SET status = 'active', updated_at = CURRENT_TIMESTAMP
+		WHERE group_id = ? AND user_id = ? AND status = 'pending' AND deleted_at IS NULL
+	`, groupID, userID)
+
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return sql.ErrNoRows // No pending request found
+	}
+
+	return nil
+}
+
+// IsGroupCreator checks if a user is the creator of a group.
+func (r *GroupRepository) IsGroupCreator(groupID uint, userID string) (bool, error) {
+	var creatorID string
+	err := r.DB.QueryRow(`
+		SELECT creator_id
+		FROM groups
+		WHERE id = ? AND deleted_at IS NULL
+	`, groupID).Scan(&creatorID)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return false, nil // Group not found
+		}
+		return false, err
+	}
+
+	return creatorID == userID, nil
+}
