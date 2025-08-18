@@ -16,4 +16,5 @@ type Post struct {
 	AllowedFollowers []string       `json:"allowedfollowers,omitempty"`
 	Creator          string         `json:"creator,omitempty"`
 	CreatorImg       string         `json:"creatorimg,omitempty"`
+	CommentCount     int            `json:"commentcount,omitempty"`
 }

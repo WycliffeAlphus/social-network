@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { formatTimeAgo } from './dateFormat';
 
-export default function CommentSection({ postId }) {
+export default function CommentSection({ postId, onCountChange = () => {} }) {
     const [comments, setComments] = useState([]);
     const [newComment, setNewComment] = useState('');
     const [loading, setLoading] = useState(false);
@@ -21,6 +21,7 @@ export default function CommentSection({ postId }) {
                 });
                 const data = await res.json();
                 setComments(data.comments || []);
+                onCountChange(Array.isArray(data.comments) ? data.comments.length : 0);
             } catch (err) {
                 console.error('Fetch error:', err);
                 setError('Failed to load comments.');
@@ -52,6 +53,7 @@ export default function CommentSection({ postId }) {
             if (res.ok) {
                 setComments((prev) => [...prev, data.comment]);
                 setNewComment('');
+                onCountChange((prev) => (typeof prev === 'number' ? prev + 1 : prev));
             } else {
                 setError(data.error || 'Comment failed.');
             }
@@ -78,6 +80,7 @@ export default function CommentSection({ postId }) {
             });
         };
         setComments((prev) => addReplyRecursive(prev));
+        // Do not change top-level comment count when adding a reply
     };
 
     return (
@@ -123,12 +126,14 @@ function CommentItem({ comment, postId, onAddReply, level = 0 }) {
     const [showReply, setShowReply] = useState(false);
     const [replyText, setReplyText] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [expanded, setExpanded] = useState(false);
 
     const name =
         comment.userNickname ||
         comment.user_nickname ||
         `${comment.user_first_name || ''} ${comment.user_last_name || ''}`.trim();
     const createdAt = comment.created_at || comment.createdAt;
+    const replyCount = Array.isArray(comment.replies) ? comment.replies.length : 0;
 
     const handleReplySubmit = async (e) => {
         e.preventDefault();
@@ -171,6 +176,15 @@ function CommentItem({ comment, postId, onAddReply, level = 0 }) {
                         {showReply ? 'Cancel' : 'Reply'}
                     </button>
 
+                    {replyCount > 0 && (
+                        <button
+                            className="text-xs text-gray-600 mt-1 ml-3"
+                            onClick={() => setExpanded((p) => !p)}
+                        >
+                            {expanded ? 'Hide replies' : `View replies (${replyCount})`}
+                        </button>
+                    )}
+
                     {showReply && (
                         <form onSubmit={handleReplySubmit} className="mt-2 flex flex-col gap-2">
                             <textarea
@@ -192,7 +206,7 @@ function CommentItem({ comment, postId, onAddReply, level = 0 }) {
                         </form>
                     )}
 
-                    {Array.isArray(comment.replies) && comment.replies.length > 0 && (
+                    {expanded && Array.isArray(comment.replies) && comment.replies.length > 0 && (
                         <ul className="mt-2 space-y-2 border-l pl-3">
                             {comment.replies.map((child) => (
                                 <CommentItem

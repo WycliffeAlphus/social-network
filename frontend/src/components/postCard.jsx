@@ -10,6 +10,7 @@ export default function PostCard({ post, showComments, setShowComments }) {
   const [dislikes, setDislikes] = useState(post.dislikeCount || 0);
   const [userReaction, setUserReaction] = useState(post.userReaction || "");
   const [isLoading, setIsLoading] = useState(false);
+  const [commentCount, setCommentCount] = useState(post.commentcount || post.commentCount || 0);
 
   const handleLikeSubmit = async (e) => {
     e.preventDefault();
@@ -102,12 +103,12 @@ export default function PostCard({ post, showComments, setShowComments }) {
           onClick={() => setShowComments((prev) => !prev)}
           className="hover:text-blue-600"
         >
-          💬
+          💬{commentCount}
         </button>
       </div>
       
       {showComments && (
-        <CommentSection postId={post.id} />
+        <CommentSection postId={post.id} onCountChange={setCommentCount} />
       )}
     </div>
   );
