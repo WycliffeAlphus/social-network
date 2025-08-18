@@ -50,4 +50,7 @@ type CommentWithUserInfo struct {
 	UserLastName  string `json:"user_last_name"`
 	UserNickname  string `json:"user_nickname"`
 	UserImgURL    string `json:"user_img_url"`
+
+	// Nested replies
+	Replies []CommentWithUserInfo `json:"replies,omitempty"`
 }

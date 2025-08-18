@@ -63,6 +63,23 @@ export default function CommentSection({ postId }) {
         }
     };
 
+    // Add a reply to the correct parent in local state
+    const addReplyToState = (parentId, reply) => {
+        const addReplyRecursive = (items) => {
+            return items.map((item) => {
+                if (item.id === parentId) {
+                    const existing = Array.isArray(item.replies) ? item.replies : [];
+                    return { ...item, replies: [...existing, reply] };
+                }
+                if (Array.isArray(item.replies) && item.replies.length > 0) {
+                    return { ...item, replies: addReplyRecursive(item.replies) };
+                }
+                return item;
+            });
+        };
+        setComments((prev) => addReplyRecursive(prev));
+    };
+
     return (
         <div className="mt-4">
             {loading && <p className="text-sm ">Loading comments...</p>}
@@ -71,13 +88,13 @@ export default function CommentSection({ postId }) {
             {!loading && comments.length > 0 && (
                 <ul className="space-y-2 mt-2">
                     {comments.map((comment) => (
-                        <li key={comment.id} className="border p-2 rounded">
-                            <p className="text-sm font-semibold">
-                                {comment.userNickname || `${comment.user_first_name} ${comment.user_last_name}`}
-                            </p>
-                            <p className="text-xs text-gray-500">{formatTimeAgo(comment.created_at)}</p>
-                            <p className="text-sm ">{comment.content}</p>
-                        </li>
+                        <CommentItem
+                            key={comment.id}
+                            comment={comment}
+                            postId={postId}
+                            onAddReply={addReplyToState}
+                            level={0}
+                        />
                     ))}
                 </ul>
             )}
@@ -99,5 +116,97 @@ export default function CommentSection({ postId }) {
                 </button>
             </form>
         </div>
+    );
+}
+
+function CommentItem({ comment, postId, onAddReply, level = 0 }) {
+    const [showReply, setShowReply] = useState(false);
+    const [replyText, setReplyText] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const name =
+        comment.userNickname ||
+        comment.user_nickname ||
+        `${comment.user_first_name || ''} ${comment.user_last_name || ''}`.trim();
+    const createdAt = comment.created_at || comment.createdAt;
+
+    const handleReplySubmit = async (e) => {
+        e.preventDefault();
+        if (!replyText.trim()) return;
+        setIsSubmitting(true);
+        try {
+            const res = await fetch(`http://localhost:8080/api/posts/${postId}/comments`, {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ content: replyText, parent_id: comment.id }),
+            });
+
+            const data = await res.json();
+            if (res.ok) {
+                onAddReply(comment.id, data.comment);
+                setReplyText('');
+                setShowReply(false);
+            }
+        } catch (err) {
+            console.error('Failed to post reply', err);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    return (
+        <li className="border p-2 rounded">
+            <div className="flex items-start gap-2">
+                <div className="flex-1">
+                    <p className="text-sm font-semibold">{name}</p>
+                    <p className="text-xs text-gray-500">{formatTimeAgo(createdAt)}</p>
+                    <p className="text-sm ">{comment.content}</p>
+                    <button
+                        className="text-xs text-blue-600 mt-1"
+                        onClick={() => setShowReply((p) => !p)}
+                    >
+                        {showReply ? 'Cancel' : 'Reply'}
+                    </button>
+
+                    {showReply && (
+                        <form onSubmit={handleReplySubmit} className="mt-2 flex flex-col gap-2">
+                            <textarea
+                                className="w-full border rounded p-2 text-sm"
+                                rows={2}
+                                placeholder="Write a reply..."
+                                value={replyText}
+                                onChange={(e) => setReplyText(e.target.value)}
+                            ></textarea>
+                            <div>
+                                <button
+                                    type="submit"
+                                    disabled={isSubmitting}
+                                    className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-2 py-1 rounded"
+                                >
+                                    {isSubmitting ? 'Posting...' : 'Post Reply'}
+                                </button>
+                            </div>
+                        </form>
+                    )}
+
+                    {Array.isArray(comment.replies) && comment.replies.length > 0 && (
+                        <ul className="mt-2 space-y-2 border-l pl-3">
+                            {comment.replies.map((child) => (
+                                <CommentItem
+                                    key={child.id}
+                                    comment={child}
+                                    postId={postId}
+                                    onAddReply={onAddReply}
+                                    level={level + 1}
+                                />)
+                            )}
+                        </ul>
+                    )}
+                </div>
+            </div>
+        </li>
     );
 }

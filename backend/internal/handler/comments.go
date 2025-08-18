@@ -189,31 +189,9 @@ func getComments(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		comment.UserImgURL = userImgURL.String
 
 		// Get replies for this comment
-		replies, err := getRepliesForComment(db, comment.Id)
+		commentReplies, err := buildRepliesTree(db, comment.Id)
 		if err == nil {
-			// Convert replies to the same format
-			var commentReplies []model.CommentWithUserInfo
-			for _, reply := range replies {
-				var parentId *string
-				if reply.ParentId.Valid {
-					parentId = &reply.ParentId.String
-				}
-				commentReplies = append(commentReplies, model.CommentWithUserInfo{
-					Id:            reply.Id,
-					PostId:        reply.PostId,
-					UserId:        reply.UserId,
-					Content:       reply.Content,
-					ParentId:      parentId,
-					CreatedAt:     reply.CreatedAt,
-					UpdatedAt:     reply.UpdatedAt,
-					UserFirstName: reply.UserFirstName,
-					UserLastName:  reply.UserLastName,
-					UserNickname:  reply.UserNickname,
-					UserImgURL:    reply.UserImgURL,
-				})
-			}
-			// For now, we'll just add the replies count as a field
-			// In a real implementation, you might want to nest them properly
+			comment.Replies = commentReplies
 		}
 
 		comments = append(comments, comment)
@@ -224,6 +202,42 @@ func getComments(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		"success":  true,
 		"comments": comments,
 	})
+}
+
+// buildRepliesTree constructs a nested list of replies for a given parent comment id
+func buildRepliesTree(db *sql.DB, parentCommentId string) ([]model.CommentWithUserInfo, error) {
+	replies, err := getRepliesForComment(db, parentCommentId)
+	if err != nil {
+		return nil, err
+	}
+
+	var nestedReplies []model.CommentWithUserInfo
+	for _, reply := range replies {
+		var parentId *string
+		if reply.ParentId.Valid {
+			parentId = &reply.ParentId.String
+		}
+
+		// Recursively build children for this reply
+		children, _ := buildRepliesTree(db, reply.Id)
+
+		nestedReplies = append(nestedReplies, model.CommentWithUserInfo{
+			Id:            reply.Id,
+			PostId:        reply.PostId,
+			UserId:        reply.UserId,
+			Content:       reply.Content,
+			ParentId:      parentId,
+			CreatedAt:     reply.CreatedAt,
+			UpdatedAt:     reply.UpdatedAt,
+			UserFirstName: reply.UserFirstName,
+			UserLastName:  reply.UserLastName,
+			UserNickname:  reply.UserNickname,
+			UserImgURL:    reply.UserImgURL,
+			Replies:       children,
+		})
+	}
+
+	return nestedReplies, nil
 }
 
 func validateComment(content string) error {
