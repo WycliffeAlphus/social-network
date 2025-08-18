@@ -76,13 +76,18 @@ export default function PostCard({ post, showComments, setShowComments }) {
       
       <p className="text-sm mb-3">{post.content}</p>
       
-      {post.imageurl?.Valid && (
-        <img
-          src={post.imageurl.String}
-          alt="Post image"
-          className="w-full rounded mt-2"
-        />
-      )}
+      {post.imageurl?.Valid && (() => {
+        const raw = (post.imageurl.String || "");
+        const stripped = raw.replace(/^\/?frontend\/public/, "");
+        const src = stripped.startsWith("/") ? stripped : `/${stripped}`;
+        return (
+          <img
+            src={src}
+            alt="Post image"
+            className="w-full rounded mt-2"
+          />
+        );
+      })()}
       
       <div className="flex justify-between text-sm border-t pt-2">
         <button 
