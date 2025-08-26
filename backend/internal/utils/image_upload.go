@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/google/uuid"
 )
@@ -58,7 +57,8 @@ func HandlePostImageUpload(r *http.Request, maxUploadSize int64, formName string
 		return sql.NullString{}, errors.New("Failed to save file")
 	}
 
-	relativePath := strings.TrimPrefix(filePath, "../frontend/public")
-	fmt.Println("jejehje",relativePath)
-	return sql.NullString{String: relativePath, Valid: true}, nil
+	// Always return a web-accessible URL under Next.js public/ dir
+	webPath := "/uploads/posts/" + filename
+	fmt.Println("saved image web path:", webPath)
+	return sql.NullString{String: webPath, Valid: true}, nil
 }
