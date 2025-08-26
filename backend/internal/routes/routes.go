@@ -24,7 +24,7 @@ func RegisterRoutes(db *sql.DB) {
 
 	// Initialize Notification-related dependencies
 	notificationRepo := repository.NewNotificationRepository(db)
-	notificationService := service.NewNotificationService(notificationRepo, userRepo) // Assuming userRepo is needed
+	notificationService := service.NewNotificationService(notificationRepo, userRepo, groupRepo)
 	notificationHandler := handler.NewNotificationHandler(notificationService)
 
 	// Public routes (no authentication required)

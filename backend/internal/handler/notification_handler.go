@@ -17,24 +17,40 @@ func NewNotificationHandler(s *service.NotificationService) *NotificationHandler
 
 // GetNotifications handles the request to fetch a user's notifications.
 func (h *NotificationHandler) GetNotifications(w http.ResponseWriter, r *http.Request) {
-	// userID, ok := r.Context().Value("userID").(int)
-	// if !ok {
-	// 	w.WriteHeader(http.StatusUnauthorized)
-	// 	return
-	// }
+	user := context.GetUserFromContext(r.Context())
+	if user == nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
 
-	// notifications, err := h.service.GetByUserID(userID)
-	// if err != nil {
-	// 	w.WriteHeader(http.StatusInternalServerError)
-	// 	return
-	// }
+	notifications, err := h.service.GetByUserID(user.ID)
+	if err != nil {
+		http.Error(w, "Failed to retrieve notifications", http.StatusInternalServerError)
+		return
+	}
 
-	// w.Header().Set("Content-Type", "application/json")
-	// json.NewEncoder(w).Encode(notifications)
+	w.Header().Set("Content-Type", "application/json")
+	if notifications == nil {
+		w.Write([]byte("[]")) // Return empty JSON array if no notifications
+		return
+	}
+	json.NewEncoder(w).Encode(notifications)
 }
 
-// MarkNotificationsAsRead handles marking notifications as read.
+// MarkNotificationsAsRead handles marking all notifications as read.
 func (h *NotificationHandler) MarkNotificationsAsRead(w http.ResponseWriter, r *http.Request) {
-	// Implementation to be added
-	w.WriteHeader(http.StatusNotImplemented)
+	user := context.GetUserFromContext(r.Context())
+	if user == nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	err := h.service.MarkAllAsRead(user.ID)
+	if err != nil {
+		http.Error(w, "Failed to mark notifications as read", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"message": "Notifications marked as read"})
 }
