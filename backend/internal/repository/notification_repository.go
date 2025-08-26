@@ -1,9 +1,8 @@
 package repository
 
 import (
+	"backend/internal/model"
 	"database/sql"
-
-	"social-network/internal/model"
 )
 
 type NotificationRepository struct {

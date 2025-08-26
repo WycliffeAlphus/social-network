@@ -70,36 +70,41 @@ func (s *GroupService) CreateGroup(title, description, privacySetting string, cr
 }
 
 // RequestToJoinGroup creates a join request for a user to join a group.
-func (s *GroupService) RequestToJoinGroup(groupID uint, userID string) error {
+func (s *GroupService) RequestToJoinGroup(groupID uint, userID string) (*model.Group, error) {
 	// Check if group exists
 	group, err := s.Repo.FindGroupByID(groupID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if group == nil {
-		return fmt.Errorf("group not found")
+		return nil, fmt.Errorf("group not found")
 	}
 
 	// Check if user is already a member or has a pending request
 	isMember, status, err := s.Repo.CheckUserMembership(groupID, userID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if isMember {
 		if status == "active" {
-			return fmt.Errorf("user is already a member of this group")
+			return nil, fmt.Errorf("user is already a member of this group")
 		} else if status == "pending" {
-			return fmt.Errorf("user already has a pending join request for this group")
+			return nil, fmt.Errorf("user already has a pending join request for this group")
 		}
 	}
 
 	// Check if user is the group creator (creators are automatically members)
 	if group.CreatorID == userID {
-		return fmt.Errorf("group creator cannot request to join their own group")
+		return nil, fmt.Errorf("group creator cannot request to join their own group")
 	}
 
 	// Create the join request
-	return s.Repo.CreateJoinRequest(groupID, userID)
+	err = s.Repo.CreateJoinRequest(groupID, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	return group, nil
 }
 
 // AcceptJoinRequest allows a group creator to accept a pending join request.

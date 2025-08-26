@@ -1,10 +1,10 @@
 package service
 
 import (
+	"backend/internal/model"
+	"backend/internal/repository"
 	"fmt"
 	"log"
-	"social-network/internal/model"
-	"social-network/internal/repository"
 	"strconv"
 )
 

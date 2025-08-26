@@ -20,12 +20,13 @@ func RegisterRoutes(db *sql.DB) {
 
 	groupRepo := repository.NewGroupRepository(db)
 	groupService := service.NewGroupService(groupRepo)
-	groupHandler := &handler.GroupHandler{Service: groupService, NotificationService: notificationService}
 
 	// Initialize Notification-related dependencies
 	notificationRepo := repository.NewNotificationRepository(db)
 	notificationService := service.NewNotificationService(notificationRepo, userRepo, groupRepo)
 	notificationHandler := handler.NewNotificationHandler(notificationService)
+
+	groupHandler := &handler.GroupHandler{Service: groupService, NotificationService: notificationService}
 
 	// Initialize Follower-related dependencies
 	followerHandler := handler.NewFollowerHandler(db, notificationService)
@@ -39,12 +40,12 @@ func RegisterRoutes(db *sql.DB) {
 	http.Handle("/api/profile/", middlewares.AuthMiddleware(db, handler.ProfileHandler(db)))
 	http.HandleFunc("/api/users/available", middlewares.AuthMiddleware(db, handler.GetFollowSuggestions(db)))
 	http.HandleFunc("/api/users/follow", middlewares.AuthMiddleware(db, followerHandler.FollowUser))
-	http.HandleFunc("/api/follow/accept", middlewares.AuthMiddleware(db, handler.AcceptFollowRequest(db)))
-	http.HandleFunc("/api/follow/decline", middlewares.AuthMiddleware(db, handler.DeclineFollowRequest(db)))
-	http.HandleFunc("/api/follow/cancel", middlewares.AuthMiddleware(db, handler.CancelFollowRequest(db)))
-	http.HandleFunc("/api/follow-status/", middlewares.AuthMiddleware(db, handler.GetFollowStatus(db)))
-	http.HandleFunc("/api/followers/", middlewares.AuthMiddleware(db, handler.GetFollowers(db)))
-	http.HandleFunc("/api/following/", middlewares.AuthMiddleware(db, handler.GetFollowing(db)))
+	http.HandleFunc("/api/follow/accept", middlewares.AuthMiddleware(db, followerHandler.AcceptFollowRequest))
+	http.HandleFunc("/api/follow/decline", middlewares.AuthMiddleware(db, followerHandler.DeclineFollowRequest))
+	http.HandleFunc("/api/follow/cancel", middlewares.AuthMiddleware(db, followerHandler.CancelFollowRequest))
+	http.HandleFunc("/api/follow-status/", middlewares.AuthMiddleware(db, followerHandler.GetFollowStatus()))
+	http.HandleFunc("/api/followers/", middlewares.AuthMiddleware(db, followerHandler.GetFollowers()))
+	http.HandleFunc("/api/following/", middlewares.AuthMiddleware(db, followerHandler.GetFollowing()))
 
 	groupsHandler := func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
@@ -83,7 +84,7 @@ func RegisterRoutes(db *sql.DB) {
 		http.Error(w, "Not found", http.StatusNotFound)
 	})
 
-	http.HandleFunc("/api/follow-requests", middlewares.AuthMiddleware(db, handler.GetFollowRequests(db)))
+	http.HandleFunc("/api/follow-requests", middlewares.AuthMiddleware(db, followerHandler.GetFollowRequests()))
 	http.HandleFunc("/api/profile/update", middlewares.AuthMiddleware(db, handler.UpdateProfileHandler(db)))
 	http.HandleFunc("/api/createpost", middlewares.AuthMiddleware(db, handler.CreatePost(db)))
 

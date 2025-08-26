@@ -3,6 +3,7 @@ package repository
 import (
 	"backend/internal/model"
 	"database/sql"
+	"fmt"
 	"log"
 )
 
@@ -61,4 +62,29 @@ func GetUserByNickname(db *sql.DB, nickname string) bool {
 	}
 
 	return false
+}
+
+// GetUserByID retrieves a user by their ID
+func (r *UserRepository) GetUserByID(id int) (*model.User, error) {
+	user := &model.User{}
+	query := `SELECT id, email, fname, lname, dob, imgurl, nickname, about, password, profileVisibility FROM users WHERE id = ?`
+	err := r.DB.QueryRow(query, id).Scan(
+		&user.ID,
+		&user.Email,
+		&user.FirstName,
+		&user.LastName,
+		&user.DOB,
+		&user.ImgURL,
+		&user.Nickname,
+		&user.About,
+		&user.Password,
+		&user.ProfileVisibility,
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("user with ID %d not found", id)
+		}
+		return nil, fmt.Errorf("error getting user by ID: %w", err)
+	}
+	return user, nil
 }
