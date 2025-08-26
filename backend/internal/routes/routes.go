@@ -27,6 +27,9 @@ func RegisterRoutes(db *sql.DB) {
 	notificationService := service.NewNotificationService(notificationRepo, userRepo, groupRepo)
 	notificationHandler := handler.NewNotificationHandler(notificationService)
 
+	// Initialize Follower-related dependencies
+	followerHandler := handler.NewFollowerHandler(db, notificationService)
+
 	// Public routes (no authentication required)
 	http.HandleFunc("/api/register", userHandler.Register)
 	http.HandleFunc("/api/login", handler.LoginHandler)
@@ -35,7 +38,7 @@ func RegisterRoutes(db *sql.DB) {
 	// http.Handle("/api/profile/", middlewares.AuthMiddleware(db, userHandler.Profile))
 	http.Handle("/api/profile/", middlewares.AuthMiddleware(db, handler.ProfileHandler(db)))
 	http.HandleFunc("/api/users/available", middlewares.AuthMiddleware(db, handler.GetFollowSuggestions(db)))
-	http.HandleFunc("/api/users/follow", middlewares.AuthMiddleware(db, handler.FollowUser(db)))
+	http.HandleFunc("/api/users/follow", middlewares.AuthMiddleware(db, followerHandler.FollowUser))
 	http.HandleFunc("/api/follow/accept", middlewares.AuthMiddleware(db, handler.AcceptFollowRequest(db)))
 	http.HandleFunc("/api/follow/decline", middlewares.AuthMiddleware(db, handler.DeclineFollowRequest(db)))
 	http.HandleFunc("/api/follow/cancel", middlewares.AuthMiddleware(db, handler.CancelFollowRequest(db)))

@@ -3,15 +3,32 @@ package handler
 import (
 	"backend/internal/context"
 	"backend/internal/model"
+	"backend/internal/service" // Import service package
 	"backend/pkg/extractid"
 	"database/sql"
 	"encoding/json"
 	"log"
 	"net/http"
+	"strconv"
 )
 
-func FollowUser(db *sql.DB) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+// FollowerHandler holds the services needed by the follower handlers.
+_ "backend/internal/service"
+
+type FollowerHandler struct {
+	DB                *sql.DB // Keeping DB for now, can be refactored to a FollowerService later
+	NotificationService *service.NotificationService
+}
+
+// NewFollowerHandler creates a new FollowerHandler.
+func NewFollowerHandler(db *sql.DB, ns *service.NotificationService) *FollowerHandler {
+	return &FollowerHandler{
+		DB:                db,
+		NotificationService: ns,
+	}
+}
+
+func (h *FollowerHandler) FollowUser(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 			return
@@ -70,6 +87,22 @@ func FollowUser(db *sql.DB) http.HandlerFunc {
 			log.Printf("Error creating follow relationship: %v", insertFollowErr)
 			http.Error(w, "Failed to follow user", http.StatusInternalServerError)
 			return
+		}
+
+		// Create a notification if the follow request is pending
+		if status == "requested" {
+			followedUserID, err := strconv.Atoi(request.FollowedUserID)
+			if err != nil {
+				log.Printf("Error converting followed user ID: %v", err)
+				// Not returning an error to the user, as the follow action itself was successful
+			} else {
+				actorID, _ := strconv.Atoi(currentUserID)
+				err := h.NotificationService.CreateFollowRequestNotification(actorID, followedUserID)
+				if err != nil {
+					log.Printf("Error creating follow request notification: %v", err)
+					// Non-critical error, so we don't block the user response
+				}
+			}
 		}
 
 		message := "Follow request sent"
