@@ -20,7 +20,7 @@ func RegisterRoutes(db *sql.DB) {
 
 	groupRepo := repository.NewGroupRepository(db)
 	groupService := service.NewGroupService(groupRepo)
-	groupHandler := &handler.GroupHandler{Service: groupService}
+	groupHandler := &handler.GroupHandler{Service: groupService, NotificationService: notificationService}
 
 	// Initialize Notification-related dependencies
 	notificationRepo := repository.NewNotificationRepository(db)
@@ -68,6 +68,16 @@ func RegisterRoutes(db *sql.DB) {
 			} else {
 				middlewares.AuthMiddleware(db, http.HandlerFunc(groupHandler.JoinGroupRequest)).ServeHTTP(w, r)
 			}
+			return
+		}
+		// Handle /api/groups/:id/invite endpoint
+		if strings.Contains(r.URL.Path, "/invite") {
+			middlewares.AuthMiddleware(db, http.HandlerFunc(groupHandler.InviteUserToGroup)).ServeHTTP(w, r)
+			return
+		}
+		// Handle /api/groups/:id/events endpoint
+		if strings.Contains(r.URL.Path, "/events") {
+			middlewares.AuthMiddleware(db, http.HandlerFunc(groupHandler.CreateEvent)).ServeHTTP(w, r)
 			return
 		}
 		http.Error(w, "Not found", http.StatusNotFound)

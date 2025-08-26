@@ -154,3 +154,43 @@ func (r *GroupRepository) IsGroupCreator(groupID uint, userID string) (bool, err
 
 	return creatorID == userID, nil
 }
+
+// GetGroupMembers retrieves all active members of a group.
+func (r *GroupRepository) GetGroupMembers(groupID uint) ([]string, error) {
+	rows, err := r.DB.Query(`
+		SELECT user_id FROM group_members
+		WHERE group_id = ? AND status = 'active'
+	`, groupID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var memberIDs []string
+	for rows.Next() {
+		var memberID string
+		if err := rows.Scan(&memberID); err != nil {
+			return nil, err
+		}
+		memberIDs = append(memberIDs, memberID)
+	}
+
+	return memberIDs, rows.Err()
+}
+
+// CreateEvent inserts a new event into the database.
+func (r *GroupRepository) CreateEvent(event *model.Event) (int, error) {
+	query := `
+		INSERT INTO events (group_id, creator_id, title, description, event_time)
+		VALUES (?, ?, ?, ?, ?)
+	`
+	res, err := r.DB.Exec(query, event.GroupID, event.CreatorID, event.Title, event.Description, event.EventTime)
+	if err != nil {
+		return 0, err
+	}
+	id, err := res.LastInsertId()
+	if err != nil {
+		return 0, err
+	}
+	return int(id), nil
+}
