@@ -22,6 +22,11 @@ func RegisterRoutes(db *sql.DB) {
 	groupService := service.NewGroupService(groupRepo)
 	groupHandler := &handler.GroupHandler{Service: groupService}
 
+	// Initialize Notification-related dependencies
+	notificationRepo := repository.NewNotificationRepository(db)
+	notificationService := service.NewNotificationService(notificationRepo, userRepo) // Assuming userRepo is needed
+	notificationHandler := handler.NewNotificationHandler(notificationService)
+
 	// Public routes (no authentication required)
 	http.HandleFunc("/api/register", userHandler.Register)
 	http.HandleFunc("/api/login", handler.LoginHandler)
@@ -74,4 +79,7 @@ func RegisterRoutes(db *sql.DB) {
 	http.HandleFunc("/api/feeds", middlewares.AuthMiddleware(db, handler.DashboardHandler(db)))
 	http.HandleFunc("/api/reaction", middlewares.AuthMiddleware(db, handler.HandleReaction(db)))
 
+	// Notification routes
+	http.HandleFunc("/api/notifications", middlewares.AuthMiddleware(db, notificationHandler.GetNotifications))
+	http.HandleFunc("/api/notifications/read", middlewares.AuthMiddleware(db, notificationHandler.MarkNotificationsAsRead))
 }
