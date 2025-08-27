@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 
 	"backend/internal/handler"
 	"backend/internal/middlewares"
@@ -11,7 +12,9 @@ import (
 )
 
 func main() {
-	sqlite.CreateMigrationFile()
+	if len(os.Args) >= 2 {
+		sqlite.CreateMigrationFile()
+	}
 
 	// Connect to the SQLite database and apply migrations
 	db, err := sqlite.ConnectAndMigrate()
