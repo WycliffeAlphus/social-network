@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Sidebar from "../components/sidebar";
 import { usePathname } from "next/navigation";
+import connectWebsocket from "@/components/ws";
 
 export default function ClientLayout({ children }) {
   const [data, setData] = useState(null);
@@ -24,6 +25,7 @@ export default function ClientLayout({ children }) {
           const data = await res.json()
           // console.log(data)
           setData(data)
+          connectWebsocket(data.current_user_id)
         }
       } catch (error) {
         console.error("error fetching user: ", error)

@@ -1,11 +1,13 @@
 package main
 
 import (
+	"log"
+	"net/http"
+
+	"backend/internal/handler"
 	"backend/internal/middlewares"
 	"backend/internal/routes"
 	"backend/pkg/db/sqlite"
-	"log"
-	"net/http"
 )
 
 func main() {
@@ -19,6 +21,8 @@ func main() {
 
 	// Register all routes (handlers)
 	routes.RegisterRoutes(db)
+
+	go handler.HandleMessages()
 
 	// Serve uploaded files from the /uploads/ directory
 	// This allows accessing files at http://localhost:8080/uploads/<filename>
