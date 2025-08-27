@@ -1,0 +1,10 @@
+CREATE TABLE IF NOT EXISTS messages (
+    id VARCHAR(40) PRIMARY KEY,
+    sender_id VARCHAR(40),
+    receiver_id VARCHAR(40),
+    content TEXT NOT NULL,
+    read INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE
+);
