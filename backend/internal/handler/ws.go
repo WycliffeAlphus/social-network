@@ -50,20 +50,20 @@ func WebSocketConnection(db *sql.DB) http.HandlerFunc {
 			log.Println("Login message read error:", err)
 			return
 		}
-		nickname := loginMsg.From
+		id := loginMsg.From
 
 		mutex.Lock()
-		users[nickname] = conn
+		users[id] = conn
 		mutex.Unlock()
 
-		log.Println(nickname, "connected")
+		log.Println(id, "connected")
 
 		// Clean up on disconnect
 		defer func() {
 			mutex.Lock()
-			delete(users, nickname)
+			delete(users, id)
 			mutex.Unlock()
-			log.Println(nickname, "disconnected")
+			log.Println(id, "disconnected")
 		}()
 
 		for {
@@ -71,7 +71,7 @@ func WebSocketConnection(db *sql.DB) http.HandlerFunc {
 			var msg model.Message
 			err := conn.ReadJSON(&msg)
 			if err != nil {
-				fmt.Println("Read error from "+nickname+": ", err)
+				fmt.Println("Read error from user: ", err)
 				break
 			}
 			fmt.Println("here is the message",msg)
