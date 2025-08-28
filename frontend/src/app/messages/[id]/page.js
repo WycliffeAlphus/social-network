@@ -3,15 +3,18 @@
 import { useUser } from "@/context/user-context";
 import { useParams } from "next/navigation";
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { PaperAirplaneIcon, PhotoIcon, FaceSmileIcon } from "@heroicons/react/24/outline";
+import EmojiPicker from 'emoji-picker-react';
 
 export default function Messages() {
     const currentUserId = useUser()
     const { id } = useParams()
     const router = useRouter()
-
     const [message, setMessage] = useState('')
+    const [showEmojiPicker, setShowEmojiPicker] = useState(false)
+    const emojiPickerRef = useRef(null)
+    const emojiButtonRef = useRef(null)
 
     useEffect(() => {
         if (currentUserId && currentUserId === id) {
@@ -19,6 +22,36 @@ export default function Messages() {
             return
         }
     }, [id, currentUserId, router]);
+
+    const onEmojiClick = (emojiData) => {
+        setMessage(prevMessage => prevMessage + emojiData.emoji)
+    }
+
+    // this closes the emoji picker when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target)) {
+                setShowEmojiPicker(false)
+            }
+        }
+
+        document.addEventListener('click', handleClickOutside)
+        return () => {
+            document.removeEventListener('click', handleClickOutside)
+        }
+    }, [showEmojiPicker])
+
+    // calculate emoji picker position based on emoji button
+    const getEmojiPickerPosition = () => {
+        if (!emojiButtonRef.current) return {};
+
+        const buttonRect = emojiButtonRef.current.getBoundingClientRect();
+        return {
+            bottom: `calc(100% - ${buttonRect.top}px)`,
+            left: `${buttonRect.left}px`,
+            transform: 'translateY(-10px)'
+        };
+    }
 
     return (
         <div className="flex flex-col h-screen">
@@ -61,8 +94,10 @@ export default function Messages() {
                         />
                     </div>
                     <button
+                        ref={emojiButtonRef}
                         type="button"
                         className="p-2 rounded-full cursor-pointer"
+                        onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                     >
                         <FaceSmileIcon className="h-6 w-6 text-blue-500" />
                     </button>
@@ -81,6 +116,22 @@ export default function Messages() {
                         <PaperAirplaneIcon className="h-6 w-6" />
                     </button>
                 </div>
+
+                {/* Emoji Picker */}
+                {showEmojiPicker && (
+                    <div
+                        ref={emojiPickerRef}
+                        className="fixed scrollbar bottom-16 left-16 z-77"
+                        style={getEmojiPickerPosition()}
+                    >
+                        <EmojiPicker
+                            onEmojiClick={onEmojiClick}
+                            width={350}
+                            height={350}
+                            theme="dark"
+                        />
+                    </div>
+                )}
             </form>
         </div>
     )
