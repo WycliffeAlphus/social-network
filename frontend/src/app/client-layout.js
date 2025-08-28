@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Sidebar from "../components/sidebar";
 import { usePathname } from "next/navigation";
 import connectWebsocket from "@/components/ws";
+import { UserContext } from "@/context/user-context";
 
 export default function ClientLayout({ children }) {
   const [data, setData] = useState(null);
@@ -43,13 +44,15 @@ export default function ClientLayout({ children }) {
   if (!data) return <div>Loading...</div>
 
   return (
-    <div className="h-screen px-[1%] md:px-[12%] 2xl:px-[18%]">
-      <div className="flex min-h-screen">
-        <Sidebar data={data} />
-        <main className="flex-1">
-          {children}
-        </main>
-      </div>
+    <div className="h-screen md:px-[12%] 2xl:px-[18%]">
+      <UserContext.Provider value={data?.current_user_id}>
+        <div className="flex min-h-screen">
+          <Sidebar data={data} />
+          <main className="flex-1">
+            {children}
+          </main>
+        </div>
+      </UserContext.Provider>
     </div>
   );
 }
