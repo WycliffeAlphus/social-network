@@ -76,6 +76,18 @@ export default function Messages() {
         };
     }, []);
 
+    // closes emoji picker when window is resized
+    useEffect(() => {
+        const handleResize = () => {
+            setShowEmojiPicker(false);
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => {
+            window.removeEventListener('resize', handleResize);
+        };
+    }, []);
+
     return (
         <div className="flex flex-col h-screen">
             {/* Chat header */}
