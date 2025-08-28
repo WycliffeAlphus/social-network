@@ -27,6 +27,6 @@ body {
 }
 
 .scrollbar {
-  scrollbar-color: grey rgb(40, 40, 40);
+  scrollbar-color: rgb(210, 210, 210) rgba(40, 40, 40, 0);
   scrollbar-width: thin;
 }
