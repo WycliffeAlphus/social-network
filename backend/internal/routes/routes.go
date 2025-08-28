@@ -62,6 +62,12 @@ func RegisterRoutes(db *sql.DB) {
 			}
 			return
 		}
+
+		// Handle /api/groups/:id/events endpoint
+		if strings.Contains(r.URL.Path, "/events") {
+			middlewares.AuthMiddleware(db, http.HandlerFunc(groupHandler.CreateGroupEvent)).ServeHTTP(w, r)
+			return
+		}
 		http.Error(w, "Not found", http.StatusNotFound)
 	})
 

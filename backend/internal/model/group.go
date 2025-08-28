@@ -12,3 +12,15 @@ type Group struct {
 	UpdatedAt      time.Time  `json:"updated_at"`
 	DeletedAt      *time.Time `json:"deleted_at,omitempty"`
 }
+
+type GroupEvent struct {
+	ID          uint       `json:"id"`
+	GroupID     uint       `json:"group_id"`
+	Title       string     `json:"title"`
+	Description string     `json:"description"`
+	Time        time.Time  `json:"time"`
+	Location    string     `json:"location"`
+	CreatedAt   time.Time  `json:"created_at"`
+	UpdatedAt   time.Time  `json:"updated_at"`
+	DeletedAt   *time.Time `json:"deleted_at,omitempty"`
+}

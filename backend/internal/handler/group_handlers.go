@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"backend/internal/context"
 	"backend/internal/model"
@@ -191,4 +192,54 @@ func extractGroupIDFromPath(path string) (uint, error) {
 	}
 
 	return 0, fmt.Errorf("group ID not found in path")
+}
+
+// CreateGroupEventRequest is the payload to create a group event
+type CreateGroupEventRequest struct {
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	Time        string `json:"time"` // ISO8601 string
+	Location    string `json:"location"`
+}
+
+// CreateGroupEvent handles POST /api/groups/:id/events
+func (h *GroupHandler) CreateGroupEvent(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		utils.RespondWithError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		return
+	}
+
+	user := context.MustGetUser(r.Context())
+	userID := user.ID
+
+	groupID, err := extractGroupIDFromPath(r.URL.Path)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid group ID")
+		return
+	}
+
+	var req CreateGroupEventRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid request payload: "+err.Error())
+		return
+	}
+	if req.Title == "" || req.Time == "" {
+		utils.RespondWithError(w, http.StatusBadRequest, "title and time are required")
+		return
+	}
+
+	// Parse time (expect RFC3339)
+	t, err := time.Parse(time.RFC3339, req.Time)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusBadRequest, "invalid time format, expected RFC3339")
+		return
+	}
+
+	event, err := h.Service.CreateGroupEvent(groupID, userID, req.Title, req.Description, t, req.Location)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	utils.RespondWithJSON(w, http.StatusCreated, event)
 }
