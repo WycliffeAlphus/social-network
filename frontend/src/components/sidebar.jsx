@@ -67,7 +67,7 @@ export default function Sidebar({ data }) {
 
   return (
     <>
-      <aside className="sticky min-w-[5rem] xl:w-[12rem] pt-[3rem] top-0 h-[100vh] overflow-y-auto">
+      <aside className="sticky min-w-[5rem] xl:w-[12rem] pt-[3rem] top-0 h-[100vh] overflow-y-auto scrollbar">
         <ul className="w-full">
           <li className="p-4 border-gray-100/20">
             <Link href="/" className="flex w-full pb-4 items-center items-center justify-center md:justify-start">

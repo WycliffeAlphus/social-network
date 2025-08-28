@@ -88,6 +88,52 @@ export default function Messages() {
         };
     }, []);
 
+    // prevent scrolling when emoji picker is open
+    useEffect(() => {
+        if (showEmojiPicker) {
+            // add event listener to prevent scrolling
+            const preventScroll = (e) => {
+                // allow scrolling within the emoji picker
+                if (emojiPickerRef.current && emojiPickerRef.current.contains(e.target)) {
+                    return true; // allow scrolling inside emoji picker
+                }
+
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+            };
+
+            // prevent scroll on various events
+            document.addEventListener('wheel', preventScroll, { passive: false });
+            document.addEventListener('touchmove', preventScroll, { passive: false });
+            document.addEventListener('keydown', (e) => {
+                if (['Space', 'ArrowUp', 'ArrowDown', 'PageUp', 'PageDown'].includes(e.code)) {
+                    e.preventDefault();
+                }
+            });
+
+            // prevent scrollbar dragging by disabling overflow on ALL scrollable containers
+            const scrollableContainers = document.querySelectorAll('.overflow-y-auto, .overflow-auto, [style*="overflow"], [class*="scroll"]');
+            const originalStyles = [];
+
+            scrollableContainers.forEach((container, index) => {
+                originalStyles[index] = container.style.overflow;
+                container.style.overflow = 'hidden';
+            });
+
+            // cleanup function to restore scrolling
+            return () => {
+                document.removeEventListener('wheel', preventScroll);
+                document.removeEventListener('touchmove', preventScroll);
+
+                // restore all scrollable containers
+                scrollableContainers.forEach((container, index) => {
+                    container.style.overflow = originalStyles[index];
+                });
+            };
+        }
+    }, [showEmojiPicker]);
+
     return (
         <div className="flex flex-col h-screen">
             {/* Chat header */}
@@ -96,7 +142,7 @@ export default function Messages() {
             </div>
 
             {/* Messages area */}
-            <div className="flex-1 overflow-y-auto p-3 space-y-4">
+            <div className="flex-1 overflow-y-auto scrollbar p-3 space-y-4">
                 {/* Example messages */}
                 <div className="flex justify-start">
                     <div className="bg-gray-700 text-white rounded-3xl rounded-bl-sm p-3 max-w-xs">
