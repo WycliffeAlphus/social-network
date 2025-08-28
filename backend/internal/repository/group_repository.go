@@ -7,7 +7,7 @@ import (
 )
 
 type GroupRepository struct {
-	DB *sql.DB 
+	DB *sql.DB
 }
 
 // NewGroupRepository creates and returns a new instance of GroupRepository.
@@ -153,4 +153,39 @@ func (r *GroupRepository) IsGroupCreator(groupID uint, userID string) (bool, err
 	}
 
 	return creatorID == userID, nil
+}
+
+// InsertGroupEvent inserts a new event for a group
+func (r *GroupRepository) InsertGroupEvent(event *model.GroupEvent) (uint, error) {
+	stmt, err := r.DB.Prepare(`
+        INSERT INTO group_events (group_id, title, description, time, location)
+        VALUES (?, ?, ?, ?, ?)
+    `)
+	if err != nil {
+		return 0, err
+	}
+	defer stmt.Close()
+
+	res, err := stmt.Exec(event.GroupID, event.Title, event.Description, event.Time, event.Location)
+	if err != nil {
+		return 0, err
+	}
+	id, err := res.LastInsertId()
+	if err != nil {
+		return 0, err
+	}
+	return uint(id), nil
+}
+
+// IsActiveMember checks if a user is an active member of the group
+func (r *GroupRepository) IsActiveMember(groupID uint, userID string) (bool, error) {
+	var count int
+	err := r.DB.QueryRow(`
+        SELECT COUNT(1) FROM group_members
+        WHERE group_id = ? AND user_id = ? AND status = 'active' AND deleted_at IS NULL
+    `, groupID, userID).Scan(&count)
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
 }

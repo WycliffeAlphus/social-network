@@ -4,6 +4,7 @@ import (
 	"backend/internal/model"
 	"backend/internal/repository"
 	"fmt"
+	"time"
 )
 
 type GroupService struct {
@@ -86,9 +87,10 @@ func (s *GroupService) RequestToJoinGroup(groupID uint, userID string) error {
 		return err
 	}
 	if isMember {
-		if status == "active" {
+		switch status {
+		case "active":
 			return fmt.Errorf("user is already a member of this group")
-		} else if status == "pending" {
+		case "pending":
 			return fmt.Errorf("user already has a pending join request for this group")
 		}
 	}
@@ -124,4 +126,43 @@ func (s *GroupService) AcceptJoinRequest(groupID uint, requesterUserID string, c
 
 	// Accept the join request
 	return s.Repo.AcceptJoinRequest(groupID, requesterUserID)
+}
+
+// CreateGroupEvent validates membership and creates a new event for the group
+func (s *GroupService) CreateGroupEvent(groupID uint, creatorUserID string, title string, description string, t time.Time, location string) (*model.GroupEvent, error) {
+	// ensure group exists
+	group, err := s.Repo.FindGroupByID(groupID)
+	if err != nil {
+		return nil, err
+	}
+	if group == nil {
+		return nil, fmt.Errorf("group not found")
+	}
+
+	// only active members can create events (including creator)
+	isMember, err := s.Repo.IsActiveMember(groupID, creatorUserID)
+	if err != nil {
+		return nil, err
+	}
+	if !isMember && group.CreatorID != creatorUserID {
+		return nil, fmt.Errorf("only active members can create events")
+	}
+
+	if title == "" {
+		return nil, fmt.Errorf("title is required")
+	}
+
+	event := &model.GroupEvent{
+		GroupID:     groupID,
+		Title:       title,
+		Description: description,
+		Time:        t,
+		Location:    location,
+	}
+	id, err := s.Repo.InsertGroupEvent(event)
+	if err != nil {
+		return nil, err
+	}
+	event.ID = id
+	return event, nil
 }
