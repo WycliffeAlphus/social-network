@@ -25,3 +25,8 @@ body {
 .input-error-bottom {
     border-bottom: 1px solid red !important;
 }
+
+.scrollbar {
+  scrollbar-color: grey rgb(40, 40, 40);
+  scrollbar-width: thin;
+}
