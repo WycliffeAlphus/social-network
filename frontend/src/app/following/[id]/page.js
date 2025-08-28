@@ -44,7 +44,7 @@ export default function FollowingPage() {
                     <FollowSuggestion />
                 </div>
                 <h1 className="py-[0.7rem] px-[1rem] bg-ble-500 text-2xl font-bold border-t lg:border-0 border-gray-400">Following</h1>
-                <div className="p-7 border-t border-gray-400">
+                <div className="p-7">
                     {following.length > 0 ? (
                         following.map(user => (
                             <Link

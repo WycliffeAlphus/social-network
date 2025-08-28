@@ -43,7 +43,7 @@ export default function FollowersPage() {
                     <FollowSuggestion />
                 </div>
                 <h1 className="py-[0.7rem] px-[1rem] bg-ble-500 text-2xl font-bold border-t lg:border-0 border-gray-400">Followers</h1>
-                <div className="p-7 border-t border-gray-400">
+                <div className="p-7">
                     {followers.length > 0 ? (
                         followers.map(user => (
                             <Link

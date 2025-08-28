@@ -137,7 +137,7 @@ export default function Messages() {
     return (
         <div className="flex flex-col h-screen">
             {/* Chat header */}
-            <div className="border-b border-gray-200 p-4">
+            <div className="border-b border-gray-400 p-4">
                 <h2 className="text-xl font-semibold">Chat</h2>
             </div>
 
@@ -159,7 +159,7 @@ export default function Messages() {
             </div>
 
             {/* Message input form */}
-            <form className="border-t border-gray-200 p-4">
+            <form className="border-t border-gray-400 p-4">
                 <div className="flex items-center space-x-2">
                     <div>
                         <label htmlFor="chatImage" className="cursor-pointer">
@@ -187,7 +187,7 @@ export default function Messages() {
                         value={message}
                         onChange={(e) => setMessage(e.target.value)}
                         placeholder="Type a message..."
-                        className="flex-1 border border-gray-300 rounded-full py-2 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="flex-1 border border-gray-400 rounded-full py-2 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                     <button
                         type="submit"
