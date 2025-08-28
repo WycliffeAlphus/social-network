@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from "react";
 import { PaperAirplaneIcon, PhotoIcon, FaceSmileIcon } from "@heroicons/react/24/outline";
 import EmojiPicker from 'emoji-picker-react';
+import { getWebSocket } from "@/components/ws";
 
 export default function Messages() {
     const currentUserId = useUser()
@@ -134,8 +135,31 @@ export default function Messages() {
         }
     }, [showEmojiPicker]);
 
+    const handleSubmit = async (e) => {
+        e.preventDefault()
+
+        if (!currentUserId || !receiverId || !message) {
+            return
+        }
+
+        const msg = {
+            from: currentUserId,
+            to: receiverId,
+            content: message
+        }
+
+        console.log(msg)
+
+        const sock = getWebSocket()
+        sock.send(JSON.stringify(msg))
+    }
+
     return (
         <div className="flex flex-col h-screen">
+            {/* show the below if valid */}
+            {/* if not valid show cannot send message to the user */}
+            {/* if ID not in the db, giza */}
+
             {/* Chat header */}
             <div className="border-b border-gray-400 p-4">
                 <h2 className="text-xl font-semibold">Chat</h2>
@@ -159,7 +183,7 @@ export default function Messages() {
             </div>
 
             {/* Message input form */}
-            <form className="border-t border-gray-400 p-4">
+            <form onSubmit={handleSubmit} className="border-t border-gray-400 p-4">
                 <div className="flex items-center space-x-2">
                     <div>
                         <label htmlFor="chatImage" className="cursor-pointer">
