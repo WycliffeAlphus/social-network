@@ -15,6 +15,7 @@ export default function Messages() {
     const [showEmojiPicker, setShowEmojiPicker] = useState(false)
     const emojiPickerRef = useRef(null)
     const emojiButtonRef = useRef(null)
+    const [isDarkMode, setIsDarkMode] = useState(false)
 
     useEffect(() => {
         if (currentUserId && currentUserId === id) {
@@ -52,6 +53,28 @@ export default function Messages() {
             transform: 'translateY(-10px)'
         };
     }
+
+    useEffect(() => {
+        const checkDarkMode = () => {
+            setIsDarkMode(window.matchMedia('(prefers-color-scheme: dark)').matches);
+        }
+
+        // check initially
+        checkDarkMode();
+
+        // listen for system theme changes
+        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+
+        const handleThemeChange = (e) => {
+            setIsDarkMode(e.matches);
+        };
+
+        mediaQuery.addEventListener('change', handleThemeChange);
+
+        return () => {
+            mediaQuery.removeEventListener('change', handleThemeChange);
+        };
+    }, []);
 
     return (
         <div className="flex flex-col h-screen">
@@ -128,7 +151,7 @@ export default function Messages() {
                             onEmojiClick={onEmojiClick}
                             width={350}
                             height={350}
-                            theme="dark"
+                            theme={isDarkMode ? 'dark' : 'light'}
                         />
                     </div>
                 )}
