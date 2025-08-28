@@ -57,6 +57,7 @@ func WebSocketConnection(db *sql.DB) http.HandlerFunc {
 		mutex.Unlock()
 
 		log.Println(id, "connected")
+		BroadcastUserList(db)
 
 		// Clean up on disconnect
 		defer func() {
@@ -64,6 +65,7 @@ func WebSocketConnection(db *sql.DB) http.HandlerFunc {
 			delete(users, id)
 			mutex.Unlock()
 			log.Println(id, "disconnected")
+			BroadcastUserList(db)
 		}()
 
 		for {
