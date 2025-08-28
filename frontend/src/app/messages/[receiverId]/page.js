@@ -9,7 +9,7 @@ import EmojiPicker from 'emoji-picker-react';
 
 export default function Messages() {
     const currentUserId = useUser()
-    const { id } = useParams()
+    const { receiverId } = useParams()
     const router = useRouter()
     const [message, setMessage] = useState('')
     const [showEmojiPicker, setShowEmojiPicker] = useState(false)
@@ -18,11 +18,11 @@ export default function Messages() {
     const [isDarkMode, setIsDarkMode] = useState(false)
 
     useEffect(() => {
-        if (currentUserId && currentUserId === id) {
+        if (currentUserId && currentUserId === receiverId) {
             router.push('/messages')
             return
         }
-    }, [id, currentUserId, router]);
+    }, [receiverId, currentUserId, router]);
 
     const onEmojiClick = (emojiData) => {
         setMessage(prevMessage => prevMessage + emojiData.emoji)
