@@ -1,18 +1,16 @@
+let sock
 
 export default function connectWebsocket(id) {
-    let sock
     sock = new WebSocket(`ws://localhost:8080/ws`);
-    
-    sock.onopen = () => {
-        console.log("hit")
-        sock.send(JSON.stringify({
-            from: id
-        }))
 
+    sock.onopen = () => {
         sock.send(JSON.stringify({
             from: id,
-            content: "Test message"
-        }));
+            to: "",
+            content: "",
+            timestamp: new Date().toISOString()
+        }))
+        console.log("WebSocket connected.");
     }
 
     sock.onmessage = (event) => {
@@ -23,4 +21,8 @@ export default function connectWebsocket(id) {
     sock.onerror = (error) => {
         console.error("WebSocket error:", error);
     };
+}
+
+export function getWebSocket() {
+    return sock;
 }
