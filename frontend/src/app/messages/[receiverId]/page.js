@@ -22,6 +22,8 @@ export default function Messages() {
     const [isLoading, setIsLoading] = useState(true)
     const [receiverExists, setReceiverExists] = useState(false)
     const [hasFollowRelationship, setHasFollowRelationship] = useState(false)
+    const [messages, setMessages] = useState([])
+    const [messagesLoading, setMessagesLoading] = useState(true)
 
     useEffect(() => {
         if (currentUserId && currentUserId === receiverId) {
@@ -60,6 +62,37 @@ export default function Messages() {
     const onEmojiClick = (emojiData) => {
         setMessage(prevMessage => prevMessage + emojiData.emoji)
     }
+
+    useEffect(() => {
+        if (!currentUserId || !receiverId || currentUserId === receiverId) {
+            return;
+        }
+
+        const getConversation = async () => {
+            try {
+                const response = await fetch(`http://localhost:8080/api/conversations?receiverId=${receiverId}`, {
+                    credentials: 'include',
+                })
+
+                if (response.status === 400) {
+                    return
+                }
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch profile')
+                }
+
+                const messages = await response.json()
+                setMessages(messages)
+            } catch (error) {
+                console.error('Error fetching conversation:', error);
+            } finally {
+                setMessagesLoading(false)
+            }
+        }
+
+        getConversation()
+    }, [receiverId, currentUserId])
 
     // this closes the emoji picker when clicking outside
     useEffect(() => {
@@ -223,21 +256,24 @@ export default function Messages() {
             </div>
 
             {/* Messages area */}
-            <div className="flex-1 overflow-y-auto scrollbar p-3 space-y-4">
-                {/* Example messages */}
-                <div className="flex justify-start">
-                    <div className="bg-gray-700 text-white rounded-3xl rounded-bl-sm p-3 max-w-xs">
-                        <p>Hello there! How are you doing?</p>
-                        <p className="text-xs text-gray-500 mt-1">10:30 AM</p>
-                    </div>
+            {!messagesLoading ? (
+                <div className="flex-1 overflow-y-auto scrollbar p-3 space-y-4">
+                    {messages && messages.length > 0 ? (
+                        messages.map((message) => (
+                            <div key={`${message.timestamp}-${message.from}`} className={`flex ${message.from === currentUserId ? 'justify-end' : 'justify-start'}`}>
+                                <div className={`text-white rounded-3xl p-3 max-w-xs ${message.from === currentUserId ? 'bg-blue-500 rounded-br-sm' : 'bg-gray-700 rounded-bl-sm'}`}>
+                                    <p>{message.content}</p>
+                                    <p className="text-xs font-bold text-gray-300 mt-1">{message.timestamp}</p>
+                                </div>
+                            </div>
+                        ))
+                    ) : (
+                        <h3>Begin your conversation</h3>
+                    )}
                 </div>
-                <div className="flex justify-end">
-                    <div className="bg-blue-500 text-white rounded-3xl rounded-br-sm p-3 max-w-xs">
-                        <p>I'm good, thanks for asking!</p>
-                        <p className="text-xs text-blue-100 mt-1">10:32 AM</p>
-                    </div>
-                </div>
-            </div>
+            ) : (
+                <Loading />
+            )}
 
             {/* Message input form */}
             <form onSubmit={handleSubmit} className="border-t border-gray-400 p-4">
