@@ -25,7 +25,7 @@ func main() {
 	// Register all routes (handlers)
 	routes.RegisterRoutes(db)
 
-	go handler.HandleMessages()
+	go handler.HandleMessages(db)
 
 	// Serve uploaded files from the /uploads/ directory
 	// This allows accessing files at http://localhost:8080/uploads/<filename>

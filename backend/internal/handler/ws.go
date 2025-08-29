@@ -9,6 +9,7 @@ import (
 
 	"backend/internal/model"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 )
 
@@ -83,22 +84,33 @@ func WebSocketConnection(db *sql.DB) http.HandlerFunc {
 	}
 }
 
-func HandleMessages() {
+func HandleMessages(db *sql.DB) {
 	for {
 		msg := <-broadcast
 
+		messageId := uuid.NewString()
+		_, insertMessageErr := db.Exec(`
+		INSERT INTO messages (id, sender_id, receiver_id, content)
+		VALUES (?, ?, ?, ?)`, messageId, msg.From, msg.To, msg.Content)
+		if insertMessageErr != nil {
+			log.Println("Failed to save message to database: ", insertMessageErr)
+		}
 
 		mutex.Lock()
-		conn, ok := users[msg.From]
+		recipientConn, ok := users[msg.To]
 		mutex.Unlock()
 		if ok {
-			fmt.Println("we good")
-			err := conn.WriteJSON("hello thereeeeee")
+			err := recipientConn.WriteJSON(msg)
 			if err != nil {
-				log.Println("Error sending typing notification to", msg.From+":", err)
-				conn.Close()
-				delete(users, msg.From)
+				log.Println("Error sending message to", msg.To+":", err)
+				recipientConn.Close()
+				delete(users, msg.To)
 			}
+		} else {
+			log.Println("User", msg.To, "is not online. Message not delivered.")
 		}
+
+		// update the user list for both sender and recipient
+		BroadcastUserList(db)
 	}
 }
