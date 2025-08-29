@@ -182,6 +182,9 @@ export default function Messages() {
 
         sendMessage(msg)
         setMessage('') // clear input after sending message
+
+        // create a custom event that will be listened accross the app when a message is sent
+        window.dispatchEvent(new CustomEvent('messageEvent'))
     }
 
     if (isLoading) {

@@ -33,6 +33,16 @@ export function ContactedChats() {
     }
 
     fetchContacts();
+
+    const handleMessageSent = () => [
+      fetchContacts()
+    ]
+
+    window.addEventListener('messageEvent', handleMessageSent)
+
+    return () => {
+      window.removeEventListener('messageEvent', handleMessageSent)
+    }
   }, []);
 
   if (loading) {
