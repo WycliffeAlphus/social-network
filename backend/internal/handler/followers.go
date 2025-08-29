@@ -4,6 +4,7 @@ import (
 	"backend/internal/context"
 	"backend/internal/model"
 	"backend/pkg/extractid"
+	"backend/pkg/getusers"
 	"database/sql"
 	"encoding/json"
 	"log"
@@ -500,17 +501,10 @@ func CheckFollowRelationship(db *sql.DB) http.HandlerFunc {
 		currentUserID := context.MustGetUser(r.Context()).ID
 		receiverId := r.URL.Query().Get("receiverId")
 
-		if receiverId == "" {
-			http.Error(w, "User IDs are required", http.StatusBadRequest)
-			return
-		}
+		exists := getusers.UserExists(db, receiverId, w)
 
-		// check if selected user exists
-		var exists bool
-		checkExistsErr := db.QueryRow(`SELECT EXISTS(SELECT 1 FROM users WHERE id = ?)`, receiverId).Scan(&exists)
-		if checkExistsErr != nil {
-			log.Println("Error checking if message receiver exists: ", checkExistsErr)
-			http.Error(w, "An error occured, please check back later", http.StatusInternalServerError)
+		if receiverId == "" || !exists {
+			http.Error(w, "User IDs are required", http.StatusBadRequest)
 			return
 		}
 
@@ -526,7 +520,7 @@ func CheckFollowRelationship(db *sql.DB) http.HandlerFunc {
     	`
 		err := db.QueryRow(query, currentUserID, receiverId, receiverId, currentUserID).Scan(&hasFollowRelationship)
 		if err != nil {
-			log.Println("Error checking if follow relationship exists: ", checkExistsErr)
+			log.Println("Error checking if follow relationship exists: ", err)
 			http.Error(w, "An error occured, please check back later", http.StatusInternalServerError)
 			return
 		}
