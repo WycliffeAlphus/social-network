@@ -5,6 +5,7 @@ import Sidebar from "../components/sidebar";
 import { usePathname } from "next/navigation";
 import connectWebsocket from "@/components/ws";
 import { UserContext } from "@/context/user-context";
+import Loading from "@/components/loading";
 
 export default function ClientLayout({ children }) {
   const [data, setData] = useState(null);
@@ -41,7 +42,7 @@ export default function ClientLayout({ children }) {
     return <>{children}</>
   }
 
-  if (!data) return <div>Loading...</div>
+  if (!data) return <div className="ml-30 mt-30"><Loading /></div>
 
   return (
     <div className="h-screen md:px-[12%] 2xl:px-[18%]">
