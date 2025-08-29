@@ -1,16 +1,18 @@
-let sock
+let sock = null
 
 export default function connectWebsocket(id) {
+    if (sock && (sock.readyState === WebSocket.OPEN || sock.readyState === WebSocket.CONNECTING)) {
+        return // already connected or connecting
+    }
+
     sock = new WebSocket(`ws://localhost:8080/ws`);
 
     sock.onopen = () => {
-        if (sock.readyState === WebSocket.OPEN) { // <-- this explicity checks the socket's on-open status to prevent race condition when useffect is called multiple times
-            sock.send(JSON.stringify({
-                from: id,
-                to: "",
-                content: ""
-            }));
-        }
+        sock.send(JSON.stringify({
+            from: id,
+            to: "",
+            content: ""
+        }));
         console.log("WebSocket connected.");
     }
 
