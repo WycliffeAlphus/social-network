@@ -29,6 +29,10 @@ export default function connectWebsocket(id) {
     sock.onerror = (error) => {
         console.error("WebSocket error:", error);
     };
+
+    sock.onclose = () => {
+        console.log("WebSocket disconnected.");
+    };
 }
 
 export function getWebSocket() {
