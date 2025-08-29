@@ -138,20 +138,23 @@ export default function Messages() {
     const handleSubmit = async (e) => {
         e.preventDefault()
 
-        if (!currentUserId || !receiverId || !message) {
+        if (!currentUserId || !receiverId || !message.trim()) {
             return
         }
 
         const msg = {
             from: currentUserId,
             to: receiverId,
-            content: message
+            content: message.trim()
         }
 
-        console.log(msg)
-
         const sock = getWebSocket()
-        sock.send(JSON.stringify(msg))
+        if (sock && sock.readyState === WebSocket.OPEN) {
+            sock.send(JSON.stringify(msg))
+            setMessage('') // clear input after sending message
+        } else {
+            console.error("WebSocket not connected")
+        }
     }
 
     return (
