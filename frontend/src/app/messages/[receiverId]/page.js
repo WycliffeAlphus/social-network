@@ -4,7 +4,7 @@ import { useUser } from "@/context/user-context";
 import { useParams } from "next/navigation";
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from "react";
-import { PaperAirplaneIcon, PhotoIcon, FaceSmileIcon } from "@heroicons/react/24/outline";
+import { PaperAirplaneIcon, PhotoIcon, FaceSmileIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import EmojiPicker from 'emoji-picker-react';
 import { getWebSocket } from "@/components/ws";
 import { sendMessage } from "@/components/ws";
@@ -18,12 +18,42 @@ export default function Messages() {
     const emojiPickerRef = useRef(null)
     const emojiButtonRef = useRef(null)
     const [isDarkMode, setIsDarkMode] = useState(false)
+    const [isLoading, setIsLoading] = useState(true)
+    const [receiverExists, setReceiverExists] = useState(false)
+    const [hasFollowRelationship, setHasFollowRelationship] = useState(false)
 
     useEffect(() => {
         if (currentUserId && currentUserId === receiverId) {
             router.push('/messages')
             return
         }
+
+        // check user existence and follow relationship
+        const checkUserAndRelationship = async () => {
+            if (!currentUserId || !receiverId) return
+
+            try {
+                setIsLoading(true)
+                const response = await fetch(`http://localhost:8080/api/follow-relationship?receiverId=${receiverId}`, {
+                    credentials: 'include',
+                })
+
+                if (response.ok) {
+                    const data = await response.json()
+                    console.log(data)
+                    setReceiverExists(data.messageReceiverExists)
+                    setHasFollowRelationship(data.has_follow_relationship)
+                }
+            } catch (error) {
+                console.error('Error checking relationship:', error)
+                setReceiverExists(false)
+                setHasFollowRelationship(false)
+            } finally {
+                setIsLoading(false)
+            }
+        }
+
+        checkUserAndRelationship()
     }, [receiverId, currentUserId, router]);
 
     const onEmojiClick = (emojiData) => {
@@ -153,12 +183,34 @@ export default function Messages() {
         setMessage('') // clear input after sending message
     }
 
+    if (isLoading) {
+        return (
+            <div>Loading...</div>
+        )
+    }
+
+    if (!receiverExists) {
+        return (
+            <div></div>
+        )
+    }
+
+    if (!hasFollowRelationship) {
+        return (
+            <div className="flex items-center justify-center h-screen">
+                <div className="text-center p-6 mx-4">
+                    <ExclamationTriangleIcon className="h-12 w-12 mx-auto mb-3" />
+                    <h3 className="text-lg font-semibold mb-2">Whoa! Hold Up ⛔</h3>
+                    <p className="">
+                        🕵️‍♂️ No following, no messaging. Them's the rules. This ain't Tinder 😤.
+                    </p>
+                </div>
+            </div>
+        )
+    }
+
     return (
         <div className="flex flex-col h-screen">
-            {/* show the below if valid */}
-            {/* if not valid show cannot send message to the user */}
-            {/* if ID not in the db, giza */}
-
             {/* Chat header */}
             <div className="border-b border-gray-400 p-4">
                 <h2 className="text-xl font-semibold">Chat</h2>
