@@ -13,7 +13,12 @@ export default function connectWebsocket(id) {
             to: "",
             content: ""
         }));
-        console.log("WebSocket connected.");
+
+        // send any queued messages
+        while (messageQueue.length > 0) {
+            const msg = messageQueue.shift()
+            sock.send(JSON.stringify(msg))
+        }
     }
 
     sock.onmessage = (event) => {
