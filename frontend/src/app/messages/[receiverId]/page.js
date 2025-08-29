@@ -11,7 +11,7 @@ import { sendMessage } from "@/components/ws";
 import Loading from "@/components/loading";
 
 export default function Messages() {
-    const currentUserId = useUser()
+    const currentUserId = useUser().current_user_id
     const { receiverId } = useParams()
     const router = useRouter()
     const [message, setMessage] = useState('')

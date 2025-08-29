@@ -46,7 +46,7 @@ export default function ClientLayout({ children }) {
 
   return (
     <div className="h-screen md:px-[12%] 2xl:px-[18%]">
-      <UserContext.Provider value={data?.current_user_id}>
+       <UserContext.Provider value={data || {}}>
         <div className="flex min-h-screen">
           <Sidebar data={data} />
           <main className="flex-1">
