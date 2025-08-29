@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { PaperAirplaneIcon, PhotoIcon, FaceSmileIcon } from "@heroicons/react/24/outline";
 import EmojiPicker from 'emoji-picker-react';
 import { getWebSocket } from "@/components/ws";
+import { sendMessage } from "@/components/ws";
 
 export default function Messages() {
     const currentUserId = useUser()
@@ -148,13 +149,8 @@ export default function Messages() {
             content: message.trim()
         }
 
-        const sock = getWebSocket()
-        if (sock && sock.readyState === WebSocket.OPEN) {
-            sock.send(JSON.stringify(msg))
-            setMessage('') // clear input after sending message
-        } else {
-            console.error("WebSocket not connected")
-        }
+        sendMessage(msg)
+        setMessage('') // clear input after sending message
     }
 
     return (

@@ -1,4 +1,5 @@
 let sock = null
+let messageQueue = []
 
 export default function connectWebsocket(id) {
     if (sock && (sock.readyState === WebSocket.OPEN || sock.readyState === WebSocket.CONNECTING)) {
@@ -37,4 +38,15 @@ export default function connectWebsocket(id) {
 
 export function getWebSocket() {
     return sock;
+}
+
+export function sendMessage(message) {
+    const sock = getWebSocket()
+    if (sock && sock.readyState === WebSocket.OPEN) {
+        sock.send(JSON.stringify(message))
+    } else {
+        // queue message for when connection is established
+        messageQueue.push(message)
+        console.log("Message queued, waiting for connection")
+    }
 }
