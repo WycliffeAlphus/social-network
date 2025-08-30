@@ -10,6 +10,7 @@ const NotificationsList = () => {
         const fetchNotifications = async () => {
             setIsLoading(true);
             const data = await getNotifications();
+            console.log('Notifications data:', data);
             setNotifications(data || []);
             setIsLoading(false);
         };

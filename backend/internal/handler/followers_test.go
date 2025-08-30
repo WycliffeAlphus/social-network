@@ -17,27 +17,47 @@ import (
 // MockNotificationService is a mock implementation of NotificationService for testing.
 type MockNotificationService struct{}
 
-func (m *MockNotificationService) CreateFollowRequestNotification(actorID, targetUserID int) error {
+func (m *MockNotificationService) CreateFollowRequestNotification(actorID, targetUserID string) error {
 	return nil
 }
 
-func (m *MockNotificationService) CreateGroupInviteNotification(actorID, targetUserID, groupID int) error {
+func (m *MockNotificationService) CreateFollowAcceptedNotification(actorID, targetUserID string) error {
 	return nil
 }
 
-func (m *MockNotificationService) GetByUserID(userID int) ([]*model.Notification, error) {
+func (m *MockNotificationService) CreateGroupInviteNotification(actorID, targetUserID string, groupID int) error {
+	return nil
+}
+
+func (m *MockNotificationService) GetByUserID(userID string) ([]*model.Notification, error) {
 	return nil, nil
 }
 
-func (m *MockNotificationService) MarkAllAsRead(userID int) error {
+func (m *MockNotificationService) MarkAllAsRead(userID string) error {
 	return nil
 }
 
-func (m *MockNotificationService) CreateGroupJoinRequestNotification(actorID, groupOwnerID, groupID int) error {
+func (m *MockNotificationService) CreateGroupJoinRequestNotification(actorID, groupOwnerID string, groupID int) error {
 	return nil
 }
 
-func (m *MockNotificationService) CreateGroupEventNotification(actorID, groupID, eventID int) error {
+func (m *MockNotificationService) CreateGroupJoinAcceptedNotification(actorID, targetUserID string, groupID int) error {
+	return nil
+}
+
+func (m *MockNotificationService) CreateGroupEventNotification(actorID string, groupID, eventID int) error {
+	return nil
+}
+
+func (m *MockNotificationService) CreatePostNotification(actorID, postID string, groupID *int) error {
+	return nil
+}
+
+func (m *MockNotificationService) CreateCommentNotification(actorID, postOwnerID, postID string) error {
+	return nil
+}
+
+func (m *MockNotificationService) CreateReactionNotification(actorID, postOwnerID, postID string) error {
 	return nil
 }
 
@@ -46,7 +66,7 @@ func TestFollowUser_InvalidMethod(t *testing.T) {
 	defer db.Close()
 
 	mockNotificationService := &MockNotificationService{}
-	followerHandler := NewFollowerHandler(db, mockNotificationService)
+	followerHandler := NewFollowerHandler(db, (*service.NotificationService)(mockNotificationService))
 
 	req := httptest.NewRequest(http.MethodGet, "/api/users/follow", nil)
 	// Inject mock user into context
@@ -65,7 +85,7 @@ func TestAcceptFollowRequest_InvalidMethod(t *testing.T) {
 	defer db.Close()
 
 	mockNotificationService := &MockNotificationService{}
-	followerHandler := NewFollowerHandler(db, mockNotificationService)
+	followerHandler := NewFollowerHandler(db, (*service.NotificationService)(mockNotificationService))
 
 	req := httptest.NewRequest(http.MethodGet, "/api/follow/accept", nil)
 	mockUser := &model.User{ID: "test-user"}
@@ -83,7 +103,7 @@ func TestDeclineFollowRequest_InvalidMethod(t *testing.T) {
 	defer db.Close()
 
 	mockNotificationService := &MockNotificationService{}
-	followerHandler := NewFollowerHandler(db, mockNotificationService)
+	followerHandler := NewFollowerHandler(db, (*service.NotificationService)(mockNotificationService))
 
 	req := httptest.NewRequest(http.MethodGet, "/api/follow/decline", nil)
 	mockUser := &model.User{ID: "test-user"}
@@ -101,7 +121,7 @@ func TestCancelFollowRequest_InvalidMethod(t *testing.T) {
 	defer db.Close()
 
 	mockNotificationService := &MockNotificationService{}
-	followerHandler := NewFollowerHandler(db, mockNotificationService)
+	followerHandler := NewFollowerHandler(db, (*service.NotificationService)(mockNotificationService))
 
 	req := httptest.NewRequest(http.MethodGet, "/api/follow/cancel", nil)
 	mockUser := &model.User{ID: "test-user"}
@@ -119,7 +139,7 @@ func TestFollowUser_InvalidBody(t *testing.T) {
 	defer db.Close()
 
 	mockNotificationService := &MockNotificationService{}
-	followerHandler := NewFollowerHandler(db, mockNotificationService)
+	followerHandler := NewFollowerHandler(db, (*service.NotificationService)(mockNotificationService))
 
 	req := httptest.NewRequest(http.MethodPost, "/api/users/follow", bytes.NewBuffer([]byte("notjson")))
 	mockUser := &model.User{ID: "test-user"}

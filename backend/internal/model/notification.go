@@ -4,8 +4,8 @@ import "time"
 
 type Notification struct {
 	ID         int       `json:"id"`
-	UserID     int       `json:"user_id"`
-	ActorID    int       `json:"actor_id"`
+	UserID     string    `json:"user_id"`
+	ActorID    string    `json:"actor_id"`
 	Type       string    `json:"type"`
 	ContentID  int       `json:"content_id,omitempty"`
 	Message    string    `json:"message"`

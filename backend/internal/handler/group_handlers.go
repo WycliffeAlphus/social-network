@@ -119,8 +119,8 @@ func (h *GroupHandler) JoinGroupRequest(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Trigger notification for the group owner
-	actorID, _ := strconv.Atoi(userID)
-	groupOwnerID, _ := strconv.Atoi(group.CreatorID)
+	actorID := userID
+	groupOwnerID := group.CreatorID
 	if err := h.NotificationService.CreateGroupJoinRequestNotification(actorID, groupOwnerID, int(groupID)); err != nil {
 		log.Printf("Failed to create group join request notification: %v", err)
 		// Do not block response to user for notification failure
@@ -174,6 +174,14 @@ func (h *GroupHandler) AcceptJoinRequest(w http.ResponseWriter, r *http.Request)
 		log.Printf("Failed to accept join request: %v", err)
 		utils.RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
+	}
+
+	// Create a notification for the user who's request was accepted
+	actorID := creatorUserID
+	targetUserID := req.UserID
+	if err := h.NotificationService.CreateGroupJoinAcceptedNotification(actorID, targetUserID, int(groupID)); err != nil {
+		log.Printf("Failed to create group join accepted notification: %v", err)
+		// Non-critical error, so we don't block the user response
 	}
 
 	utils.RespondWithJSON(w, http.StatusOK, map[string]string{
@@ -232,8 +240,8 @@ func (h *GroupHandler) InviteUserToGroup(w http.ResponseWriter, r *http.Request)
 	}
 
 	// Trigger notification for the invited user
-	inviterIDInt, _ := strconv.Atoi(inviterID)
-	targetUserIDInt, _ := strconv.Atoi(req.TargetUserID)
+	inviterIDInt := inviterID
+	targetUserIDInt := req.TargetUserID
 	if err := h.NotificationService.CreateGroupInviteNotification(inviterIDInt, targetUserIDInt, int(groupID)); err != nil {
 		log.Printf("Failed to create group invite notification: %v", err)
 		// Do not block response to user for notification failure
@@ -245,7 +253,7 @@ func (h *GroupHandler) InviteUserToGroup(w http.ResponseWriter, r *http.Request)
 // CreateEvent handles POST /groups/:id/events
 func (h *GroupHandler) CreateEvent(w http.ResponseWriter, r *http.Request) {
 	creator := context.MustGetUser(r.Context())
-	creatorID, _ := strconv.Atoi(creator.ID)
+	creatorID := creator.ID
 
 	groupID, err := extractGroupIDFromPath(r.URL.Path)
 	if err != nil {

@@ -24,7 +24,7 @@ func (r *NotificationRepository) Create(notification *model.Notification) error 
 }
 
 // GetByUserID retrieves all notifications for a specific user, ordered by most recent.
-func (r *NotificationRepository) GetByUserID(userID int) ([]*model.Notification, error) {
+func (r *NotificationRepository) GetByUserID(userID string) ([]*model.Notification, error) {
 	query := `
 		SELECT id, user_id, actor_id, type, content_id, message, is_read, created_at
 		FROM notifications
@@ -54,14 +54,14 @@ func (r *NotificationRepository) GetByUserID(userID int) ([]*model.Notification,
 }
 
 // MarkAsRead marks a single notification as read in the database.
-func (r *NotificationRepository) MarkAsRead(notificationID int, userID int) error {
+func (r *NotificationRepository) MarkAsRead(notificationID int, userID string) error {
 	query := `UPDATE notifications SET is_read = 1 WHERE id = ? AND user_id = ?`
 	_, err := r.DB.Exec(query, notificationID, userID)
 	return err
 }
 
 // MarkAllAsRead marks all notifications for a user as read.
-func (r *NotificationRepository) MarkAllAsRead(userID int) error {
+func (r *NotificationRepository) MarkAllAsRead(userID string) error {
 	query := `UPDATE notifications SET is_read = 1 WHERE user_id = ?`
 	_, err := r.DB.Exec(query, userID)
 	return err

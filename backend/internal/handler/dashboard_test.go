@@ -27,7 +27,8 @@ func TestDashboardHandler(t *testing.T) {
 
 	// Record response
 	rr := httptest.NewRecorder()
-	DashboardHandler(rr, req)
+
+	DashboardHandler(nil)(rr, req)
 
 	// Check response status
 	if rr.Code != http.StatusOK {
@@ -108,7 +109,7 @@ func TestDashboardHandler_MethodNotAllowed(t *testing.T) {
 
 	// Record response
 	rr := httptest.NewRecorder()
-	DashboardHandler(rr, req)
+	DashboardHandler(nil)(rr, req)
 
 	// Check response status
 	if rr.Code != http.StatusMethodNotAllowed {

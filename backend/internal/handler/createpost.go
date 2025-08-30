@@ -3,10 +3,12 @@ package handler
 import (
 	"backend/internal/context"
 	"backend/internal/model"
+	"backend/internal/service"
 	"backend/internal/utils"
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -30,7 +32,7 @@ const (
 	maxUploadSize    = 20 * 1024 * 1024 // 20MB
 )
 
-func CreatePost(db *sql.DB) http.HandlerFunc {
+func CreatePost(db *sql.DB, notificationService *service.NotificationService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -98,6 +100,11 @@ func CreatePost(db *sql.DB) http.HandlerFunc {
 					return
 				}
 			}
+		}
+
+		// Notify followers
+		if err := notificationService.CreatePostNotification(post.UserId, post.Id, nil); err != nil {
+			log.Printf("Error creating post notification: %v", err)
 		}
 
 		w.WriteHeader(http.StatusCreated)

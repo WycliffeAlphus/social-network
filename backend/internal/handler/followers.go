@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"strconv"
 )
 
 // FollowerHandler holds the services needed by the follower handlers.
@@ -88,19 +87,20 @@ func (h *FollowerHandler) FollowUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Create a notification if the follow request is pending
+	// Create a notification
+	actorID := currentUserID
+	followedUserID := request.FollowedUserID
 	if status == "requested" {
-		followedUserID, err := strconv.Atoi(request.FollowedUserID)
+		err := h.NotificationService.CreateFollowRequestNotification(actorID, followedUserID)
 		if err != nil {
-			log.Printf("Error converting followed user ID: %v", err)
-			// Not returning an error to the user, as the follow action itself was successful
-		} else {
-			actorID, _ := strconv.Atoi(currentUserID)
-			err := h.NotificationService.CreateFollowRequestNotification(actorID, followedUserID)
-			if err != nil {
-				log.Printf("Error creating follow request notification: %v", err)
-				// Non-critical error, so we don't block the user response
-			}
+			log.Printf("Error creating follow request notification: %v", err)
+			// Non-critical error, so we don't block the user response
+		}
+	} else if status == "accepted" {
+		err := h.NotificationService.CreateFollowAcceptedNotification(actorID, followedUserID)
+		if err != nil {
+			log.Printf("Error creating follow accepted notification: %v", err)
+			// Non-critical error, so we don't block the user response
 		}
 	}
 
@@ -167,6 +167,14 @@ func (h *FollowerHandler) AcceptFollowRequest(w http.ResponseWriter, r *http.Req
 		log.Printf("Error accepting follow request: %v", err)
 		http.Error(w, "Failed to accept follow request", http.StatusInternalServerError)
 		return
+	}
+
+	// Create a notification for the user who sent the follow request
+	followerID := request.FollowerID
+	actorID := currentUserID
+	if err := h.NotificationService.CreateFollowAcceptedNotification(actorID, followerID); err != nil {
+		log.Printf("Error creating follow accepted notification: %v", err)
+		// Non-critical error, so we don't block the user response
 	}
 
 	w.WriteHeader(http.StatusOK)

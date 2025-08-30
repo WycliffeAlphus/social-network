@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS notifications (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    actor_id INTEGER NOT NULL,
+    user_id VARCHAR(40) NOT NULL,
+    actor_id VARCHAR(40) NOT NULL,
     type TEXT NOT NULL,
     content_id INTEGER,
     message TEXT NOT NULL,

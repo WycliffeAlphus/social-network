@@ -5,7 +5,6 @@ import (
 	"backend/internal/service"
 	"encoding/json"
 	"net/http"
-	"strconv"
 )
 
 type NotificationHandler struct {
@@ -20,11 +19,7 @@ func NewNotificationHandler(s *service.NotificationService) *NotificationHandler
 func (h *NotificationHandler) GetNotifications(w http.ResponseWriter, r *http.Request) {
 	user := context.MustGetUser(r.Context())
 
-	userID, err := strconv.Atoi(user.ID)
-	if err != nil {
-		http.Error(w, "Invalid user ID", http.StatusBadRequest)
-		return
-	}
+	userID := user.ID
 
 	notifications, err := h.service.GetByUserID(userID)
 	if err != nil {
@@ -44,13 +39,9 @@ func (h *NotificationHandler) GetNotifications(w http.ResponseWriter, r *http.Re
 func (h *NotificationHandler) MarkNotificationsAsRead(w http.ResponseWriter, r *http.Request) {
 	user := context.MustGetUser(r.Context())
 
-	userID, err := strconv.Atoi(user.ID)
-	if err != nil {
-		http.Error(w, "Invalid user ID", http.StatusBadRequest)
-		return
-	}
+	userID := user.ID
 
-	err = h.service.MarkAllAsRead(userID)
+	err := h.service.MarkAllAsRead(userID)
 	if err != nil {
 		http.Error(w, "Failed to mark notifications as read", http.StatusInternalServerError)
 		return

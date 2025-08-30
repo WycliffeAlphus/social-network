@@ -4,7 +4,8 @@ export async function getNotifications() {
   try {
     const response = await fetch('/api/notifications');
     if (!response.ok) {
-      throw new Error('Failed to fetch notifications');
+      const errorBody = await response.text();
+      throw new Error(`Failed to fetch notifications: ${response.status} ${response.statusText} - ${errorBody}`);
     }
     return await response.json();
   } catch (error) {
