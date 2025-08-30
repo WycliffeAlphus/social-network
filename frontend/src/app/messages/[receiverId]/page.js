@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from "react";
 import { PaperAirplaneIcon, PhotoIcon, FaceSmileIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import EmojiPicker from 'emoji-picker-react';
-import { getWebSocket } from "@/components/ws";
 import { sendMessage } from "@/components/ws";
 import Loading from "@/components/loading";
 import { formattedMessageDate } from "@/lib/messageDate";
@@ -57,6 +56,7 @@ export default function Messages() {
                     console.log(data)
                     setHasFollowRelationship(data.hasFollowRelationship)
                     setReceiverData(data.receiverData)
+                    setReceiverExists(data.messageReceiverExists)
                 }
             } catch (error) {
                 console.error('Error checking relationship:', error)
