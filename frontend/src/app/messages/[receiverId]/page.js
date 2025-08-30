@@ -9,6 +9,7 @@ import EmojiPicker from 'emoji-picker-react';
 import { getWebSocket } from "@/components/ws";
 import { sendMessage } from "@/components/ws";
 import Loading from "@/components/loading";
+import { formattedMessageDate } from "@/lib/messageDate";
 
 export default function Messages() {
     const currentUserId = useUser().current_user_id
@@ -220,7 +221,8 @@ export default function Messages() {
         const msg = {
             from: currentUserId,
             to: receiverId,
-            content: message.trim()
+            content: message.trim(),
+            timestamp: formattedMessageDate(),
         }
 
         sendMessage(msg)
@@ -293,7 +295,7 @@ export default function Messages() {
                             <div key={`${message.timestamp}-${message.from}`} className={`flex ${message.from === currentUserId ? 'justify-end' : 'justify-start'}`}>
                                 <div className={`text-white rounded-3xl p-3 max-w-xs ${message.from === currentUserId ? 'bg-blue-500 rounded-br-sm' : 'bg-gray-700 rounded-bl-sm'}`}>
                                     <p>{message.content}</p>
-                                    <p className="text-xs font-bold text-gray-300 mt-1">{message.timestamp}</p>
+                                    <p className="text-xs font-bold text-gray-300 mt-1">{formattedMessageDate(message.timestamp)}</p>
                                 </div>
                             </div>
                         ))
