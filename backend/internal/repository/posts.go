@@ -17,7 +17,7 @@ SELECT
         SELECT COUNT(1) FROM comments c WHERE c.post_id = p.id AND c.parent_id IS NULL
     ) AS comment_count
 FROM posts p
-WHERE p.visibility = 'public' 
+WHERE (p.visibility = 'public' 
    OR p.user_id = ?
    OR (
         p.visibility = 'almostprivate'
@@ -36,7 +36,8 @@ WHERE p.visibility = 'public'
             WHERE private_posts.post_id = p.id
               AND private_posts.user_id = ?
         )
-    )
+    ))
+AND p.group_id IS NULL
 ORDER BY p.created_at DESC`, id, id, id, id)
 
 	if err != nil {
