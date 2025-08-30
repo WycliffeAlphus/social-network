@@ -501,7 +501,7 @@ func CheckFollowRelationship(db *sql.DB) http.HandlerFunc {
 		currentUserID := context.MustGetUser(r.Context()).ID
 		receiverId := r.URL.Query().Get("receiverId")
 
-		exists := getusers.UserExists(db, receiverId, w)
+		receiverData, exists := getusers.UserExists(db, receiverId, w)
 
 		if receiverId == "" || !exists {
 			http.Error(w, "User IDs are required", http.StatusBadRequest)
@@ -526,8 +526,9 @@ func CheckFollowRelationship(db *sql.DB) http.HandlerFunc {
 		}
 
 		response := map[string]interface{}{
-			"has_follow_relationship": hasFollowRelationship,
+			"hasFollowRelationship": hasFollowRelationship,
 			"messageReceiverExists":   exists,
+			"receiverData":   receiverData,
 		}
 
 		w.Header().Set("Content-Type", "application/json")

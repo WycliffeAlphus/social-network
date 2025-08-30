@@ -24,6 +24,7 @@ export default function Messages() {
     const [hasFollowRelationship, setHasFollowRelationship] = useState(false)
     const [messages, setMessages] = useState([])
     const [messagesLoading, setMessagesLoading] = useState(true)
+    const [receiverData, setReceiverData] = useState(null)
 
     useEffect(() => {
         if (currentUserId && currentUserId === receiverId) {
@@ -36,7 +37,6 @@ export default function Messages() {
             if (!currentUserId || !receiverId) return
 
             try {
-                setIsLoading(true)
                 const response = await fetch(`http://localhost:8080/api/follow-relationship?receiverId=${receiverId}`, {
                     credentials: 'include',
                 })
@@ -44,8 +44,8 @@ export default function Messages() {
                 if (response.ok) {
                     const data = await response.json()
                     console.log(data)
-                    setReceiverExists(data.messageReceiverExists)
-                    setHasFollowRelationship(data.has_follow_relationship)
+                    setHasFollowRelationship(data.hasFollowRelationship)
+                    setReceiverData(data.receiverData)
                 }
             } catch (error) {
                 console.error('Error checking relationship:', error)
@@ -251,8 +251,27 @@ export default function Messages() {
     return (
         <div className="flex flex-col h-screen">
             {/* Chat header */}
-            <div className="border-b border-gray-400 p-4">
-                <h2 className="text-xl font-semibold">Chat</h2>
+            <div className="border-b flex items-center gap-3 border-gray-400 p-4">
+                {receiverData.avatar?.String ? (
+                    <img
+                        src={receiverData.avatar.String}
+                        alt="User avatar"
+                        className="w-12 h-12 rounded-full object-cover"
+                    />
+                ) : (
+                    <div className="w-[clamp(2rem,4vw,3.5rem)] h-[clamp(2rem,4vw,3.5rem)] rounded-full bg-gray-200 overflow-hidden flex items-center justify-center">
+                        <span className="text-lg text-black font-medium">
+                            {receiverData.firstname?.charAt(0).toUpperCase()}
+                            {receiverData.lastname?.charAt(0).toUpperCase()}
+                        </span>
+                    </div>
+                )}
+
+                <div>
+                    <span className="font-medium group-hover:text-[#4169e1]">
+                        {receiverData.firstname} {receiverData.lastname}
+                    </span>
+                </div>
             </div>
 
             {/* Messages area */}

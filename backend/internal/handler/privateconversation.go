@@ -15,7 +15,7 @@ func PrivateConversations(db *sql.DB) http.HandlerFunc {
 		currentUserId := context.MustGetUser(r.Context()).ID
 		receiverId := r.URL.Query().Get("receiverId")
 
-		exists := getusers.UserExists(db, receiverId, w)
+		_, exists := getusers.UserExists(db, receiverId, w)
 
 		if receiverId == "" || !exists {
 			http.Error(w, "Select a user to converse with", http.StatusBadRequest)
