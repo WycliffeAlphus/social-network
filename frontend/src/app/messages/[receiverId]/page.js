@@ -25,6 +25,16 @@ export default function Messages() {
     const [messages, setMessages] = useState([])
     const [messagesLoading, setMessagesLoading] = useState(true)
     const [receiverData, setReceiverData] = useState(null)
+    const messagesEndRef = useRef(null)
+
+    // auto-scroll to bottom when messages change
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+    }
+
+    useEffect(() => {
+        scrollToBottom()
+    }, [messages])
 
     useEffect(() => {
         if (currentUserId && currentUserId === receiverId) {
@@ -214,6 +224,7 @@ export default function Messages() {
         }
 
         sendMessage(msg)
+        setMessages(prevMessages => [...prevMessages, msg]); // adds the message to the UI immediately (optimistic update)
         setMessage('') // clear input after sending message
 
         // create a custom event that will be listened accross the app when a message is sent
@@ -289,6 +300,7 @@ export default function Messages() {
                     ) : (
                         <h3>Begin your conversation</h3>
                     )}
+                    <div ref={messagesEndRef} /> {/* invsible element for auto-scrolling */}
                 </div>
             ) : (
                 <Loading />
