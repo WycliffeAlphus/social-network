@@ -3,10 +3,10 @@
 import { useEffect, useState } from "react";
 import FollowSuggestion from "../components/followsuggestions";
 import Rightbar from "../components/rightbar";
-import PostCard from "../components/postCard"; // Reusable post component
+import PostCard from "../components/postCard";
 
 export default function Home() {
-  const [showComments, setShowComments] = useState(false);
+  const [openPostId, setOpenPostId] = useState(null); // <-- track which post is open
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -22,7 +22,7 @@ export default function Home() {
 
         if (!response.ok) throw new Error("Failed to fetch feeds");
         const data = await response.json();
-        setPosts(data.data.posts || []); // fallback to empty array
+        setPosts(data.data.posts || []);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -32,10 +32,9 @@ export default function Home() {
     fetchFeeds();
   }, []);
 
- 
   return (
     <div className="flex min-h-screen">
-      <main className="flex-1 border-x mr-[20px] border-gray-400">
+      <main className="flex-1 border-x md:mr-[20px] border-gray-400">
         <div className="lg:hidden">
           <FollowSuggestion />
         </div>
@@ -50,8 +49,10 @@ export default function Home() {
               <PostCard
                 key={post.id}
                 post={post}
-                showComments={showComments}
-                setShowComments={setShowComments}
+                showComments={openPostId === post.id} 
+                setShowComments={() =>
+                  setOpenPostId(openPostId === post.id ? null : post.id) 
+                }
               />
             ))}
         </div>
