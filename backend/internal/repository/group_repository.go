@@ -154,3 +154,63 @@ func (r *GroupRepository) IsGroupCreator(groupID uint, userID string) (bool, err
 
 	return creatorID == userID, nil
 }
+
+// GetPendingJoinRequests retrieves all pending join requests for a group.
+func (r *GroupRepository) GetPendingJoinRequests(groupID uint) ([]model.GroupJoinRequest, error) {
+	rows, err := r.DB.Query(`
+		SELECT gm.user_id, u.fname, u.lname, u.imgurl, gm.created_at
+		FROM group_members gm
+		JOIN users u ON gm.user_id = u.id
+		WHERE gm.group_id = ? AND gm.status = 'pending' AND gm.deleted_at IS NULL
+		ORDER BY gm.created_at ASC
+	`, groupID)
+
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var requests []model.GroupJoinRequest
+	for rows.Next() {
+		var req model.GroupJoinRequest
+		var imgURL sql.NullString
+
+		err := rows.Scan(&req.UserID, &req.FirstName, &req.LastName, &imgURL, &req.RequestedAt)
+		if err != nil {
+			return nil, err
+		}
+
+		req.GroupID = groupID
+		req.UserName = req.FirstName + " " + req.LastName
+		if imgURL.Valid {
+			req.UserImageURL = imgURL.String
+		}
+
+		requests = append(requests, req)
+	}
+
+	return requests, nil
+}
+
+// RejectJoinRequest removes a pending join request.
+func (r *GroupRepository) RejectJoinRequest(groupID uint, userID string) error {
+	result, err := r.DB.Exec(`
+		DELETE FROM group_members
+		WHERE group_id = ? AND user_id = ? AND status = 'pending' AND deleted_at IS NULL
+	`, groupID, userID)
+
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return sql.ErrNoRows // No pending request found
+	}
+
+	return nil
+}

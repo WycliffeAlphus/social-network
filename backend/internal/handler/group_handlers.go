@@ -172,6 +172,90 @@ func (h *GroupHandler) AcceptJoinRequest(w http.ResponseWriter, r *http.Request)
 	})
 }
 
+// GetPendingJoinRequests handles GET /groups/:id/join-requests endpoint.
+// It allows group creators to view pending join requests for their groups.
+func (h *GroupHandler) GetPendingJoinRequests(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		utils.RespondWithError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		return
+	}
+
+	user := context.MustGetUser(r.Context())
+	creatorUserID := user.ID
+
+	if creatorUserID == "0" {
+		utils.RespondWithError(w, http.StatusUnauthorized, "User ID not found or is invalid")
+		return
+	}
+
+	// Extract group ID from URL path
+	groupID, err := extractGroupIDFromPath(r.URL.Path)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid group ID")
+		return
+	}
+
+	// Call service to get pending join requests
+	requests, err := h.Service.GetPendingJoinRequests(groupID, creatorUserID)
+	if err != nil {
+		log.Printf("Failed to get pending join requests: %v", err)
+		utils.RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	utils.RespondWithJSON(w, http.StatusOK, requests)
+}
+
+// RejectJoinRequest handles POST /groups/:id/join endpoint with action=reject.
+// It allows group creators to reject pending join requests.
+func (h *GroupHandler) RejectJoinRequest(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		utils.RespondWithError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		return
+	}
+
+	user := context.MustGetUser(r.Context())
+	creatorUserID := user.ID
+
+	if creatorUserID == "0" {
+		utils.RespondWithError(w, http.StatusUnauthorized, "User ID not found or is invalid")
+		return
+	}
+
+	// Extract group ID from URL path
+	groupID, err := extractGroupIDFromPath(r.URL.Path)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid group ID")
+		return
+	}
+
+	// Parse request body to get the user ID to reject
+	var req struct {
+		UserID string `json:"user_id"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid request payload: "+err.Error())
+		return
+	}
+
+	if req.UserID == "" {
+		utils.RespondWithError(w, http.StatusBadRequest, "User ID is required")
+		return
+	}
+
+	// Call service to reject join request
+	err = h.Service.RejectJoinRequest(groupID, req.UserID, creatorUserID)
+	if err != nil {
+		log.Printf("Failed to reject join request: %v", err)
+		utils.RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	utils.RespondWithJSON(w, http.StatusOK, map[string]string{
+		"message": "Join request rejected successfully",
+	})
+}
+
 // extractGroupIDFromPath extracts the group ID from URL paths like /groups/123/join
 func extractGroupIDFromPath(path string) (uint, error) {
 	parts := strings.Split(strings.Trim(path, "/"), "/")
