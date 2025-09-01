@@ -51,6 +51,10 @@ func PrivateConversations(db *sql.DB) http.HandlerFunc {
 			messages[i], messages[j] = messages[j], messages[i]
 		}
 
+		if messages == nil {
+			messages = []model.Message{}
+		}
+
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(messages)
 	}
