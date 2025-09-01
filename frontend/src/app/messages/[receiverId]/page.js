@@ -180,14 +180,17 @@ export default function Messages() {
                 return false;
             };
 
-            // prevent scroll on various events
-            document.addEventListener('wheel', preventScroll, { passive: false });
-            document.addEventListener('touchmove', preventScroll, { passive: false });
-            document.addEventListener('keydown', (e) => {
+            // prevent arrow keys and spacebar from scrolling the page
+            const preventKeyScroll = (e) => {
                 if (['Space', 'ArrowUp', 'ArrowDown', 'PageUp', 'PageDown'].includes(e.code)) {
                     e.preventDefault();
                 }
-            });
+            };
+
+            // prevent scroll on various events
+            document.addEventListener('wheel', preventScroll, { passive: false });
+            document.addEventListener('touchmove', preventScroll, { passive: false });
+            document.addEventListener('keydown', preventKeyScroll);
 
             // prevent scrollbar dragging by disabling overflow on ALL scrollable containers
             const scrollableContainers = document.querySelectorAll('.overflow-y-auto, .overflow-auto, [style*="overflow"], [class*="scroll"]');
@@ -202,6 +205,7 @@ export default function Messages() {
             return () => {
                 document.removeEventListener('wheel', preventScroll);
                 document.removeEventListener('touchmove', preventScroll);
+                document.removeEventListener('keydown', preventKeyScroll);
 
                 // restore all scrollable containers
                 scrollableContainers.forEach((container, index) => {
