@@ -55,11 +55,20 @@ func RegisterRoutes(db *sql.DB) {
 	http.HandleFunc("/api/groups/", func(w http.ResponseWriter, r *http.Request) {
 		// Handle /api/groups/:id/join endpoint
 		if strings.Contains(r.URL.Path, "/join") {
-			if r.URL.Query().Get("action") == "accept" {
+			action := r.URL.Query().Get("action")
+			switch action {
+			case "accept":
 				middlewares.AuthMiddleware(db, http.HandlerFunc(groupHandler.AcceptJoinRequest)).ServeHTTP(w, r)
-			} else {
+			case "reject":
+				middlewares.AuthMiddleware(db, http.HandlerFunc(groupHandler.RejectJoinRequest)).ServeHTTP(w, r)
+			default:
 				middlewares.AuthMiddleware(db, http.HandlerFunc(groupHandler.JoinGroupRequest)).ServeHTTP(w, r)
 			}
+			return
+		}
+		// Handle /api/groups/:id/join-requests endpoint
+		if strings.Contains(r.URL.Path, "/join-requests") {
+			middlewares.AuthMiddleware(db, http.HandlerFunc(groupHandler.GetPendingJoinRequests)).ServeHTTP(w, r)
 			return
 		}
 		http.Error(w, "Not found", http.StatusNotFound)

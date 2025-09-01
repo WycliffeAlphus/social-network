@@ -125,3 +125,42 @@ func (s *GroupService) AcceptJoinRequest(groupID uint, requesterUserID string, c
 	// Accept the join request
 	return s.Repo.AcceptJoinRequest(groupID, requesterUserID)
 }
+
+// GetPendingJoinRequests retrieves all pending join requests for groups created by the user.
+func (s *GroupService) GetPendingJoinRequests(groupID uint, creatorUserID string) ([]model.GroupJoinRequest, error) {
+	// Verify that the user requesting is the group creator
+	isCreator, err := s.Repo.IsGroupCreator(groupID, creatorUserID)
+	if err != nil {
+		return nil, err
+	}
+	if !isCreator {
+		return nil, fmt.Errorf("only group creators can view join requests")
+	}
+
+	// Get pending requests for this group
+	return s.Repo.GetPendingJoinRequests(groupID)
+}
+
+// RejectJoinRequest allows a group creator to reject a pending join request.
+func (s *GroupService) RejectJoinRequest(groupID uint, requesterUserID string, creatorUserID string) error {
+	// Verify that the user rejecting the request is the group creator
+	isCreator, err := s.Repo.IsGroupCreator(groupID, creatorUserID)
+	if err != nil {
+		return err
+	}
+	if !isCreator {
+		return fmt.Errorf("only group creators can reject join requests")
+	}
+
+	// Check if there's a pending request for this user
+	isMember, status, err := s.Repo.CheckUserMembership(groupID, requesterUserID)
+	if err != nil {
+		return err
+	}
+	if !isMember || status != "pending" {
+		return fmt.Errorf("no pending join request found for this user")
+	}
+
+	// Reject the join request
+	return s.Repo.RejectJoinRequest(groupID, requesterUserID)
+}
