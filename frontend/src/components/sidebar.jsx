@@ -113,7 +113,7 @@ export default function Sidebar({ data }) {
               <div className="relative">
                 <BellIcon className="h-6 w-6 mr-2" />
                 {unreadNotifications > 0 && (
-                  <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-600 ring-2 ring-white"></span>
+                  <span className="absolute top-0 right-0 block h-4 w-4 rounded-full bg-red-600 text-white text-xs flex items-center justify-center">{unreadNotifications}</span>
                 )}
               </div>
               <span className="hidden xl:inline">Notifications</span>
