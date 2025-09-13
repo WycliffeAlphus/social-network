@@ -10,11 +10,13 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import CreatePost from "./createpost";
+import { getNotifications } from "../lib/notifications";
 
 export default function Sidebar({ data }) {
   const [showCreateOptions, setShowCreateOptions] = useState(false);
   const [showAccountOptions, setShowAccountOptions] = useState(false);
   const [showCreatePosts, setShowCreatePosts] = useState(false);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
   const createOptionsRef = useRef(null);
   const accountsRef = useRef(null);
   const router = useRouter();
@@ -65,6 +67,19 @@ export default function Sidebar({ data }) {
     };
   }, [showCreatePosts]);
 
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      const notifications = await getNotifications();
+      const unread = notifications.filter(n => !n.is_read).length;
+      setUnreadNotifications(unread);
+    };
+
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 10000); // Poll every 10 seconds
+
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <>
       <aside className="sticky w-[5rem] xl:w-[12rem] pt-[3rem] top-0 h-[100vh] overflow-y-auto">
@@ -95,7 +110,12 @@ export default function Sidebar({ data }) {
           </li>
           <li className="p-4 border-gray-100/20">
             <Link href="/notifications" className="flex w-full pb-4 items-center items-center justify-center md:justify-start">
-              <BellIcon className="h-6 w-6 mr-2" />
+              <div className="relative">
+                <BellIcon className="h-6 w-6 mr-2" />
+                {unreadNotifications > 0 && (
+                  <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-600 ring-2 ring-white"></span>
+                )}
+              </div>
               <span className="hidden xl:inline">Notifications</span>
             </Link>
           </li>

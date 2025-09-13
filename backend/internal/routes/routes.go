@@ -94,6 +94,15 @@ func RegisterRoutes(db *sql.DB) {
 	http.HandleFunc("/api/reaction", middlewares.AuthMiddleware(db, handler.HandleReaction(db)))
 
 	// Notification routes
-	http.HandleFunc("/api/notifications", middlewares.AuthMiddleware(db, notificationHandler.GetNotifications))
 	http.HandleFunc("/api/notifications/read", middlewares.AuthMiddleware(db, notificationHandler.MarkNotificationsAsRead))
+	http.HandleFunc("/api/notifications/", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodPut && strings.Contains(r.URL.Path, "/read") {
+			middlewares.AuthMiddleware(db, notificationHandler.MarkNotificationAsRead).ServeHTTP(w, r)
+		} else if r.Method == http.MethodGet {
+			middlewares.AuthMiddleware(db, notificationHandler.GetNotifications).ServeHTTP(w, r)
+		} else {
+			http.NotFound(w, r)
+		}
+	})
+	http.HandleFunc("/api/notifications", middlewares.AuthMiddleware(db, notificationHandler.GetNotifications))
 }

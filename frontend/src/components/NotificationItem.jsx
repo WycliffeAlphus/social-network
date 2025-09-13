@@ -1,4 +1,5 @@
 import React from 'react';
+import { markNotificationAsRead } from '../lib/notifications';
 
 // A simple component to format the time since the notification was created
 const TimeAgo = ({ date }) => {
@@ -17,11 +18,19 @@ const TimeAgo = ({ date }) => {
     return Math.floor(seconds) + "s ago";
 };
 
-const NotificationItem = ({ notification }) => {
+const NotificationItem = ({ notification, onRead }) => {
     const itemClasses = `p-3 flex items-start gap-3 border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800`;
 
+    const handleMarkAsRead = async () => {
+        if (notification.is_read) return;
+        const success = await markNotificationAsRead(notification.id);
+        if (success) {
+            onRead(notification.id);
+        }
+    };
+
     return (
-        <div className={itemClasses}>
+        <div className={itemClasses} onClick={handleMarkAsRead}>
             {!notification.is_read && (
                 <div className="w-2.5 h-2.5 bg-blue-500 rounded-full mt-1.5 flex-shrink-0"></div>
             )}

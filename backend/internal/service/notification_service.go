@@ -84,6 +84,12 @@ func (s *NotificationService) MarkAllAsRead(userID string) error {
 	return s.repo.MarkAllAsRead(userID)
 }
 
+// MarkAsRead marks a single notification as read.
+func (s *NotificationService) MarkAsRead(notificationID int, userID string) error {
+	return s.repo.MarkAsRead(notificationID, userID)
+}
+
+
 // CreateGroupJoinRequestNotification creates a notification for the group owner when a user requests to join.
 func (s *NotificationService) CreateGroupJoinRequestNotification(actorID, groupOwnerID string, groupID int) error {
 	actor, err := s.userRepo.GetUserByID(actorID)

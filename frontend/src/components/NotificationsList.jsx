@@ -25,6 +25,12 @@ const NotificationsList = () => {
         }
     };
 
+    const handleMarkAsRead = (notificationId) => {
+        setNotifications(notifications.map(n =>
+            n.id === notificationId ? { ...n, is_read: true } : n
+        ));
+    };
+
     return (
         <div className="absolute top-full right-0 mt-2 w-80 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-20">
             <div className="p-3 flex justify-between items-center border-b border-gray-200 dark:border-gray-700">
@@ -40,7 +46,7 @@ const NotificationsList = () => {
                     <p className="p-4 text-center text-gray-500">No new notifications.</p>
                 ) : (
                     notifications.map(notification => (
-                        <NotificationItem key={notification.id} notification={notification} />
+                        <NotificationItem key={notification.id} notification={notification} onRead={handleMarkAsRead} />
                     ))
                 )}
             </div>
