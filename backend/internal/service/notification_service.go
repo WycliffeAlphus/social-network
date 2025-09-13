@@ -280,3 +280,21 @@ func (s *NotificationService) CreateReactionNotification(actorID, postOwnerID, p
 
 	return s.repo.Create(notification)
 }
+
+// CreateGroupCreatedNotification creates a notification for a new group.
+func (s *NotificationService) CreateGroupCreatedNotification(actorID string, groupID int) error {
+	group, err := s.groupRepo.FindGroupByID(uint(groupID))
+	if err != nil {
+		return err
+	}
+
+	notification := &model.Notification{
+		UserID:    actorID,
+		ActorID:   actorID,
+		Type:      "group_created",
+		ContentID: groupID,
+		Message:   fmt.Sprintf("You have created the group '%s'.", group.Title),
+	}
+
+	return s.repo.Create(notification)
+}

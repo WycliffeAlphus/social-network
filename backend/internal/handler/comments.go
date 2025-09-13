@@ -3,9 +3,12 @@ package handler
 import (
 	"backend/internal/context"
 	"backend/internal/model"
+	"backend/internal/repository"
+	"backend/internal/service"
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -19,7 +22,7 @@ const (
 )
 
 // CommentHandler handles both GET and POST requests for /posts/:id/comments
-func CommentHandler(db *sql.DB) http.HandlerFunc {
+func CommentHandler(db *sql.DB, notificationService *service.NotificationService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Check if the path ends with /comments
 		if !strings.HasSuffix(r.URL.Path, "/comments") {
@@ -29,7 +32,7 @@ func CommentHandler(db *sql.DB) http.HandlerFunc {
 
 		switch r.Method {
 		case http.MethodPost:
-			createComment(w, r, db)
+			createComment(w, r, db, notificationService)
 		case http.MethodGet:
 			getComments(w, r, db)
 		default:
@@ -39,7 +42,7 @@ func CommentHandler(db *sql.DB) http.HandlerFunc {
 }
 
 // createComment handles POST /posts/:id/comments
-func createComment(w http.ResponseWriter, r *http.Request, db *sql.DB) {
+func createComment(w http.ResponseWriter, r *http.Request, db *sql.DB, notificationService *service.NotificationService) {
 	// Get user ID from context
 	currentUser := context.MustGetUser(r.Context())
 	if currentUser == nil {
@@ -118,6 +121,17 @@ func createComment(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	if err != nil {
 		http.Error(w, "Failed to retrieve comment", http.StatusInternalServerError)
 		return
+	}
+
+	// Get post owner ID
+	postOwnerID, err := repository.GetPostOwnerID(db, postId)
+	if err != nil {
+		log.Printf("Failed to get post owner ID: %v", err)
+	} else {
+		// Create notification
+		if err := notificationService.CreateCommentNotification(currentUser.ID, postOwnerID, postId); err != nil {
+			log.Printf("Failed to create comment notification: %v", err)
+		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")

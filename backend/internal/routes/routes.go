@@ -89,9 +89,9 @@ func RegisterRoutes(db *sql.DB) {
 	http.HandleFunc("/api/createpost", middlewares.AuthMiddleware(db, handler.CreatePost(db, notificationService)))
 
 	// Comment routes
-	http.HandleFunc("/api/posts/", middlewares.AuthMiddleware(db, handler.CommentHandler(db)))
+	http.HandleFunc("/api/posts/", middlewares.AuthMiddleware(db, handler.CommentHandler(db, notificationService)))
 	http.HandleFunc("/api/feeds", middlewares.AuthMiddleware(db, handler.DashboardHandler(db)))
-	http.HandleFunc("/api/reaction", middlewares.AuthMiddleware(db, handler.HandleReaction(db)))
+	http.HandleFunc("/api/reaction", middlewares.AuthMiddleware(db, handler.HandleReaction(db, notificationService)))
 
 	// Notification routes
 	http.HandleFunc("/api/notifications/read", middlewares.AuthMiddleware(db, notificationHandler.MarkNotificationsAsRead))

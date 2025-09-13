@@ -83,6 +83,12 @@ func (h *GroupHandler) CreateGroup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Trigger notification for the group creator
+	if err := h.NotificationService.CreateGroupCreatedNotification(creatorID, int(newGroup.ID)); err != nil {
+		log.Printf("Failed to create group created notification: %v", err)
+		// Do not block response to user for notification failure
+	}
+
 	// Respond with Success
 	utils.RespondWithJSON(w, http.StatusCreated, newGroup)
 }

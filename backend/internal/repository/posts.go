@@ -63,3 +63,12 @@ ORDER BY p.created_at DESC`, id, id, id, id)
 	return &posts, nil
 
 }
+
+func GetPostOwnerID(db *sql.DB, postID string) (string, error) {
+	var ownerID string
+	err := db.QueryRow("SELECT user_id FROM posts WHERE id = ?", postID).Scan(&ownerID)
+	if err != nil {
+		return "", err
+	}
+	return ownerID, nil
+}
