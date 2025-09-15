@@ -24,7 +24,7 @@ export default function FollowingPage() {
 
                 const data = await response.json()
                 // console.log(data)
-                setFollowing(Array.isArray(data?.users) ? data.users : [])
+                setFollowing(Array.isArray(data?.data?.Users) ? data.data.Users : [])
             } catch (err) {
                 setError(err.message || 'Failed to load following')
             } finally {

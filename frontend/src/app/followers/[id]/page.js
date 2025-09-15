@@ -22,8 +22,7 @@ export default function FollowersPage() {
                 if (!response.ok) throw new Error('Failed to fetch followers')
 
                 const data = await response.json()
-                // console.log(data)
-                setFollowers(Array.isArray(data?.users) ? data.users : [])
+                setFollowers(Array.isArray(data?.data?.users) ? data.data.users : [])
             } catch (err) {
                 setError(err.message || 'Failed to load followers')
             } finally {
