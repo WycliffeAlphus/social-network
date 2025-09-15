@@ -35,7 +35,7 @@ func (s *NotificationService) CreateFollowRequestNotification(actorID, targetUse
 }
 
 
-// CreateFollowAcceptedNotification creates a notification for a new follow request.
+// CreateFollowAcceptedNotification creates a notification for an accepted follow request.
 func (s *NotificationService) CreateFollowAcceptedNotification(actorID, targetUserID string) error {
 	actor, err := s.userRepo.GetUserByID(actorID)
 	if err != nil {
@@ -47,6 +47,23 @@ func (s *NotificationService) CreateFollowAcceptedNotification(actorID, targetUs
 		ActorID: actorID,
 		Type:    "follow_accepted",
 		Message: fmt.Sprintf("%s %s accepted your follow request.", actor.FirstName, actor.LastName),
+	}
+
+	return s.repo.Create(notification)
+}
+
+// CreateNewFollowerNotification creates a notification for a new follower.
+func (s *NotificationService) CreateNewFollowerNotification(actorID, targetUserID string) error {
+	actor, err := s.userRepo.GetUserByID(actorID)
+	if err != nil {
+		return err
+	}
+
+	notification := &model.Notification{
+		UserID:  targetUserID,
+		ActorID: actorID,
+		Type:    "new_follower",
+		Message: fmt.Sprintf("%s %s is now following you.", actor.FirstName, actor.LastName),
 	}
 
 	return s.repo.Create(notification)
@@ -92,10 +109,6 @@ func (s *NotificationService) MarkAsRead(notificationID int, userID string) erro
 
 // CreateGroupJoinRequestNotification creates a notification for the group owner when a user requests to join.
 func (s *NotificationService) CreateGroupJoinRequestNotification(actorID, groupOwnerID string, groupID int) error {
-	actor, err := s.userRepo.GetUserByID(actorID)
-	if err != nil {
-		return err
-	}
 	group, err := s.groupRepo.FindGroupByID(uint(groupID))
 	if err != nil {
 		return err
@@ -106,7 +119,7 @@ func (s *NotificationService) CreateGroupJoinRequestNotification(actorID, groupO
 		ActorID:   actorID,
 		Type:      "group_join_request",
 		ContentID: groupID,
-		Message:   fmt.Sprintf("%s %s has requested to join your group '%s'.", actor.FirstName, actor.LastName, group.Title),
+		Message:   fmt.Sprintf("A user has requested to join your group '%s'.", group.Title),
 	}
 
 	return s.repo.Create(notification)
@@ -114,10 +127,6 @@ func (s *NotificationService) CreateGroupJoinRequestNotification(actorID, groupO
 
 // CreateGroupJoinAcceptedNotification creates a notification for a new follow request.
 func (s *NotificationService) CreateGroupJoinAcceptedNotification(actorID, targetUserID string, groupID int) error {
-	actor, err := s.userRepo.GetUserByID(actorID)
-	if err != nil {
-		return err
-	}
 	group, err := s.groupRepo.FindGroupByID(uint(groupID))
 	if err != nil {
 		return err
@@ -128,7 +137,7 @@ func (s *NotificationService) CreateGroupJoinAcceptedNotification(actorID, targe
 		ActorID:   actorID,
 		Type:      "group_join_accepted",
 		ContentID: groupID,
-		Message:   fmt.Sprintf("%s %s has accepted your request to join the group '%s'.", actor.FirstName, actor.LastName, group.Title),
+		Message:   fmt.Sprintf("Your request to join the group '%s' has been accepted.", group.Title),
 	}
 
 	return s.repo.Create(notification)
@@ -136,10 +145,6 @@ func (s *NotificationService) CreateGroupJoinAcceptedNotification(actorID, targe
 
 // CreateGroupEventNotification creates a notification for all group members when an event is created.
 func (s *NotificationService) CreateGroupEventNotification(actorID string, groupID, eventID int) error {
-	actor, err := s.userRepo.GetUserByID(actorID)
-	if err != nil {
-		return fmt.Errorf("failed to get actor: %w", err)
-	}
 	group, err := s.groupRepo.FindGroupByID(uint(groupID))
 	if err != nil {
 		return fmt.Errorf("failed to get group: %w", err)
@@ -152,7 +157,7 @@ func (s *NotificationService) CreateGroupEventNotification(actorID string, group
 
 	// In a real-world scenario, you would fetch the event title as well.
 	// For now, we'll use a generic message.
-	message := fmt.Sprintf("%s %s has created a new event in '%s'.", actor.FirstName, actor.LastName, group.Title)
+	message := fmt.Sprintf("A new event has been created in '%s'.", group.Title)
 
 	for _, memberIDStr := range members {
 		// Don't notify the user who created the event
@@ -179,11 +184,6 @@ func (s *NotificationService) CreateGroupEventNotification(actorID string, group
 
 // CreatePostNotification creates a notification for a new post.
 func (s *NotificationService) CreatePostNotification(actorID, postID string, groupID *int) error {
-	actor, err := s.userRepo.GetUserByID(actorID)
-	if err != nil {
-		return fmt.Errorf("failed to get actor: %w", err)
-	}
-
 	var message string
 	var members []string
 
@@ -193,14 +193,14 @@ func (s *NotificationService) CreatePostNotification(actorID, postID string, gro
 		if err != nil {
 			return fmt.Errorf("failed to get group: %w", err)
 		}
-		message = fmt.Sprintf("%s %s posted in %s.", actor.FirstName, actor.LastName, group.Title)
+		message = fmt.Sprintf("A new post has been made in %s.", group.Title)
 		members, err = s.groupRepo.GetGroupMembers(uint(*groupID))
 		if err != nil {
 			return fmt.Errorf("failed to get group members: %w", err)
 		}
 	} else {
 		// It's a public post, notify followers
-		message = fmt.Sprintf("%s %s created a new post.", actor.FirstName, actor.LastName)
+		message = "A new post has been created."
 		followers, err := s.userRepo.GetFollowers(actorID)
 		if err != nil {
 			return fmt.Errorf("failed to get followers: %w", err)
@@ -239,12 +239,7 @@ func (s *NotificationService) CreateCommentNotification(actorID, postOwnerID, po
 		return nil
 	}
 
-	actor, err := s.userRepo.GetUserByID(actorID)
-	if err != nil {
-		return fmt.Errorf("failed to get actor: %w", err)
-	}
-
-	message := fmt.Sprintf("%s %s commented on your post.", actor.FirstName, actor.LastName)
+	message := "Someone commented on your post."
 
 	notification := &model.Notification{
 		UserID:  postOwnerID,
@@ -264,12 +259,7 @@ func (s *NotificationService) CreateReactionNotification(actorID, postOwnerID, p
 		return nil
 	}
 
-	actor, err := s.userRepo.GetUserByID(actorID)
-	if err != nil {
-		return fmt.Errorf("failed to get actor: %w", err)
-	}
-
-	message := fmt.Sprintf("%s %s reacted to your post.", actor.FirstName, actor.LastName)
+	message := "Someone reacted to your post."
 
 	notification := &model.Notification{
 		UserID:  postOwnerID,

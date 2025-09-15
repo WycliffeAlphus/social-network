@@ -97,9 +97,9 @@ func (h *FollowerHandler) FollowUser(w http.ResponseWriter, r *http.Request) {
 			// Non-critical error, so we don't block the user response
 		}
 	} else if status == "accepted" {
-		err := h.NotificationService.CreateFollowAcceptedNotification(actorID, followedUserID)
+		err := h.NotificationService.CreateNewFollowerNotification(actorID, followedUserID)
 		if err != nil {
-			log.Printf("Error creating follow accepted notification: %v", err)
+			log.Printf("Error creating new follower notification: %v", err)
 			// Non-critical error, so we don't block the user response
 		}
 	}
