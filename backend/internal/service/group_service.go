@@ -150,7 +150,7 @@ func (s *GroupService) InviteUserToGroup(groupID uint, inviterID string, targetU
 }
 
 // AcceptGroupInvitation accepts a group invitation.
-func (s *GroupService) AcceptGroupInvitation(invitationID int, userID string) error {
+func (s *GroupService) AcceptGroupInvitation(invitationID int, userID string) (err error) { // Named return
 	invite, err := s.Repo.GetGroupInvitation(invitationID)
 	if err != nil {
 		return err
@@ -166,9 +166,18 @@ func (s *GroupService) AcceptGroupInvitation(invitationID int, userID string) er
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer func() {
+		if p := recover(); p != nil {
+			tx.Rollback()
+			panic(p) // re-throw panic after Rollback
+		} else if err != nil {
+			tx.Rollback() // err is non-nil; don't change it
+		} else {
+			err = tx.Commit() // if Commit returns error, update err
+		}
+	}()
 
-	if err := s.Repo.AcceptGroupInvitation(invitationID); err != nil {
+	if err = s.Repo.AcceptGroupInvitation(invitationID); err != nil {
 		return err
 	}
 
@@ -178,11 +187,11 @@ func (s *GroupService) AcceptGroupInvitation(invitationID int, userID string) er
 		Role:    "member",
 		Status:  "active",
 	}
-	if err := s.Repo.InsertGroupMember(tx, member); err != nil {
+	if err = s.Repo.InsertGroupMember(tx, member); err != nil {
 		return err
 	}
 
-	return tx.Commit()
+	return nil
 }
 
 // DeclineGroupInvitation declines a group invitation.

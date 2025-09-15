@@ -25,6 +25,10 @@ func (m *MockNotificationService) CreateFollowAcceptedNotification(actorID, targ
 	return nil
 }
 
+func (m *MockNotificationService) CreateNewFollowerNotification(actorID, targetUserID string) error {
+	return nil
+}
+
 func (m *MockNotificationService) CreateGroupInviteNotification(actorID, targetUserID string, groupID int) error {
 	return nil
 }
