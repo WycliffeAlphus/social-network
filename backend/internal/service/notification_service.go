@@ -145,6 +145,10 @@ func (s *NotificationService) CreateGroupJoinAcceptedNotification(actorID, targe
 
 // CreateGroupEventNotification creates a notification for all group members when an event is created.
 func (s *NotificationService) CreateGroupEventNotification(actorID string, groupID, eventID int) error {
+	actor, err := s.userRepo.GetUserByID(actorID)
+	if err != nil {
+		return err
+	}
 	group, err := s.groupRepo.FindGroupByID(uint(groupID))
 	if err != nil {
 		return fmt.Errorf("failed to get group: %w", err)
@@ -155,9 +159,7 @@ func (s *NotificationService) CreateGroupEventNotification(actorID string, group
 		return fmt.Errorf("failed to get group members: %w", err)
 	}
 
-	// In a real-world scenario, you would fetch the event title as well.
-	// For now, we'll use a generic message.
-	message := fmt.Sprintf("A new event has been created in '%s'.", group.Title)
+	message := fmt.Sprintf("%s %s has created a new event in '%s'.", actor.FirstName, actor.LastName, group.Title)
 
 	for _, memberIDStr := range members {
 		// Don't notify the user who created the event
@@ -184,6 +186,10 @@ func (s *NotificationService) CreateGroupEventNotification(actorID string, group
 
 // CreatePostNotification creates a notification for a new post.
 func (s *NotificationService) CreatePostNotification(actorID, postID string, groupID *int) error {
+	actor, err := s.userRepo.GetUserByID(actorID)
+	if err != nil {
+		return err
+	}
 	var message string
 	var members []string
 
@@ -193,14 +199,14 @@ func (s *NotificationService) CreatePostNotification(actorID, postID string, gro
 		if err != nil {
 			return fmt.Errorf("failed to get group: %w", err)
 		}
-		message = fmt.Sprintf("A new post has been made in %s.", group.Title)
+		message = fmt.Sprintf("%s %s has made a new post in %s.", actor.FirstName, actor.LastName, group.Title)
 		members, err = s.groupRepo.GetGroupMembers(uint(*groupID))
 		if err != nil {
 			return fmt.Errorf("failed to get group members: %w", err)
 		}
 	} else {
 		// It's a public post, notify followers
-		message = "A new post has been created."
+		message = fmt.Sprintf("%s %s has created a new post.", actor.FirstName, actor.LastName)
 		followers, err := s.userRepo.GetFollowers(actorID)
 		if err != nil {
 			return fmt.Errorf("failed to get followers: %w", err)
@@ -220,7 +226,6 @@ func (s *NotificationService) CreatePostNotification(actorID, postID string, gro
 			ActorID: actorID,
 			Type:    "new_post",
 			Message: message,
-			
 		}
 
 		if err := s.repo.Create(notification); err != nil {
