@@ -19,8 +19,7 @@ const TimeAgo = ({ date }) => {
     return Math.floor(seconds) + "s ago";
 };
 
-const NotificationItem = ({ notification, onRead, followStatus, groupInviteStatus }) => {
-    console.log('followStatus:', followStatus);
+const NotificationItem = ({ notification, onRead, onFollowBack, followStatus, groupInviteStatus }) => {
     const itemClasses = `p-3 flex items-start gap-3 border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800`;
 
     const handleMarkAsRead = async () => {
@@ -43,6 +42,12 @@ const NotificationItem = ({ notification, onRead, followStatus, groupInviteStatu
             });
 
             if (response.ok) {
+                if (action === 'accept') {
+                    const data = await response.json();
+                    onFollowBack(notification.id, notification.actor_id, data.status);
+                } else {
+                    onFollowBack(notification.id, notification.actor_id, 'not_following');
+                }
                 handleMarkAsRead();
             } else {
                 const errorData = await response.json();
@@ -79,10 +84,12 @@ const NotificationItem = ({ notification, onRead, followStatus, groupInviteStatu
                     'Content-Type': 'application/json',
                 },
                 credentials: 'include',
-                body: JSON.stringify({ userId, isFollowBack: true })
+                body: JSON.stringify({ userId: userId, isFollowBack: true })
             });
 
             if (response.ok) {
+                const data = await response.json();
+                onFollowBack(notification.id, notification.actor_id, data.status);
                 handleMarkAsRead();
             } else {
                 const errorData = await response.json();
@@ -117,13 +124,19 @@ const NotificationItem = ({ notification, onRead, followStatus, groupInviteStatu
     const renderActionButtons = () => {
         switch (notification.type) {
             case 'follow_request':
-                if (followStatus === 'requested') {
+                if (followStatus === 'not_following') {
                     return (
                         <div className="flex space-x-2 mt-2">
                             <button onClick={(e) => {e.preventDefault(); handleFollowRequest('accept', notification.actor_id)}} className="px-3 py-1 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition text-xs">Accept</button>
                             <button onClick={(e) => {e.preventDefault(); handleFollowRequest('decline', notification.actor_id)}} className="px-3 py-1 bg-gray-200 text-gray-800 rounded-full hover:bg-gray-300 transition text-xs">Decline</button>
                         </div>
                     );
+                } else if (followStatus === 'following' || followStatus === 'requested') {
+                    return (
+                        <div className="flex space-x-2 mt-2">
+                            <button className="px-3 py-1 bg-gray-200 text-gray-800 rounded-full transition text-xs" disabled>Following</button>
+                        </div>
+                    )
                 }
                 return null;
             case 'group_invite':
@@ -137,11 +150,20 @@ const NotificationItem = ({ notification, onRead, followStatus, groupInviteStatu
                 }
                 return null;
             case 'new_follower':
-                return (
-                    <div className="flex space-x-2 mt-2">
-                        <button onClick={(e) => {e.preventDefault(); handleFollowBack(notification.actor_id)}} className="px-3 py-1 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition text-xs">Follow Back</button>
-                    </div>
-                );
+                if (followStatus === 'not_following') {
+                    return (
+                        <div className="flex space-x-2 mt-2">
+                            <button onClick={(e) => {e.preventDefault(); handleFollowBack(notification.actor_id)}} className="px-3 py-1 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition text-xs">Follow Back</button>
+                        </div>
+                    );
+                } else if (followStatus === 'following' || followStatus === 'requested') {
+                    return (
+                        <div className="flex space-x-2 mt-2">
+                            <button className="px-3 py-1 bg-gray-200 text-gray-800 rounded-full transition text-xs" disabled>Following</button>
+                        </div>
+                    )
+                }
+                return null;
             default:
                 return null;
         }
@@ -166,3 +188,4 @@ const NotificationItem = ({ notification, onRead, followStatus, groupInviteStatu
 };
 
 export default NotificationItem;
+

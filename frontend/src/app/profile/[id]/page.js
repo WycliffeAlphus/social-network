@@ -80,7 +80,8 @@ export default function Profile({ params }) {
                 credentials: 'include'
             });
             if (response.ok) {
-                setFollowStatus('requested')
+                const data = await response.json();
+                setFollowStatus(data.status);
             } else {
                 console.error('Failed to follow user');
             }
@@ -147,10 +148,12 @@ export default function Profile({ params }) {
     if (!shouldShowProfile) {
         let buttonLabel = "Follow";
         let buttonClass = "bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded";
+        let disabled = false;
 
         if (followStatus === 'accepted') {
             buttonLabel = "Following";
             buttonClass = "border border-gray-400 hover:bg-gray-400 hover:text-black text-gray-800 px-4 py-2 rounded";
+            disabled = true;
         } else if (followStatus === 'requested') {
             buttonLabel = "Requested";
             buttonClass = "bg-gray-300 text-gray-600 hover:bg-gray-400 hover:text-black px-4 py-2 rounded";
@@ -172,6 +175,7 @@ export default function Profile({ params }) {
                         }
                     }}
                     className={buttonClass}
+                    disabled={disabled}
                 >
                     {buttonLabel}
                 </button>

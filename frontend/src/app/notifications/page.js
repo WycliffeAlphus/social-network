@@ -2,27 +2,49 @@
 
 import { useEffect, useState } from 'react';
 import NotificationItem from '../../components/NotificationItem';
-import { getNotifications } from '../../lib/notifications';
+import { getNotifications, getFollowStatuses, getGroupInviteStatuses } from '../../lib/notifications';
 
 function NotificationsPage() {
     const [notifications, setNotifications] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [followStatuses, setFollowStatuses] = useState({});
+    const [groupInviteStatuses, setGroupInviteStatuses] = useState({});
+
+    const fetchNotifications = async () => {
+        try {
+            setLoading(true);
+            const data = await getNotifications();
+            setNotifications(data || []);
+
+            if (data && data.length > 0) {
+                const userIds = data
+                    .filter(n => n.type === 'new_follower' || n.type === 'follow_request')
+                    .map(n => n.actor_id);
+                
+                if (userIds.length > 0) {
+                    const statuses = await getFollowStatuses(userIds);
+                    setFollowStatuses(statuses);
+                }
+
+                const invitationIds = data
+                    .filter(n => n.type === 'group_invite')
+                    .map(n => n.content_id);
+
+                if (invitationIds.length > 0) {
+                    const statuses = await getGroupInviteStatuses(invitationIds);
+                    setGroupInviteStatuses(statuses);
+                }
+            }
+        } catch (err) {
+            setError('Failed to fetch notifications.');
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        const fetchNotifications = async () => {
-            try {
-                setLoading(true);
-                const data = await getNotifications();
-                setNotifications(data || []); // Ensure notifications is an array
-            } catch (err) {
-                setError('Failed to fetch notifications.');
-                console.error(err);
-            } finally {
-                setLoading(false);
-            }
-        };
-
         fetchNotifications();
     }, []);
 
@@ -30,8 +52,9 @@ function NotificationsPage() {
         setNotifications(prev => prev.map(n => n.id === notificationId ? { ...n, is_read: true } : n));
     };
 
-    const handleFollowBack = (notificationId) => {
-        setNotifications(prev => prev.map(n => n.id === notificationId ? { ...n, is_followed_back: true } : n));
+    const handleFollowBack = (notificationId, actorId, status) => {
+        setFollowStatuses(prev => ({...prev, [actorId]: status}));
+        setNotifications(prev => prev.map(n => n.id === notificationId ? { ...n, is_read: true } : n));
     };
 
     if (loading) {
@@ -53,7 +76,9 @@ function NotificationsPage() {
                                 key={notification.id} 
                                 notification={notification} 
                                 onRead={handleRead} 
-                                onFollowBack={handleFollowBack} 
+                                onFollowBack={handleFollowBack}
+                                followStatus={followStatuses[notification.actor_id]}
+                                groupInviteStatus={groupInviteStatuses[notification.content_id]}
                             />
                         ))
                     }

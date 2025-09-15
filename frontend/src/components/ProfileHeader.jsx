@@ -16,10 +16,13 @@ export default function ProfileHeader({
     let label = 'Follow'
     let className = 'bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center gap-2'
     let onClick = onFollow
+    let disabled = false
     
     if (followStatus === 'accepted') {
       label = 'Following'
       className = 'bg-white border-2 border-blue-200 text-blue-700 px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover:bg-blue-50 hover:border-blue-300 shadow-md hover:shadow-lg flex items-center gap-2'
+      onClick = null
+      disabled = true
     } else if (followStatus === 'requested') {
       label = 'Requested'
       className = 'bg-blue-100 border-2 border-blue-200 text-blue-600 px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover:bg-blue-50 cursor-pointer shadow-md hover:shadow-lg flex items-center gap-2'
@@ -27,7 +30,7 @@ export default function ProfileHeader({
     }
     
     return (
-      <button onClick={onClick} className={className}>
+      <button onClick={onClick} className={className} disabled={disabled}>
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           {followStatus === 'accepted' ? (
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
