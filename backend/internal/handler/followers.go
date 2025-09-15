@@ -37,6 +37,7 @@ func (h *FollowerHandler) FollowUser(w http.ResponseWriter, r *http.Request) {
 
 	var request struct {
 		FollowedUserID string `json:"userId"`
+		IsFollowBack   bool   `json:"isFollowBack"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
@@ -97,10 +98,17 @@ func (h *FollowerHandler) FollowUser(w http.ResponseWriter, r *http.Request) {
 			// Non-critical error, so we don't block the user response
 		}
 	} else if status == "accepted" {
-		err := h.NotificationService.CreateNewFollowerNotification(actorID, followedUserID)
-		if err != nil {
-			log.Printf("Error creating new follower notification: %v", err)
-			// Non-critical error, so we don't block the user response
+		if request.IsFollowBack {
+			err := h.NotificationService.CreateFollowBackNotification(actorID, followedUserID)
+			if err != nil {
+				log.Printf("Error creating follow back notification: %v", err)
+			}
+		} else {
+			err := h.NotificationService.CreateNewFollowerNotification(actorID, followedUserID)
+			if err != nil {
+				log.Printf("Error creating new follower notification: %v", err)
+				// Non-critical error, so we don't block the user response
+			}
 		}
 	}
 

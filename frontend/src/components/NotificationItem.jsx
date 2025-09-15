@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { markNotificationAsRead } from '../lib/notifications';
 
@@ -20,6 +20,7 @@ const TimeAgo = ({ date }) => {
 };
 
 const NotificationItem = ({ notification, onRead }) => {
+    const [isFollowedBack, setIsFollowedBack] = useState(false);
     const itemClasses = `p-3 flex items-start gap-3 border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800`;
 
     const handleMarkAsRead = async () => {
@@ -78,11 +79,12 @@ const NotificationItem = ({ notification, onRead }) => {
                     'Content-Type': 'application/json',
                 },
                 credentials: 'include',
-                body: JSON.stringify({ userId })
+                body: JSON.stringify({ userId, isFollowBack: true })
             });
 
             if (response.ok) {
                 onRead(notification.id);
+                setIsFollowedBack(true);
             } else {
                 const errorData = await response.json();
                 console.error(`Failed to follow back: ${errorData.message || 'Unknown error'}`);
@@ -119,7 +121,9 @@ const NotificationItem = ({ notification, onRead }) => {
             case 'new_follower':
                 return (
                     <div className="flex space-x-2 mt-2">
-                        <button onClick={() => handleFollowBack(notification.actor_id)} className="px-3 py-1 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition text-xs">Follow Back</button>
+                        {!isFollowedBack && (
+                            <button onClick={() => handleFollowBack(notification.actor_id)} className="px-3 py-1 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition text-xs">Follow Back</button>
+                        )}
                     </div>
                 );
             default:

@@ -36,6 +36,25 @@ func (s *NotificationService) CreateFollowRequestNotification(actorID, targetUse
 }
 
 
+
+// CreateFollowBackNotification creates a notification for a new follow back.
+func (s *NotificationService) CreateFollowBackNotification(actorID, targetUserID string) error {
+	actor, err := s.userRepo.GetUserByID(actorID)
+	if err != nil {
+		return err
+	}
+
+	notification := &model.Notification{
+		UserID:  targetUserID,
+		ActorID: actorID,
+		Type:    "follow_back",
+		Message: fmt.Sprintf("%s %s followed you back.", actor.FirstName, actor.LastName),
+	}
+
+	return s.repo.Create(notification)
+}
+
+
 // CreateFollowAcceptedNotification creates a notification for an accepted follow request.
 func (s *NotificationService) CreateFollowAcceptedNotification(actorID, targetUserID string) error {
 	actor, err := s.userRepo.GetUserByID(actorID)
