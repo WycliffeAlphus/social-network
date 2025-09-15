@@ -42,7 +42,6 @@ export default function Home() {
 
         <div className="p-4 border-t lg:border-0">
           {loading && <p className="text-sm text-gray-500">Loading feeds...</p>}
-          {error && <p className="text-sm text-red-500">{error}</p>}
           {!loading && posts.length === 0 && <p>No posts available.</p>}
 
           {!loading &&

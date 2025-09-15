@@ -6,9 +6,9 @@ import { PhotoIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
-export default function CreatePost({ onClose }) {
+export default function CreatePost({ onClose, groupId }) {
     const [showFollowers, setShowFollowers] = useState(false);
-    const [selectedPrivacy, setSelectedPrivacy] = useState('public');
+    const [selectedPrivacy, setSelectedPrivacy] = useState(groupId ? 'group' : 'public');
     const [error, setError] = useState('')
     const [loadingFollowers, setLoadingFollowers] = useState(false);
     const [followersError, setFollowersError] = useState(null);
@@ -19,7 +19,7 @@ export default function CreatePost({ onClose }) {
     const [formData, setFormData] = useState({
         title: '',
         content: '',
-        postPrivacy: 'public',
+        postPrivacy: groupId ? 'group' : 'public',
         postImage: '',
     })
 
@@ -114,6 +114,10 @@ export default function CreatePost({ onClose }) {
         try {
             const formDataToSend = new FormData()
 
+            if (groupId) {
+                formDataToSend.append('group_id', groupId);
+            }
+
             // include selected followers if private mode
             if (selectedPrivacy === 'private') {
                 formDataToSend.append('allowedFollowers', JSON.stringify(selectedFollowers));
@@ -156,8 +160,12 @@ export default function CreatePost({ onClose }) {
             }
 
             if (response.ok) {
-                router.push('/') // redirect to home after post creation
-                onClose()
+                if (groupId) { // If it's a group post
+                    onClose(); // Just close the modal, stay on the group page
+                } else { // If it's a personal post
+                    router.push('/'); // Redirect to home
+                    onClose();
+                }
             }
         } catch (err) {
             setError('Post creation failed. Please try again.')
@@ -211,7 +219,7 @@ export default function CreatePost({ onClose }) {
             </div>
 
             {/* Privacy Settings */}
-            <div>
+            {!groupId && <div>
                 <h2 className="text-sm mb-3 text-gray-700 dark:text-white">Privacy Settings</h2>
 
                 <div className="space-y-3">
@@ -275,6 +283,7 @@ export default function CreatePost({ onClose }) {
                         </label>
                     </div>
                     <div id="private-error" className="text-red-500"></div>
+                    <div id="postPrivacy-error" className="text-red-500"></div>
                 </div>
 
                 {/* Follower Selector (shown only when private is selected) */}
@@ -317,7 +326,7 @@ export default function CreatePost({ onClose }) {
                         </div>
                     </div>
                 )}
-            </div>
+            </div>}
 
             {/* Image Upload */}
             <div className="mt-6">

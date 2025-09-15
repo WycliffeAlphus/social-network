@@ -57,16 +57,22 @@ func RegisterRoutes(db *sql.DB) {
 
 	// Group join request endpoints
 	http.HandleFunc("/api/groups/", func(w http.ResponseWriter, r *http.Request) {
+		path := r.URL.Path
 		// Handle /api/groups/:id/join endpoint
-		if strings.Contains(r.URL.Path, "/join") {
+		if strings.Contains(path, "/join") {
 			if r.URL.Query().Get("action") == "accept" {
 				middlewares.AuthMiddleware(db, http.HandlerFunc(groupHandler.AcceptJoinRequest)).ServeHTTP(w, r)
 			} else {
 				middlewares.AuthMiddleware(db, http.HandlerFunc(groupHandler.JoinGroupRequest)).ServeHTTP(w, r)
 			}
 			return
+		} else if strings.Contains(path, "/posts") {
+			middlewares.AuthMiddleware(db, http.HandlerFunc(handler.GetGroupPosts(db))).ServeHTTP(w, r)
+			return
+		} else {
+			middlewares.AuthMiddleware(db, http.HandlerFunc(handler.GetGroup(db))).ServeHTTP(w, r)
+			return
 		}
-		http.Error(w, "Not found", http.StatusNotFound)
 	})
 
 	http.HandleFunc("/api/follow-requests", middlewares.AuthMiddleware(db, handler.GetFollowRequests(db)))
