@@ -37,6 +37,10 @@ func RegisterRoutes(db *sql.DB) {
 	http.HandleFunc("/api/follow-status/", middlewares.AuthMiddleware(db, handler.GetFollowStatus(db)))
 	http.HandleFunc("/api/followers/", middlewares.AuthMiddleware(db, handler.GetFollowers(db)))
 	http.HandleFunc("/api/following/", middlewares.AuthMiddleware(db, handler.GetFollowing(db)))
+	http.HandleFunc("/api/follow-relationship", middlewares.AuthMiddleware(db, handler.CheckFollowRelationship(db)))
+	http.HandleFunc("/ws", handler.WebSocketConnection(db))
+	http.HandleFunc("/api/users", middlewares.AuthMiddleware(db, handler.HandleUserStatuses(db)))
+	http.HandleFunc("/api/conversations", middlewares.AuthMiddleware(db, handler.PrivateConversations(db)))
 
 	groupsHandler := func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {

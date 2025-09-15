@@ -3,6 +3,7 @@
 import { use, useEffect, useState } from 'react'
 import ProfileHeader from '@/components/ProfileHeader'
 import ProfileDetails from '@/components/ProfileDetails'
+import Loading from '@/components/loading'
 
 export default function Profile({ params }) {
     const { id } = use(params)
@@ -135,7 +136,7 @@ export default function Profile({ params }) {
     };
 
     if (loading) {
-        return <div className="flex justify-center items-center h-screen">Loading...</div>
+        return <div className="flex items-center justify-center h-screen"><Loading /></div>
     }
 
     if (error) {

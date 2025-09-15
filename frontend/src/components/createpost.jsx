@@ -189,7 +189,7 @@ export default function CreatePost({ onClose }) {
                     value={formData.title}
                     onChange={handleChange}
                     placeholder="What's your post about?"
-                    className="mt-1 w-full py-1 px-3 border-b border-gray-700 focus:outline-none focus:border-b-blue-500"
+                    className="mt-1 w-full py-1 px-3 border-b border-gray-400 focus:outline-none focus:border-b-blue-500"
                     required
                 />
                 <div id="title-error" className="text-red-500"></div>
@@ -203,7 +203,7 @@ export default function CreatePost({ onClose }) {
                     name="content"
                     value={formData.content}
                     onChange={handleChange}
-                    className="mt-1 w-full max-h-[9rem] min-h-[9rem] p-3 border-b border-gray-700 focus:outline-none focus:border-b-blue-500"
+                    className="mt-1 w-full max-h-[9rem] min-h-[9rem] p-3 border-b border-gray-400 focus:outline-none focus:border-b-blue-500"
                     placeholder="Write your post content here..."
                     required
                 ></textarea>
@@ -217,7 +217,7 @@ export default function CreatePost({ onClose }) {
                 <div className="space-y-3">
                     {/* Public Option */}
                     <div
-                        className={`flex items-center px-3 py-1 border rounded-lg cursor-pointer ${selectedPrivacy === 'public' ? 'border-blue-500' : 'border-gray-700 hover:border-blue-500'}`}
+                        className={`flex items-center px-3 py-1 border rounded-lg cursor-pointer ${selectedPrivacy === 'public' ? 'border-blue-500' : 'border-gray-400 hover:border-blue-500'}`}
                         onClick={() => handlePrivacyChange('public')}
                     >
                         <input
@@ -237,7 +237,7 @@ export default function CreatePost({ onClose }) {
 
                     {/* Followers Only Option */}
                     <div
-                        className={`flex items-center px-3 py-1 border rounded-lg cursor-pointer ${selectedPrivacy === 'almostprivate' ? 'border-blue-500' : 'border-gray-700 hover:border-blue-500'}`}
+                        className={`flex items-center px-3 py-1 border rounded-lg cursor-pointer ${selectedPrivacy === 'almostprivate' ? 'border-blue-500' : 'border-gray-400 hover:border-blue-500'}`}
                         onClick={() => handlePrivacyChange('almostprivate')}
                     >
                         <input
@@ -257,7 +257,7 @@ export default function CreatePost({ onClose }) {
 
                     {/* Private Option */}
                     <div
-                        className={`flex items-center px-3 py-1 border rounded-lg cursor-pointer ${selectedPrivacy === 'private' ? 'border-blue-500' : 'border-gray-700 hover:border-blue-500'}`}
+                        className={`flex items-center px-3 py-1 border rounded-lg cursor-pointer ${selectedPrivacy === 'private' ? 'border-blue-500' : 'border-gray-400 hover:border-blue-500'}`}
                         onClick={() => handlePrivacyChange('private')}
                     >
                         <input
