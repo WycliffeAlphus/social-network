@@ -198,7 +198,7 @@ func (r *GroupRepository) CreateEvent(event *model.Event) (int, error) {
 // CreateGroupInvitation inserts a new group invitation into the database.
 func (r *GroupRepository) CreateGroupInvitation(groupID uint, inviterID, targetUserID string) error {
 	_, err := r.DB.Exec(`
-		INSERT INTO group_invites (group_id, inviter_id, invited_id, status)
+		INSERT INTO group_invites (group_id, inviter_user_id, invited_user_id, status)
 		VALUES (?, ?, ?, 'pending')
 	`, groupID, inviterID, targetUserID)
 	return err
@@ -224,10 +224,10 @@ func (r *GroupRepository) DeclineGroupInvitation(invitationID int) error {
 func (r *GroupRepository) GetGroupInvitation(invitationID int) (*model.GroupInvite, error) {
 	var invite model.GroupInvite
 	err := r.DB.QueryRow(`
-		SELECT id, group_id, inviter_id, invited_id, status
+		SELECT id, group_id, inviter_user_id, invited_user_id, status
 		FROM group_invites
 		WHERE id = ?
-	`, invitationID).Scan(&invite.ID, &invite.GroupID, &invite.InviterID, &invite.InvitedID, &invite.Status)
+	`, invitationID).Scan(&invite.ID, &invite.GroupID, &invite.InviterUserID, &invite.InvitedUserID, &invite.Status)
 	if err != nil {
 		return nil, err
 	}

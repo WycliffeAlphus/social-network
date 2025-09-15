@@ -4,6 +4,7 @@ import (
 	"backend/internal/model"
 	"backend/internal/repository"
 	"fmt"
+	"strconv"
 )
 
 type GroupService struct {
@@ -155,7 +156,13 @@ func (s *GroupService) AcceptGroupInvitation(invitationID int, userID string) (e
 	if err != nil {
 		return err
 	}
-	if invite.InvitedID != userID {
+
+	uid, err := strconv.ParseUint(userID, 10, 64)
+	if err != nil {
+		return fmt.Errorf("invalid user ID")
+	}
+
+	if invite.InvitedUserID != uint(uid) {
 		return fmt.Errorf("you are not authorized to accept this invitation")
 	}
 	if invite.Status != "pending" {
@@ -183,7 +190,7 @@ func (s *GroupService) AcceptGroupInvitation(invitationID int, userID string) (e
 
 	member := &model.GroupMember{
 		GroupID: uint(invite.GroupID),
-		UserID:  invite.InvitedID,
+		UserID:  strconv.FormatUint(uint64(invite.InvitedUserID), 10),
 		Role:    "member",
 		Status:  "active",
 	}
@@ -200,7 +207,11 @@ func (s *GroupService) DeclineGroupInvitation(invitationID int, userID string) e
 	if err != nil {
 		return err
 	}
-	if invite.InvitedID != userID {
+	uid, err := strconv.ParseUint(userID, 10, 64)
+	if err != nil {
+		return fmt.Errorf("invalid user ID")
+	}
+	if invite.InvitedUserID != uint(uid) {
 		return fmt.Errorf("you are not authorized to decline this invitation")
 	}
 	if invite.Status != "pending" {
