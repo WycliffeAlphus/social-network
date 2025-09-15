@@ -220,8 +220,7 @@ func (s *NotificationService) CreatePostNotification(actorID, postID string, gro
 			ActorID: actorID,
 			Type:    "new_post",
 			Message: message,
-			// Assuming you might want to link to the post, you'd need a way to represent this.
-			// Maybe ContentID could store postID, but it's an int. This needs schema adjustment.
+			
 		}
 
 		if err := s.repo.Create(notification); err != nil {
@@ -239,14 +238,16 @@ func (s *NotificationService) CreateCommentNotification(actorID, postOwnerID, po
 		return nil
 	}
 
-	message := "Someone commented on your post."
+	actor, err := s.userRepo.GetUserByID(actorID)
+	if err != nil {
+		return err
+	}
 
 	notification := &model.Notification{
 		UserID:  postOwnerID,
 		ActorID: actorID,
 		Type:    "new_comment",
-		Message: message,
-		// Again, linking to the post/comment would be ideal but requires schema changes.
+		Message: fmt.Sprintf("%s %s commented on your post.", actor.FirstName, actor.LastName),
 	}
 
 	return s.repo.Create(notification)
@@ -259,13 +260,16 @@ func (s *NotificationService) CreateReactionNotification(actorID, postOwnerID, p
 		return nil
 	}
 
-	message := "Someone reacted to your post."
+	actor, err := s.userRepo.GetUserByID(actorID)
+	if err != nil {
+		return err
+	}
 
 	notification := &model.Notification{
 		UserID:  postOwnerID,
 		ActorID: actorID,
 		Type:    "new_reaction",
-		Message: message,
+		Message: fmt.Sprintf("%s %s reacted to your post.", actor.FirstName, actor.LastName),
 	}
 
 	return s.repo.Create(notification)
