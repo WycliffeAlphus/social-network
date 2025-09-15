@@ -16,17 +16,17 @@ func NewNotificationRepository(db *sql.DB) *NotificationRepository {
 // Create inserts a new notification into the database.
 func (r *NotificationRepository) Create(notification *model.Notification) error {
 	query := `
-		INSERT INTO notifications (user_id, actor_id, type, content_id, message)
-		VALUES (?, ?, ?, ?, ?)
+		INSERT INTO notifications (user_id, actor_id, type, content_id, post_id, message)
+		VALUES (?, ?, ?, ?, ?, ?)
 	`
-	_, err := r.DB.Exec(query, notification.UserID, notification.ActorID, notification.Type, notification.ContentID, notification.Message)
+	_, err := r.DB.Exec(query, notification.UserID, notification.ActorID, notification.Type, notification.ContentID, notification.PostID, notification.Message)
 	return err
 }
 
 // GetByUserID retrieves all notifications for a specific user, ordered by most recent.
 func (r *NotificationRepository) GetByUserID(userID string) ([]*model.Notification, error) {
 	query := `
-		SELECT id, user_id, actor_id, type, content_id, message, is_read, created_at
+		SELECT id, user_id, actor_id, type, content_id, post_id, message, is_read, created_at
 		FROM notifications
 		WHERE user_id = ?
 		ORDER BY created_at DESC
@@ -40,7 +40,7 @@ func (r *NotificationRepository) GetByUserID(userID string) ([]*model.Notificati
 	var notifications []*model.Notification
 	for rows.Next() {
 		var n model.Notification
-		if err := rows.Scan(&n.ID, &n.UserID, &n.ActorID, &n.Type, &n.ContentID, &n.Message, &n.IsRead, &n.CreatedAt); err != nil {
+		if err := rows.Scan(&n.ID, &n.UserID, &n.ActorID, &n.Type, &n.ContentID, &n.PostID, &n.Message, &n.IsRead, &n.CreatedAt); err != nil {
 			return nil, err
 		}
 		notifications = append(notifications, &n)

@@ -1,4 +1,5 @@
 import React from 'react';
+import Link from 'next/link';
 import { markNotificationAsRead } from '../lib/notifications';
 
 // A simple component to format the time since the notification was created
@@ -29,6 +30,103 @@ const NotificationItem = ({ notification, onRead }) => {
         }
     };
 
+    const handleFollowRequest = async (action, followerId) => {
+        try {
+            const response = await fetch(`http://localhost:8080/api/follow/${action}` , {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+                body: JSON.stringify({ followerId })
+            });
+
+            if (response.ok) {
+                onRead(notification.id);
+            } else {
+                const errorData = await response.json();
+                console.error(`Failed to ${action} request: ${errorData.message || 'Unknown error'}`);
+            }
+        } catch (err) {
+            console.error(`Error ${action} follow request:`, err);
+        }
+    };
+
+    const handleGroupInvite = async (action, invitationID) => {
+        try {
+            const response = await fetch(`http://localhost:8080/api/groups/invites/${invitationID}/${action}` , {
+                method: 'POST',
+                credentials: 'include',
+            });
+
+            if (response.ok) {
+                onRead(notification.id);
+            } else {
+                const errorData = await response.json();
+                console.error(`Failed to ${action} group invite: ${errorData.message || 'Unknown error'}`);
+            }
+        } catch (err) {
+            console.error(`Error ${action} group invite:`, err);
+        }
+    };
+
+    const handleFollowBack = async (userId) => {
+        try {
+            const response = await fetch('http://localhost:8080/api/users/follow', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+                body: JSON.stringify({ userId })
+            });
+
+            if (response.ok) {
+                onRead(notification.id);
+            } else {
+                const errorData = await response.json();
+                console.error(`Failed to follow back: ${errorData.message || 'Unknown error'}`);
+            }
+        } catch (err) {
+            console.error('Error following back:', err);
+        }
+    };
+
+    const renderActionButtons = () => {
+        switch (notification.type) {
+            case 'new_post':
+            case 'new_comment':
+            case 'new_reaction':
+                return (
+                    <Link href={`/post/${notification.post_id.String}`}>
+                        <a className="text-sm text-blue-600 hover:underline">View Post</a>
+                    </Link>
+                );
+            case 'follow_request':
+                return (
+                    <div className="flex space-x-2 mt-2">
+                        <button onClick={() => handleFollowRequest('accept', notification.actor_id)} className="px-3 py-1 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition text-xs">Accept</button>
+                        <button onClick={() => handleFollowRequest('decline', notification.actor_id)} className="px-3 py-1 bg-gray-200 text-gray-800 rounded-full hover:bg-gray-300 transition text-xs">Decline</button>
+                    </div>
+                );
+            case 'group_invite':
+                return (
+                    <div className="flex space-x-2 mt-2">
+                        <button onClick={() => handleGroupInvite('accept', notification.id)} className="px-3 py-1 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition text-xs">Accept</button>
+                        <button onClick={() => handleGroupInvite('decline', notification.id)} className="px-3 py-1 bg-gray-200 text-gray-800 rounded-full hover:bg-gray-300 transition text-xs">Decline</button>
+                    </div>
+                );
+            case 'new_follower':
+                return (
+                    <div className="flex space-x-2 mt-2">
+                        <button onClick={() => handleFollowBack(notification.actor_id)} className="px-3 py-1 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition text-xs">Follow Back</button>
+                    </div>
+                );
+            default:
+                return null;
+        }
+    };
+
     return (
         <div className={itemClasses} onClick={handleMarkAsRead}>
             {!notification.is_read && (
@@ -41,6 +139,7 @@ const NotificationItem = ({ notification, onRead }) => {
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                     <TimeAgo date={notification.created_at} />
                 </p>
+                {renderActionButtons()}
             </div>
         </div>
     );

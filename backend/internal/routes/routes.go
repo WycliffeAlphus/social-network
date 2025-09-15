@@ -76,6 +76,16 @@ func RegisterRoutes(db *sql.DB) {
 			middlewares.AuthMiddleware(db, http.HandlerFunc(groupHandler.InviteUserToGroup)).ServeHTTP(w, r)
 			return
 		}
+		// Handle /api/groups/invites/:id/accept endpoint
+		if strings.Contains(r.URL.Path, "/invites/") && strings.HasSuffix(r.URL.Path, "/accept") {
+			middlewares.AuthMiddleware(db, http.HandlerFunc(groupHandler.AcceptGroupInvitation)).ServeHTTP(w, r)
+			return
+		}
+		// Handle /api/groups/invites/:id/decline endpoint
+		if strings.Contains(r.URL.Path, "/invites/") && strings.HasSuffix(r.URL.Path, "/decline") {
+			middlewares.AuthMiddleware(db, http.HandlerFunc(groupHandler.DeclineGroupInvitation)).ServeHTTP(w, r)
+			return
+		}
 		// Handle /api/groups/:id/events endpoint
 		if strings.Contains(r.URL.Path, "/events") {
 			middlewares.AuthMiddleware(db, http.HandlerFunc(groupHandler.CreateEvent)).ServeHTTP(w, r)

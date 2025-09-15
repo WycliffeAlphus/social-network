@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import NotificationsList from '../../components/NotificationsList';
+import NotificationItem from '../../components/NotificationItem';
 import { getNotifications } from '../../lib/notifications';
 
 function NotificationsPage() {
@@ -14,7 +14,7 @@ function NotificationsPage() {
             try {
                 setLoading(true);
                 const data = await getNotifications();
-                setNotifications(data);
+                setNotifications(data || []); // Ensure notifications is an array
             } catch (err) {
                 setError('Failed to fetch notifications.');
                 console.error(err);
@@ -26,6 +26,10 @@ function NotificationsPage() {
         fetchNotifications();
     }, []);
 
+    const handleRead = (notificationId) => {
+        setNotifications(prev => prev.map(n => n.id === notificationId ? { ...n, is_read: true } : n));
+    };
+
     if (loading) {
         return <div className="text-center mt-8">Loading notifications...</div>;
     }
@@ -36,9 +40,15 @@ function NotificationsPage() {
 
     return (
         <div className="container mx-auto p-4">
-            <h1 className="text-2xl font-bold mb-4">Notifications</h1>
+            <h1 className="text-2xl font-bold mb-4 text-center">Notifications</h1>
             {notifications.length > 0 ? (
-                <NotificationsList notifications={notifications} />
+                <div className="max-w-md mx-auto">
+                    {
+                        notifications.map(notification => (
+                            <NotificationItem key={notification.id} notification={notification} onRead={handleRead} />
+                        ))
+                    }
+                </div>
             ) : (
                 <p className="text-center text-gray-500">No notifications yet.</p>
             )}

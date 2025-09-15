@@ -3,6 +3,7 @@ package service
 import (
 	"backend/internal/model"
 	"backend/internal/repository"
+	"database/sql"
 	"fmt"
 	"log"
 )
@@ -225,6 +226,7 @@ func (s *NotificationService) CreatePostNotification(actorID, postID string, gro
 			UserID:  memberID,
 			ActorID: actorID,
 			Type:    "new_post",
+			PostID:  sql.NullString{String: postID, Valid: true},
 			Message: message,
 		}
 
@@ -252,6 +254,7 @@ func (s *NotificationService) CreateCommentNotification(actorID, postOwnerID, po
 		UserID:  postOwnerID,
 		ActorID: actorID,
 		Type:    "new_comment",
+		PostID:  sql.NullString{String: postID, Valid: true},
 		Message: fmt.Sprintf("%s %s commented on your post.", actor.FirstName, actor.LastName),
 	}
 
@@ -274,6 +277,7 @@ func (s *NotificationService) CreateReactionNotification(actorID, postOwnerID, p
 		UserID:  postOwnerID,
 		ActorID: actorID,
 		Type:    "new_reaction",
+		PostID:  sql.NullString{String: postID, Valid: true},
 		Message: fmt.Sprintf("%s %s reacted to your post.", actor.FirstName, actor.LastName),
 	}
 

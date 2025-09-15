@@ -146,24 +146,59 @@ func (s *GroupService) InviteUserToGroup(groupID uint, inviterID string, targetU
 	}
 
 	// Create the invitation (pending member)
-	groupMember := &model.GroupMember{
-		GroupID: groupID,
-		UserID:  targetUserID,
-		Role:    "member",
-		Status:  "invited",
+	return s.Repo.CreateGroupInvitation(groupID, inviterID, targetUserID)
+}
+
+// AcceptGroupInvitation accepts a group invitation.
+func (s *GroupService) AcceptGroupInvitation(invitationID int, userID string) error {
+	invite, err := s.Repo.GetGroupInvitation(invitationID)
+	if err != nil {
+		return err
+	}
+	if invite.InvitedID != userID {
+		return fmt.Errorf("you are not authorized to accept this invitation")
+	}
+	if invite.Status != "pending" {
+		return fmt.Errorf("this invitation is no longer valid")
 	}
 
 	tx, err := s.Repo.DB.Begin()
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback() // Rollback on error
+	defer tx.Rollback()
 
-	if err := s.Repo.InsertGroupMember(tx, groupMember); err != nil {
+	if err := s.Repo.AcceptGroupInvitation(invitationID); err != nil {
+		return err
+	}
+
+	member := &model.GroupMember{
+		GroupID: uint(invite.GroupID),
+		UserID:  invite.InvitedID,
+		Role:    "member",
+		Status:  "active",
+	}
+	if err := s.Repo.InsertGroupMember(tx, member); err != nil {
 		return err
 	}
 
 	return tx.Commit()
+}
+
+// DeclineGroupInvitation declines a group invitation.
+func (s *GroupService) DeclineGroupInvitation(invitationID int, userID string) error {
+	invite, err := s.Repo.GetGroupInvitation(invitationID)
+	if err != nil {
+		return err
+	}
+	if invite.InvitedID != userID {
+		return fmt.Errorf("you are not authorized to decline this invitation")
+	}
+	if invite.Status != "pending" {
+		return fmt.Errorf("this invitation is no longer valid")
+	}
+
+	return s.Repo.DeclineGroupInvitation(invitationID)
 }
 
 // CreateEvent creates a new event for a group.

@@ -256,6 +256,44 @@ func (h *GroupHandler) InviteUserToGroup(w http.ResponseWriter, r *http.Request)
 	utils.RespondWithJSON(w, http.StatusOK, map[string]string{"message": "Invitation sent successfully"})
 }
 
+// AcceptGroupInvitation handles POST /groups/invites/:id/accept
+func (h *GroupHandler) AcceptGroupInvitation(w http.ResponseWriter, r *http.Request) {
+	user := context.MustGetUser(r.Context())
+	userID := user.ID
+
+	invitationID, err := strconv.Atoi(strings.TrimPrefix(r.URL.Path, "/api/groups/invites/"))
+	if err != nil {
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid invitation ID")
+		return
+	}
+
+	if err := h.Service.AcceptGroupInvitation(invitationID, userID); err != nil {
+		utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	utils.RespondWithJSON(w, http.StatusOK, map[string]string{"message": "Invitation accepted"})
+}
+
+// DeclineGroupInvitation handles POST /groups/invites/:id/decline
+func (h *GroupHandler) DeclineGroupInvitation(w http.ResponseWriter, r *http.Request) {
+	user := context.MustGetUser(r.Context())
+	userID := user.ID
+
+	invitationID, err := strconv.Atoi(strings.TrimPrefix(r.URL.Path, "/api/groups/invites/"))
+	if err != nil {
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid invitation ID")
+		return
+	}
+
+	if err := h.Service.DeclineGroupInvitation(invitationID, userID); err != nil {
+		utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	utils.RespondWithJSON(w, http.StatusOK, map[string]string{"message": "Invitation declined"})
+}
+
 // CreateEvent handles POST /groups/:id/events
 func (h *GroupHandler) CreateEvent(w http.ResponseWriter, r *http.Request) {
 	creator := context.MustGetUser(r.Context())

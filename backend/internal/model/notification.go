@@ -1,14 +1,18 @@
 package model
 
-import "time"
+import (
+	"database/sql"
+	"time"
+)
 
 type Notification struct {
-	ID         int       `json:"id"`
-	UserID     string    `json:"user_id"`
-	ActorID    string    `json:"actor_id"`
-	Type       string    `json:"type"`
-	ContentID  int       `json:"content_id,omitempty"`
-	Message    string    `json:"message"`
-	IsRead     bool      `json:"is_read"`
-	CreatedAt  time.Time `json:"created_at"`
+	ID         int            `json:"id"`
+	UserID     string         `json:"user_id"`
+	ActorID    string         `json:"actor_id"`
+	Type       string         `json:"type"`
+	ContentID  int            `json:"content_id,omitempty"`
+	PostID     sql.NullString `json:"post_id,omitempty"`
+	Message    string         `json:"message"`
+	IsRead     bool           `json:"is_read"`
+	CreatedAt  time.Time      `json:"created_at"`
 }
