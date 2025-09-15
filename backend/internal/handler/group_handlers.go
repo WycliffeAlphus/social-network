@@ -243,3 +243,29 @@ func (h *GroupHandler) CreateGroupEvent(w http.ResponseWriter, r *http.Request) 
 
 	utils.RespondWithJSON(w, http.StatusCreated, event)
 }
+
+
+
+func (h *GroupHandler) ViewGroup(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		utils.RespondWithError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		return
+	}
+
+	
+	groupID, err := extractGroupIDFromPath(r.URL.Path)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid group ID")
+		return
+	}
+
+	
+	groupDetails, err := h.Service.ViewGroup(groupID)
+	if err != nil {
+		log.Printf("Failed to retrieve group details: %v", err)
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to retrieve group details")
+		return
+	}
+
+	utils.RespondWithJSON(w, http.StatusOK, groupDetails)
+}

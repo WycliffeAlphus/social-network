@@ -166,3 +166,8 @@ func (s *GroupService) CreateGroupEvent(groupID uint, creatorUserID string, titl
 	event.ID = id
 	return event, nil
 }
+
+func (s *GroupService) ViewGroup(groupid uint) (model.Group, error) {
+	groupDetails, err := s.Repo.FindGroupByID(groupid)
+	return *groupDetails, err
+}

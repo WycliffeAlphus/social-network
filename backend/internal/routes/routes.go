@@ -68,6 +68,13 @@ func RegisterRoutes(db *sql.DB) {
 			middlewares.AuthMiddleware(db, http.HandlerFunc(groupHandler.CreateGroupEvent)).ServeHTTP(w, r)
 			return
 		}
+
+		// Handle /api/groups/:id/view endpoint
+		if strings.Contains(r.URL.Path, "/view") {
+			middlewares.AuthMiddleware(db, http.HandlerFunc(groupHandler.ViewGroup)).ServeHTTP(w, r)
+			return
+		}
+
 		http.Error(w, "Not found", http.StatusNotFound)
 	})
 
