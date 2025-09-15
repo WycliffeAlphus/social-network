@@ -65,6 +65,9 @@ func (h *FollowerHandler) FollowUser(w http.ResponseWriter, r *http.Request) {
 	if profileVisibility == "public" {
 		status = "accepted"
 	}
+	if request.IsFollowBack {
+		status = "accepted"
+	}
 
 	// check if already following
 	var alreadyFollowing bool
@@ -558,7 +561,7 @@ func (h *FollowerHandler) GetFollowStatuses(w http.ResponseWriter, r *http.Reque
 			SELECT status 
 			FROM followers 
 			WHERE follower_id = ? AND followed_id = ?
-		`, userID, currentUserID).Scan(&status)
+		`, currentUserID, userID).Scan(&status)
 
 		if err != nil {
 			if err == sql.ErrNoRows {

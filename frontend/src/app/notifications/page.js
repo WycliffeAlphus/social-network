@@ -14,26 +14,26 @@ function NotificationsPage() {
     const fetchNotifications = async () => {
         try {
             setLoading(true);
-            const data = await getNotifications();
-            setNotifications(data || []);
+            const notificationsData = await getNotifications();
+            setNotifications(notificationsData || []);
 
-            if (data && data.length > 0) {
-                const userIds = data
+            if (notificationsData && notificationsData.length > 0) {
+                const userIds = notificationsData
                     .filter(n => n.type === 'new_follower' || n.type === 'follow_request')
                     .map(n => n.actor_id);
                 
                 if (userIds.length > 0) {
-                    const statuses = await getFollowStatuses(userIds);
-                    setFollowStatuses(statuses);
+                    const statusesResponse = await getFollowStatuses(userIds);
+                    setFollowStatuses(statusesResponse.data);
                 }
 
-                const invitationIds = data
+                const invitationIds = notificationsData
                     .filter(n => n.type === 'group_invite')
                     .map(n => n.content_id);
 
                 if (invitationIds.length > 0) {
-                    const statuses = await getGroupInviteStatuses(invitationIds);
-                    setGroupInviteStatuses(statuses);
+                    const statusesResponse = await getGroupInviteStatuses(invitationIds);
+                    setGroupInviteStatuses(statusesResponse.data);
                 }
             }
         } catch (err) {
