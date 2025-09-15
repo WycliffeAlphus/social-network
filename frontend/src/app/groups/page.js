@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation"; 
+import { useRouter } from "next/navigation";
 
 export default function GroupsPage() {
   const [groups, setGroups] = useState([]);
@@ -14,7 +14,7 @@ export default function GroupsPage() {
     async function fetchGroups() {
       try {
         const response = await fetch("http://localhost:8080/api/groups", {
-          credentials: 'include', 
+          credentials: 'include',
         });
 
         if (response.status === 401) {
@@ -22,19 +22,19 @@ export default function GroupsPage() {
         }
 
         if (!response.ok) {
-            const errorData = await response.json();
-            console.error("Server error details:", errorData);
+          const errorData = await response.json();
+          console.error("Server error details:", errorData);
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
+
         const responseData = await response.json();
         console.log("Received data from API:", responseData);
 
         if (responseData && Array.isArray(responseData.data)) {
-            setGroups(responseData.data);
+          setGroups(responseData.data);
         } else {
-            console.error("API did not return a valid groups array:", responseData);
-            setGroups([]);
+          console.error("API did not return a valid groups array:", responseData);
+          setGroups([]);
         }
 
       } catch (e) {
@@ -82,7 +82,9 @@ export default function GroupsPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {groups.map((group) => (
             <div key={group.id} className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
-              <h2 className="text-xl font-semibold mb-2 text-gray-900">{group.title}</h2>
+              <a href={`/groups/${group.id}/events`}>
+                <h2 className="text-xl font-semibold mb-2 text-gray-900">{group.title}</h2>
+              </a>
               <p className="text-gray-600">{group.description}</p>
             </div>
           ))}
