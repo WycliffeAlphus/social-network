@@ -57,8 +57,11 @@ export default function FollowSuggestion() {
     }
 
     const handleFollow = async (userId) => {
+        const userToFollow = availableUsers.find(user => user.id === userId);
+
         // Optimistically update the UI
-        setFollowStatusMap(prev => ({ ...prev, [userId]: 'accepted' }));
+        const newStatus = userToFollow && userToFollow.visibility === 'private' ? 'requested' : 'accepted';
+        setFollowStatusMap(prev => ({ ...prev, [userId]: newStatus }));
 
         try {
             const response = await fetch('http://localhost:8080/api/users/follow', {
