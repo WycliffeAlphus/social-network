@@ -168,11 +168,29 @@ func (h *FollowerHandler) AcceptFollowRequest(w http.ResponseWriter, r *http.Req
 	}
 
 	// Update the follow request status to accepted
-	_, err = h.DB.Exec(`
+	result, err := h.DB.Exec(`
 		UPDATE followers 
 		SET status = 'accepted' 
 		WHERE follower_id = ? AND followed_id = ? AND status = 'requested'
 	`, request.FollowerID, currentUserID)
+
+	if err != nil {
+		log.Printf("Error accepting follow request: %v", err)
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to accept follow request")
+		return
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		log.Printf("Error getting rows affected: %v", err)
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to accept follow request")
+		return
+	}
+
+	if rowsAffected == 0 {
+		utils.RespondWithError(w, http.StatusNotFound, "Follow request not found or already processed")
+		return
+	}
 
 	if err != nil {
 		log.Printf("Error accepting follow request: %v", err)
@@ -576,4 +594,47 @@ func (h *FollowerHandler) GetFollowStatuses(w http.ResponseWriter, r *http.Reque
 	}
 
 	utils.RespondWithJSON(w, http.StatusOK, statuses)
+}
+
+// GetIncomingFollowRequestStatus checks if the viewed user has sent a follow request to the current user.
+func (h *FollowerHandler) GetIncomingFollowRequestStatus() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			utils.RespondWithError(w, http.StatusMethodNotAllowed, "Method not allowed")
+			return
+		}
+
+		currentUserID := context.MustGetUser(r.Context()).ID
+
+		// Extract user ID from URL path (this is the ID of the user whose profile is being viewed)
+		viewedUserID := extractid.ExtractUserIDFromPath(r.URL.Path, "incoming-follow-request-status")
+		if viewedUserID == "" {
+			utils.RespondWithError(w, http.StatusBadRequest, "Invalid user ID")
+			return
+		}
+
+		// Check if the viewed user has sent a follow request to the current user
+		var status string
+		err := h.DB.QueryRow(`
+			SELECT status 
+			FROM followers 
+			WHERE follower_id = ? AND followed_id = ?
+		`, viewedUserID, currentUserID).Scan(&status)
+
+		if err != nil {
+			if err == sql.ErrNoRows {
+				status = "none" // No incoming request or already declined/accepted and deleted
+			} else {
+				log.Printf("Error checking incoming follow request status: %v", err)
+				utils.RespondWithError(w, http.StatusInternalServerError, "Internal server error")
+				return
+			}
+		}
+
+		response := map[string]string{
+			"status": status,
+		}
+
+		utils.RespondWithJSON(w, http.StatusOK, response)
+	}
 }

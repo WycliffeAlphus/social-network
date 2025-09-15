@@ -46,6 +46,7 @@ func RegisterRoutes(db *sql.DB) {
 	http.HandleFunc("/api/follow/cancel", middlewares.AuthMiddleware(db, followerHandler.CancelFollowRequest))
 	http.HandleFunc("/api/follow-status/", middlewares.AuthMiddleware(db, followerHandler.GetFollowStatus()))
 	http.HandleFunc("/api/follow-statuses", middlewares.AuthMiddleware(db, followerHandler.GetFollowStatuses))
+	http.HandleFunc("/api/incoming-follow-request-status/", middlewares.AuthMiddleware(db, followerHandler.GetIncomingFollowRequestStatus()))
 	http.HandleFunc("/api/followers/", middlewares.AuthMiddleware(db, followerHandler.GetFollowers()))
 	http.HandleFunc("/api/following/", middlewares.AuthMiddleware(db, followerHandler.GetFollowing()))
 

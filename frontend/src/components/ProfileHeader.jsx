@@ -8,8 +8,11 @@ export default function ProfileHeader({
   followersCount,
   followingCount,
   followStatus,
+  incomingFollowRequestStatus,
   onFollow,
   onCancelRequest,
+  onAcceptFollowRequest,
+  onDeclineFollowRequest,
   onToggleVisibility
 }) {
   const renderFollowButton = () => {
@@ -29,6 +32,19 @@ export default function ProfileHeader({
       onClick = onCancelRequest
     }
     
+    if (incomingFollowRequestStatus === 'pending') {
+      return (
+        <div className="flex space-x-4">
+          <button onClick={onAcceptFollowRequest} className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+            Accept
+          </button>
+          <button onClick={onDeclineFollowRequest} className="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400">
+            Decline
+          </button>
+        </div>
+      )
+    }
+
     return (
       <button onClick={onClick} className={className} disabled={disabled}>
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
