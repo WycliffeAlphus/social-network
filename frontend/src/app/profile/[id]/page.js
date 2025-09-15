@@ -59,7 +59,7 @@ export default function Profile({ params }) {
             })
             if (response.ok) {
                 const data = await response.json()
-                setFollowStatus(data.status)
+                setFollowStatus(data.data.status)
             } else {
                 console.error('Failed to fetch follow status:', response.status, response.statusText)
                 return
@@ -81,7 +81,7 @@ export default function Profile({ params }) {
             });
             if (response.ok) {
                 const data = await response.json();
-                setFollowStatus(data.status);
+                setFollowStatus(data.data.status);
             } else {
                 console.error('Failed to follow user');
             }
