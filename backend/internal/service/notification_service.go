@@ -35,7 +35,22 @@ func (s *NotificationService) CreateFollowRequestNotification(actorID, targetUse
 	return s.repo.Create(notification)
 }
 
+// CreateFollowDeclinedNotification creates a notification for a declined follow request.
+func (s *NotificationService) CreateFollowDeclinedNotification(actorID, targetUserID string) error {
+	actor, err := s.userRepo.GetUserByID(actorID)
+	if err != nil {
+		return err
+	}
 
+	notification := &model.Notification{
+		UserID:  targetUserID,
+		ActorID: actorID,
+		Type:    "follow_declined",
+		Message: fmt.Sprintf("%s %s declined your follow request.", actor.FirstName, actor.LastName),
+	}
+
+	return s.repo.Create(notification)
+}
 
 // CreateFollowBackNotification creates a notification for a new follow back.
 func (s *NotificationService) CreateFollowBackNotification(actorID, targetUserID string) error {
@@ -90,7 +105,7 @@ func (s *NotificationService) CreateNewFollowerNotification(actorID, targetUserI
 }
 
 // CreateGroupInviteNotification creates a notification for a group invitation.
-func (s *NotificationService) CreateGroupInviteNotification(actorID, targetUserID string, groupID int) error {
+func (s *NotificationService) CreateGroupInviteNotification(actorID, targetUserID string, groupID, invitationID int) error {
 	actor, err := s.userRepo.GetUserByID(actorID)
 	if err != nil {
 		return err
@@ -104,7 +119,7 @@ func (s *NotificationService) CreateGroupInviteNotification(actorID, targetUserI
 		UserID:    targetUserID,
 		ActorID:   actorID,
 		Type:      "group_invite",
-		ContentID: groupID,
+		ContentID: invitationID,
 		Message:   fmt.Sprintf("%s %s has invited you to join the group '%s'.", actor.FirstName, actor.LastName, group.Title),
 	}
 

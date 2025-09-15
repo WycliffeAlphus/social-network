@@ -196,12 +196,19 @@ func (r *GroupRepository) CreateEvent(event *model.Event) (int, error) {
 }
 
 // CreateGroupInvitation inserts a new group invitation into the database.
-func (r *GroupRepository) CreateGroupInvitation(groupID uint, inviterID, targetUserID string) error {
-	_, err := r.DB.Exec(`
+func (r *GroupRepository) CreateGroupInvitation(groupID uint, inviterID, targetUserID string) (int, error) {
+	result, err := r.DB.Exec(`
 		INSERT INTO group_invites (group_id, inviter_user_id, invited_user_id, status)
 		VALUES (?, ?, ?, 'pending')
 	`, groupID, inviterID, targetUserID)
-	return err
+	if err != nil {
+		return 0, err
+	}
+	id, err := result.LastInsertId()
+	if err != nil {
+		return 0, err
+	}
+	return int(id), nil
 }
 
 // AcceptGroupInvitation marks a group invitation as accepted.

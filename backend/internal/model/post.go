@@ -17,4 +17,7 @@ type Post struct {
 	Creator          string         `json:"creator,omitempty"`
 	CreatorImg       string         `json:"creatorimg,omitempty"`
 	CommentCount     int            `json:"commentcount,omitempty"`
+	LikeCount        int            `json:"likeCount"`
+	DislikeCount     int            `json:"dislikeCount"`
+	UserReaction     string         `json:"userReaction"`
 }

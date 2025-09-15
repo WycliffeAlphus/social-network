@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -240,7 +241,8 @@ func (h *GroupHandler) InviteUserToGroup(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	if err := h.Service.InviteUserToGroup(groupID, inviterID, req.TargetUserID); err != nil {
+	invitationID, err := h.Service.InviteUserToGroup(groupID, inviterID, req.TargetUserID)
+	if err != nil {
 		utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -248,7 +250,7 @@ func (h *GroupHandler) InviteUserToGroup(w http.ResponseWriter, r *http.Request)
 	// Trigger notification for the invited user
 	inviterIDInt := inviterID
 	targetUserIDInt := req.TargetUserID
-	if err := h.NotificationService.CreateGroupInviteNotification(inviterIDInt, targetUserIDInt, int(groupID)); err != nil {
+	if err := h.NotificationService.CreateGroupInviteNotification(inviterIDInt, targetUserIDInt, int(groupID), invitationID); err != nil {
 		log.Printf("Failed to create group invite notification: %v", err)
 		// Do not block response to user for notification failure
 	}
@@ -326,4 +328,39 @@ func (h *GroupHandler) CreateEvent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.RespondWithJSON(w, http.StatusCreated, createdEvent)
+}
+
+// GetGroupInviteStatuses checks the status for a list of group invitations.
+func (h *GroupHandler) GetGroupInviteStatuses(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var request struct {
+		InvitationIDs []int `json:"invitationIds"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	statuses := make(map[int]string)
+	for _, invitationID := range request.InvitationIDs {
+		invite, err := h.Service.Repo.GetGroupInvitation(invitationID)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				statuses[invitationID] = "not_found"
+			} else {
+				log.Printf("Error checking group invitation status: %v", err)
+				statuses[invitationID] = "error"
+			}
+		} else {
+			statuses[invitationID] = invite.Status
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(statuses)
 }

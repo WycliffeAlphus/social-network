@@ -37,6 +37,7 @@ func RegisterRoutes(db *sql.DB) {
 	http.HandleFunc("/api/logout", handler.LogoutHandler)
 
 	// http.Handle("/api/profile/", middlewares.AuthMiddleware(db, userHandler.Profile))
+	http.Handle("/api/profile/current", middlewares.AuthMiddleware(db, handler.CurrentUserProfileHandler(db)))
 	http.Handle("/api/profile/", middlewares.AuthMiddleware(db, handler.ProfileHandler(db)))
 	http.HandleFunc("/api/users/available", middlewares.AuthMiddleware(db, handler.GetFollowSuggestions(db)))
 	http.HandleFunc("/api/users/follow", middlewares.AuthMiddleware(db, followerHandler.FollowUser))
@@ -44,6 +45,7 @@ func RegisterRoutes(db *sql.DB) {
 	http.HandleFunc("/api/follow/decline", middlewares.AuthMiddleware(db, followerHandler.DeclineFollowRequest))
 	http.HandleFunc("/api/follow/cancel", middlewares.AuthMiddleware(db, followerHandler.CancelFollowRequest))
 	http.HandleFunc("/api/follow-status/", middlewares.AuthMiddleware(db, followerHandler.GetFollowStatus()))
+	http.HandleFunc("/api/follow-statuses", middlewares.AuthMiddleware(db, followerHandler.GetFollowStatuses))
 	http.HandleFunc("/api/followers/", middlewares.AuthMiddleware(db, followerHandler.GetFollowers()))
 	http.HandleFunc("/api/following/", middlewares.AuthMiddleware(db, followerHandler.GetFollowing()))
 
@@ -59,6 +61,7 @@ func RegisterRoutes(db *sql.DB) {
 	}
 
 	http.HandleFunc("/api/groups", groupsHandler)
+	http.HandleFunc("/api/group-invites/statuses", middlewares.AuthMiddleware(db, groupHandler.GetGroupInviteStatuses))
 
 	// Group join request endpoints
 	http.HandleFunc("/api/groups/", func(w http.ResponseWriter, r *http.Request) {
@@ -115,4 +118,5 @@ func RegisterRoutes(db *sql.DB) {
 		}
 	})
 	http.HandleFunc("/api/notifications", middlewares.AuthMiddleware(db, notificationHandler.GetNotifications))
+	http.HandleFunc("/api/post/", middlewares.AuthMiddleware(db, handler.GetPost(db)))
 }

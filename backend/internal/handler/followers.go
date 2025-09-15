@@ -4,6 +4,7 @@ import (
 	"backend/internal/context"
 	"backend/internal/model"
 	"backend/internal/service" // Import service package
+	"backend/internal/utils"
 	"backend/pkg/extractid"
 	"database/sql"
 	"encoding/json"
@@ -28,7 +29,7 @@ func NewFollowerHandler(db *sql.DB, ns *service.NotificationService) *FollowerHa
 
 func (h *FollowerHandler) FollowUser(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		utils.RespondWithError(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
 
@@ -41,13 +42,13 @@ func (h *FollowerHandler) FollowUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
 
 	// prevent self-follow
 	if currentUserID == request.FollowedUserID {
-		http.Error(w, "Cannot follow yourself", http.StatusBadRequest)
+		utils.RespondWithError(w, http.StatusBadRequest, "Cannot follow yourself")
 		return
 	}
 
@@ -55,7 +56,7 @@ func (h *FollowerHandler) FollowUser(w http.ResponseWriter, r *http.Request) {
 	var profileVisibility string
 	err := h.DB.QueryRow("SELECT profileVisibility FROM users WHERE id = ?", request.FollowedUserID).Scan(&profileVisibility)
 	if err != nil {
-		http.Error(w, "User not found", http.StatusNotFound)
+		utils.RespondWithError(w, http.StatusNotFound, "User not found")
 		return
 	}
 
@@ -71,12 +72,12 @@ func (h *FollowerHandler) FollowUser(w http.ResponseWriter, r *http.Request) {
 		currentUserID, request.FollowedUserID).Scan(&alreadyFollowing)
 	if checkAlreadyFollowingErr != nil {
 		log.Printf("Error checking follow status: %v", checkAlreadyFollowingErr)
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		utils.RespondWithError(w, http.StatusInternalServerError, "Internal server error")
 		return
 	}
 
 	if alreadyFollowing {
-		http.Error(w, "Already following this user", http.StatusBadRequest)
+		utils.RespondWithError(w, http.StatusBadRequest, "Already following this user")
 		return
 	}
 
@@ -84,7 +85,7 @@ func (h *FollowerHandler) FollowUser(w http.ResponseWriter, r *http.Request) {
 	_, insertFollowErr := h.DB.Exec("INSERT INTO followers (follower_id, followed_id, status) VALUES (?, ?, ?)", currentUserID, request.FollowedUserID, status)
 	if insertFollowErr != nil {
 		log.Printf("Error creating follow relationship: %v", insertFollowErr)
-		http.Error(w, "Failed to follow user", http.StatusInternalServerError)
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to follow user")
 		return
 	}
 
@@ -117,8 +118,7 @@ func (h *FollowerHandler) FollowUser(w http.ResponseWriter, r *http.Request) {
 		message = "Successfully followed user"
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{
+	utils.RespondWithJSON(w, http.StatusOK, map[string]string{
 		"message": message,
 		"status":  status,
 	})
@@ -129,7 +129,7 @@ func (h *FollowerHandler) FollowUser(w http.ResponseWriter, r *http.Request) {
 // The function checks that the request exists and is pending, then updates its status to 'accepted'.
 func (h *FollowerHandler) AcceptFollowRequest(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		utils.RespondWithError(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
 
@@ -141,7 +141,7 @@ func (h *FollowerHandler) AcceptFollowRequest(w http.ResponseWriter, r *http.Req
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
 
@@ -155,12 +155,12 @@ func (h *FollowerHandler) AcceptFollowRequest(w http.ResponseWriter, r *http.Req
 
 	if err != nil {
 		log.Printf("Error checking follow request: %v", err)
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		utils.RespondWithError(w, http.StatusInternalServerError, "Internal server error")
 		return
 	}
 
 	if !exists {
-		http.Error(w, "Follow request not found or already processed", http.StatusNotFound)
+		utils.RespondWithError(w, http.StatusNotFound, "Follow request not found or already processed")
 		return
 	}
 
@@ -173,7 +173,7 @@ func (h *FollowerHandler) AcceptFollowRequest(w http.ResponseWriter, r *http.Req
 
 	if err != nil {
 		log.Printf("Error accepting follow request: %v", err)
-		http.Error(w, "Failed to accept follow request", http.StatusInternalServerError)
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to accept follow request")
 		return
 	}
 
@@ -185,8 +185,7 @@ func (h *FollowerHandler) AcceptFollowRequest(w http.ResponseWriter, r *http.Req
 		// Non-critical error, so we don't block the user response
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{"message": "Follow request accepted"})
+	utils.RespondWithJSON(w, http.StatusOK, map[string]string{"message": "Follow request accepted"})
 }
 
 // DeclineFollowRequest allows the recipient of a follow request to decline it.
@@ -194,7 +193,7 @@ func (h *FollowerHandler) AcceptFollowRequest(w http.ResponseWriter, r *http.Req
 // The function checks that the request exists and is pending, then deletes it from the database.
 func (h *FollowerHandler) DeclineFollowRequest(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		utils.RespondWithError(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
 
@@ -206,7 +205,7 @@ func (h *FollowerHandler) DeclineFollowRequest(w http.ResponseWriter, r *http.Re
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
 
@@ -220,12 +219,12 @@ func (h *FollowerHandler) DeclineFollowRequest(w http.ResponseWriter, r *http.Re
 
 	if err != nil {
 		log.Printf("Error checking follow request: %v", err)
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		utils.RespondWithError(w, http.StatusInternalServerError, "Internal server error")
 		return
 	}
 
 	if !exists {
-		http.Error(w, "Follow request not found or already processed", http.StatusNotFound)
+		utils.RespondWithError(w, http.StatusNotFound, "Follow request not found or already processed")
 		return
 	}
 
@@ -237,19 +236,26 @@ func (h *FollowerHandler) DeclineFollowRequest(w http.ResponseWriter, r *http.Re
 
 	if err != nil {
 		log.Printf("Error declining follow request: %v", err)
-		http.Error(w, "Failed to decline follow request", http.StatusInternalServerError)
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to decline follow request")
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{"message": "Follow request declined"})
+	// Create a notification for the user who sent the follow request
+	followerID := request.FollowerID
+	actorID := currentUserID
+	if err := h.NotificationService.CreateFollowDeclinedNotification(actorID, followerID); err != nil {
+		log.Printf("Error creating follow declined notification: %v", err)
+		// Non-critical error, so we don't block the user response
+	}
+
+	utils.RespondWithJSON(w, http.StatusOK, map[string]string{"message": "Follow request declined"})
 }
 
 // CancelFollowRequest allows a user to cancel their own follow request.
 // Only the user who sent the request can cancel it.
 func (h *FollowerHandler) CancelFollowRequest(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		utils.RespondWithError(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
 
@@ -261,7 +267,7 @@ func (h *FollowerHandler) CancelFollowRequest(w http.ResponseWriter, r *http.Req
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
 
@@ -275,12 +281,12 @@ func (h *FollowerHandler) CancelFollowRequest(w http.ResponseWriter, r *http.Req
 
 	if err != nil {
 		log.Printf("Error checking follow request: %v", err)
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		utils.RespondWithError(w, http.StatusInternalServerError, "Internal server error")
 		return
 	}
 
 	if !exists {
-		http.Error(w, "Follow request not found or already processed", http.StatusNotFound)
+		utils.RespondWithError(w, http.StatusNotFound, "Follow request not found or already processed")
 		return
 	}
 
@@ -292,19 +298,18 @@ func (h *FollowerHandler) CancelFollowRequest(w http.ResponseWriter, r *http.Req
 
 	if err != nil {
 		log.Printf("Error canceling follow request: %v", err)
-		http.Error(w, "Failed to cancel follow request", http.StatusInternalServerError)
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to cancel follow request")
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{"message": "Follow request canceled"})
+	utils.RespondWithJSON(w, http.StatusOK, map[string]string{"message": "Follow request canceled"})
 }
 
 // GetFollowers handles GET /users/:id/followers
 func (h *FollowerHandler) GetFollowers() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			utils.RespondWithError(w, http.StatusMethodNotAllowed, "Method not allowed")
 			return
 		}
 
@@ -316,7 +321,7 @@ func (h *FollowerHandler) GetFollowers() http.HandlerFunc {
 		case "currentuser":
 			requestedID = currentUserId
 		case "":
-			http.Error(w, "Invalid user ID", http.StatusBadRequest)
+			utils.RespondWithError(w, http.StatusBadRequest, "Invalid user ID")
 			return
 		}
 
@@ -331,7 +336,7 @@ func (h *FollowerHandler) GetFollowers() http.HandlerFunc {
 
 		rows, err := h.DB.Query(query, requestedID)
 		if err != nil {
-			http.Error(w, "Failed to query followers: "+err.Error(), http.StatusInternalServerError)
+			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to query followers: "+err.Error())
 			return
 		}
 		defer rows.Close()
@@ -341,13 +346,13 @@ func (h *FollowerHandler) GetFollowers() http.HandlerFunc {
 			var user model.UserInfo
 			err := rows.Scan(&user.ID, &user.FName, &user.LName, &user.ImgURL, &user.Status)
 			if err != nil {
-				http.Error(w, "Failed to scan follower: "+err.Error(), http.StatusInternalServerError)
+				utils.RespondWithError(w, http.StatusInternalServerError, "Failed to scan follower: "+err.Error())
 				return
 			}
 			followers = append(followers, user)
 		}
 		if err = rows.Err(); err != nil {
-			http.Error(w, "Error iterating followers: "+err.Error(), http.StatusInternalServerError)
+			utils.RespondWithError(w, http.StatusInternalServerError, "Error iterating followers: "+err.Error())
 			return
 		}
 
@@ -360,8 +365,7 @@ func (h *FollowerHandler) GetFollowers() http.HandlerFunc {
 		}
 
 		// Return response
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(response)
+		utils.RespondWithJSON(w, http.StatusOK, response)
 	}
 }
 
@@ -369,7 +373,7 @@ func (h *FollowerHandler) GetFollowers() http.HandlerFunc {
 func (h *FollowerHandler) GetFollowing() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			utils.RespondWithError(w, http.StatusMethodNotAllowed, "Method not allowed")
 			return
 		}
 
@@ -378,7 +382,7 @@ func (h *FollowerHandler) GetFollowing() http.HandlerFunc {
 		// Extract user ID from URL path
 		requestedID := extractid.ExtractUserIDFromPath(r.URL.Path, "following")
 		if requestedID == "" {
-			http.Error(w, "Invalid user ID", http.StatusBadRequest)
+			utils.RespondWithError(w, http.StatusBadRequest, "Invalid user ID")
 			return
 		}
 
@@ -393,7 +397,7 @@ func (h *FollowerHandler) GetFollowing() http.HandlerFunc {
 
 		rows, err := h.DB.Query(query, requestedID)
 		if err != nil {
-			http.Error(w, "Failed to query following: "+err.Error(), http.StatusInternalServerError)
+			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to query following: "+err.Error())
 			return
 		}
 		defer rows.Close()
@@ -403,13 +407,13 @@ func (h *FollowerHandler) GetFollowing() http.HandlerFunc {
 			var user model.UserInfo
 			err := rows.Scan(&user.ID, &user.FName, &user.LName, &user.ImgURL)
 			if err != nil {
-				http.Error(w, "Failed to scan following user: "+err.Error(), http.StatusInternalServerError)
+				utils.RespondWithError(w, http.StatusInternalServerError, "Failed to scan following user: "+err.Error())
 				return
 			}
 			following = append(following, user)
 		}
 		if err = rows.Err(); err != nil {
-			http.Error(w, "Error iterating following: "+err.Error(), http.StatusInternalServerError)
+			utils.RespondWithError(w, http.StatusInternalServerError, "Error iterating following: "+err.Error())
 			return
 		}
 
@@ -421,8 +425,7 @@ func (h *FollowerHandler) GetFollowing() http.HandlerFunc {
 
 		// fmt.Println(response)
 
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(response)
+		utils.RespondWithJSON(w, http.StatusOK, response)
 	}
 }
 
@@ -430,7 +433,7 @@ func (h *FollowerHandler) GetFollowing() http.HandlerFunc {
 func (h *FollowerHandler) GetFollowRequests() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			utils.RespondWithError(w, http.StatusMethodNotAllowed, "Method not allowed")
 			return
 		}
 
@@ -451,7 +454,7 @@ func (h *FollowerHandler) GetFollowRequests() http.HandlerFunc {
 		rows, err := h.DB.Query(query, currentUserId)
 		if err != nil {
 			log.Println("error querying follow requests: ", err)
-			http.Error(w, "An error occured. Please check back later", http.StatusInternalServerError)
+			utils.RespondWithError(w, http.StatusInternalServerError, "An error occured. Please check back later")
 			return
 		}
 		defer rows.Close()
@@ -467,7 +470,7 @@ func (h *FollowerHandler) GetFollowRequests() http.HandlerFunc {
 			)
 			if err != nil {
 				log.Println("error scanning follow request: ", err)
-				http.Error(w, "An error occurred processing your request", http.StatusInternalServerError)
+				utils.RespondWithError(w, http.StatusInternalServerError, "An error occurred processing your request")
 				return
 			}
 			requests = append(requests, req)
@@ -475,7 +478,7 @@ func (h *FollowerHandler) GetFollowRequests() http.HandlerFunc {
 
 		if err = rows.Err(); err != nil {
 			log.Println("error after scanning rows: ", err)
-			http.Error(w, "An error occurred processing your request", http.StatusInternalServerError)
+			utils.RespondWithError(w, http.StatusInternalServerError, "An error occurred processing your request")
 			return
 		}
 
@@ -483,11 +486,7 @@ func (h *FollowerHandler) GetFollowRequests() http.HandlerFunc {
 			requests = []model.FollowRequest{}
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		if err := json.NewEncoder(w).Encode(requests); err != nil {
-			log.Println("error encoding response: ", err)
-			http.Error(w, "An error occurred processing your request", http.StatusInternalServerError)
-		}
+		utils.RespondWithJSON(w, http.StatusOK, requests)
 	}
 }
 
@@ -495,7 +494,7 @@ func (h *FollowerHandler) GetFollowRequests() http.HandlerFunc {
 func (h *FollowerHandler) GetFollowStatus() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			utils.RespondWithError(w, http.StatusMethodNotAllowed, "Method not allowed")
 			return
 		}
 
@@ -504,7 +503,7 @@ func (h *FollowerHandler) GetFollowStatus() http.HandlerFunc {
 		// Extract user ID from URL path
 		requestedID := extractid.ExtractUserIDFromPath(r.URL.Path, "follow-status")
 		if requestedID == "" {
-			http.Error(w, "Invalid user ID", http.StatusBadRequest)
+			utils.RespondWithError(w, http.StatusBadRequest, "Invalid user ID")
 			return
 		}
 
@@ -521,7 +520,7 @@ func (h *FollowerHandler) GetFollowStatus() http.HandlerFunc {
 				status = "not_following"
 			} else {
 				log.Printf("Error checking follow status: %v", err)
-				http.Error(w, "Internal server error", http.StatusInternalServerError)
+				utils.RespondWithError(w, http.StatusInternalServerError, "Internal server error")
 				return
 			}
 		}
@@ -530,7 +529,48 @@ func (h *FollowerHandler) GetFollowStatus() http.HandlerFunc {
 			"status": status,
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(response)
+		utils.RespondWithJSON(w, http.StatusOK, response)
 	}
+}
+
+// GetFollowStatuses checks the follow status for a list of users.
+func (h *FollowerHandler) GetFollowStatuses(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		utils.RespondWithError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		return
+	}
+
+	currentUserID := context.MustGetUser(r.Context()).ID
+
+	var request struct {
+		UserIDs []string `json:"userIds"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	statuses := make(map[string]string)
+	for _, userID := range request.UserIDs {
+		var status string
+		err := h.DB.QueryRow(`
+			SELECT status 
+			FROM followers 
+			WHERE follower_id = ? AND followed_id = ?
+		`, userID, currentUserID).Scan(&status)
+
+		if err != nil {
+			if err == sql.ErrNoRows {
+				statuses[userID] = "not_following"
+			} else {
+				log.Printf("Error checking follow status: %v", err)
+				statuses[userID] = "error"
+			}
+		} else {
+			statuses[userID] = status
+		}
+	}
+
+	utils.RespondWithJSON(w, http.StatusOK, statuses)
 }

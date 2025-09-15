@@ -12,11 +12,11 @@ import (
 )
 
 type ReactionResponse struct {
-	Success     bool   `json:"success"`
-	Message     string `json:"message"`
+	Success      bool   `json:"success"`
+	Message      string `json:"message"`
 	UserReaction string `json:"userReaction"` // "like", "dislike", or ""
-	LikeCount   int    `json:"likeCount"`
-	DislikeCount int   `json:"dislikeCount"`
+	LikeCount    int    `json:"likeCount"`
+	DislikeCount int    `json:"dislikeCount"`
 }
 
 func HandleReaction(db *sql.DB, notificationService *service.NotificationService) http.HandlerFunc {
@@ -55,6 +55,7 @@ func HandleReaction(db *sql.DB, notificationService *service.NotificationService
 			sendErrorResponse(w, "Failed to check reaction status", http.StatusInternalServerError)
 			return
 		}
+		log.Printf("Reaction exists: %v", exists)
 
 		var userReaction string
 
@@ -73,6 +74,7 @@ func HandleReaction(db *sql.DB, notificationService *service.NotificationService
 				sendErrorResponse(w, "Failed to check existing reactions", http.StatusInternalServerError)
 				return
 			}
+			log.Printf("User has reacted: %v", hasReacted)
 
 			if hasReacted {
 				// Update existing reaction to new type

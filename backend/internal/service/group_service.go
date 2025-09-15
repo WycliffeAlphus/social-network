@@ -133,17 +133,17 @@ func (s *GroupService) AcceptJoinRequest(groupID uint, requesterUserID string, c
 }
 
 // InviteUserToGroup creates an invitation for a user to join a group.
-func (s *GroupService) InviteUserToGroup(groupID uint, inviterID string, targetUserID string) error {
+func (s *GroupService) InviteUserToGroup(groupID uint, inviterID string, targetUserID string) (int, error) {
 	// In a real app, you would check if the inviterID has permission to invite.
 	// For now, we'll assume any member can invite.
 
 	// Check if target user is already a member
 	isMember, _, err := s.Repo.CheckUserMembership(groupID, targetUserID)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	if isMember {
-		return fmt.Errorf("user is already a member or has a pending invitation")
+		return 0, fmt.Errorf("user is already a member or has a pending invitation")
 	}
 
 	// Create the invitation (pending member)

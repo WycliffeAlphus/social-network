@@ -129,6 +129,7 @@ func createComment(w http.ResponseWriter, r *http.Request, db *sql.DB, notificat
 		log.Printf("Failed to get post owner ID: %v", err)
 	} else {
 		// Create notification
+		log.Printf("Creating comment notification for user %s", postOwnerID)
 		if err := notificationService.CreateCommentNotification(currentUser.ID, postOwnerID, postId); err != nil {
 			log.Printf("Failed to create comment notification: %v", err)
 		}
