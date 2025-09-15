@@ -47,3 +47,43 @@ export async function markNotificationAsRead(id) {
     return false;
   }
 }
+
+export async function getFollowStatuses(userIds) {
+  try {
+    const response = await fetch(`${API_URL}/api/follow-statuses`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({ userIds }),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to fetch follow statuses');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching follow statuses:', error);
+    return {};
+  }
+}
+
+export async function getGroupInviteStatuses(invitationIds) {
+  try {
+    const response = await fetch(`${API_URL}/api/group-invites/statuses`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({ invitationIds }),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to fetch group invite statuses');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching group invite statuses:', error);
+    return {};
+  }
+}

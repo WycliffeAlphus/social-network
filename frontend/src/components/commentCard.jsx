@@ -163,14 +163,14 @@ function CommentItem({ comment, postId, onAddReply, level = 0 }) {
     };
 
     return (
-        <li className="border p-2 rounded">
+        <li className="border p-2 rounded overflow-hidden">
             <div className="flex items-start gap-2">
                 <div className="flex-1">
                     <div className="flex items-start justify-between">
                         <p className="text-sm font-semibold">{name}</p>
                         <p className="text-xs text-gray-500">{formatTimeAgo(createdAt)}</p>
                     </div>
-                    <p className="text-sm ">{comment.content}</p>
+                    <p className="text-sm break-words">{comment.content}</p>
                     <button
                         className="text-xs text-blue-600 mt-1"
                         onClick={() => setShowReply((p) => !p)}

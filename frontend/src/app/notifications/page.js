@@ -30,6 +30,10 @@ function NotificationsPage() {
         setNotifications(prev => prev.map(n => n.id === notificationId ? { ...n, is_read: true } : n));
     };
 
+    const handleFollowBack = (notificationId) => {
+        setNotifications(prev => prev.map(n => n.id === notificationId ? { ...n, is_followed_back: true } : n));
+    };
+
     if (loading) {
         return <div className="text-center mt-8">Loading notifications...</div>;
     }
@@ -45,7 +49,12 @@ function NotificationsPage() {
                 <div className="max-w-md mx-auto">
                     {
                         notifications.map(notification => (
-                            <NotificationItem key={notification.id} notification={notification} onRead={handleRead} />
+                            <NotificationItem 
+                                key={notification.id} 
+                                notification={notification} 
+                                onRead={handleRead} 
+                                onFollowBack={handleFollowBack} 
+                            />
                         ))
                     }
                 </div>

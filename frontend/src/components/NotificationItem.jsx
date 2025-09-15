@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import { markNotificationAsRead } from '../lib/notifications';
 
@@ -19,8 +19,8 @@ const TimeAgo = ({ date }) => {
     return Math.floor(seconds) + "s ago";
 };
 
-const NotificationItem = ({ notification, onRead }) => {
-    const [isFollowedBack, setIsFollowedBack] = useState(false);
+const NotificationItem = ({ notification, onRead, followStatus, groupInviteStatus }) => {
+    console.log('followStatus:', followStatus);
     const itemClasses = `p-3 flex items-start gap-3 border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800`;
 
     const handleMarkAsRead = async () => {
@@ -43,7 +43,7 @@ const NotificationItem = ({ notification, onRead }) => {
             });
 
             if (response.ok) {
-                onRead(notification.id);
+                handleMarkAsRead();
             } else {
                 const errorData = await response.json();
                 console.error(`Failed to ${action} request: ${errorData.message || 'Unknown error'}`);
@@ -61,7 +61,7 @@ const NotificationItem = ({ notification, onRead }) => {
             });
 
             if (response.ok) {
-                onRead(notification.id);
+                handleMarkAsRead();
             } else {
                 const errorData = await response.json();
                 console.error(`Failed to ${action} group invite: ${errorData.message || 'Unknown error'}`);
@@ -83,8 +83,7 @@ const NotificationItem = ({ notification, onRead }) => {
             });
 
             if (response.ok) {
-                onRead(notification.id);
-                setIsFollowedBack(true);
+                handleMarkAsRead();
             } else {
                 const errorData = await response.json();
                 console.error(`Failed to follow back: ${errorData.message || 'Unknown error'}`);
@@ -94,36 +93,53 @@ const NotificationItem = ({ notification, onRead }) => {
         }
     };
 
-    const renderActionButtons = () => {
+    const getNotificationLink = () => {
         switch (notification.type) {
             case 'new_post':
             case 'new_comment':
             case 'new_reaction':
-                return (
-                    <Link href={`/post/${notification.post_id.String}`}>
-                        <a className="text-sm text-blue-600 hover:underline">View Post</a>
-                    </Link>
-                );
+                return `/?post_id=${notification.post_id.String}`;
             case 'follow_request':
-                return (
-                    <div className="flex space-x-2 mt-2">
-                        <button onClick={() => handleFollowRequest('accept', notification.actor_id)} className="px-3 py-1 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition text-xs">Accept</button>
-                        <button onClick={() => handleFollowRequest('decline', notification.actor_id)} className="px-3 py-1 bg-gray-200 text-gray-800 rounded-full hover:bg-gray-300 transition text-xs">Decline</button>
-                    </div>
-                );
+            case 'new_follower':
+            case 'follow_back':
+            case 'follow_accepted':
+                return `/profile/${notification.actor_id}`;
             case 'group_invite':
-                return (
-                    <div className="flex space-x-2 mt-2">
-                        <button onClick={() => handleGroupInvite('accept', notification.id)} className="px-3 py-1 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition text-xs">Accept</button>
-                        <button onClick={() => handleGroupInvite('decline', notification.id)} className="px-3 py-1 bg-gray-200 text-gray-800 rounded-full hover:bg-gray-300 transition text-xs">Decline</button>
-                    </div>
-                );
+            case 'group_join_request':
+            case 'group_join_accepted':
+            case 'group_event_created':
+                return `/groups/${notification.content_id}`;
+            default:
+                return '#';
+        }
+    };
+
+    const renderActionButtons = () => {
+        switch (notification.type) {
+            case 'follow_request':
+                if (followStatus === 'requested') {
+                    return (
+                        <div className="flex space-x-2 mt-2">
+                            <button onClick={(e) => {e.preventDefault(); handleFollowRequest('accept', notification.actor_id)}} className="px-3 py-1 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition text-xs">Accept</button>
+                            <button onClick={(e) => {e.preventDefault(); handleFollowRequest('decline', notification.actor_id)}} className="px-3 py-1 bg-gray-200 text-gray-800 rounded-full hover:bg-gray-300 transition text-xs">Decline</button>
+                        </div>
+                    );
+                }
+                return null;
+            case 'group_invite':
+                if (groupInviteStatus === 'pending') {
+                    return (
+                        <div className="flex space-x-2 mt-2">
+                            <button onClick={(e) => {e.preventDefault(); handleGroupInvite('accept', notification.content_id)}} className="px-3 py-1 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition text-xs">Accept</button>
+                            <button onClick={(e) => {e.preventDefault(); handleGroupInvite('decline', notification.content_id)}} className="px-3 py-1 bg-gray-200 text-gray-800 rounded-full hover:bg-gray-300 transition text-xs">Decline</button>
+                        </div>
+                    );
+                }
+                return null;
             case 'new_follower':
                 return (
                     <div className="flex space-x-2 mt-2">
-                        {!isFollowedBack && (
-                            <button onClick={() => handleFollowBack(notification.actor_id)} className="px-3 py-1 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition text-xs">Follow Back</button>
-                        )}
+                        <button onClick={(e) => {e.preventDefault(); handleFollowBack(notification.actor_id)}} className="px-3 py-1 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition text-xs">Follow Back</button>
                     </div>
                 );
             default:
@@ -132,7 +148,7 @@ const NotificationItem = ({ notification, onRead }) => {
     };
 
     return (
-        <div className={itemClasses} onClick={handleMarkAsRead}>
+        <Link href={getNotificationLink()} className={itemClasses} onClick={handleMarkAsRead}>
             {!notification.is_read && (
                 <div className="w-2.5 h-2.5 bg-blue-500 rounded-full mt-1.5 flex-shrink-0"></div>
             )}
@@ -145,7 +161,7 @@ const NotificationItem = ({ notification, onRead }) => {
                 </p>
                 {renderActionButtons()}
             </div>
-        </div>
+        </Link>
     );
 };
 

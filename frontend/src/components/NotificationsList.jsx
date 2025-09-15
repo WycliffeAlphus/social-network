@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { getNotifications, markNotificationsAsRead } from '../lib/notifications';
+import { getNotifications, markNotificationsAsRead, getFollowStatuses, getGroupInviteStatuses } from '../lib/notifications';
 import NotificationItem from './NotificationItem';
 
 const NotificationsList = () => {
     const [notifications, setNotifications] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [followStatuses, setFollowStatuses] = useState({});
+    const [groupInviteStatuses, setGroupInviteStatuses] = useState({});
 
     useEffect(() => {
         const fetchNotifications = async () => {
@@ -12,6 +14,25 @@ const NotificationsList = () => {
             const data = await getNotifications();
             console.log('Notifications data:', data);
             setNotifications(data || []);
+
+            const followRequestUserIds = data
+                .filter(n => n.type === 'follow_request')
+                .map(n => n.actor_id);
+
+            if (followRequestUserIds.length > 0) {
+                const statuses = await getFollowStatuses(followRequestUserIds);
+                setFollowStatuses(statuses);
+            }
+
+            const groupInviteIds = data
+                .filter(n => n.type === 'group_invite')
+                .map(n => n.content_id);
+
+            if (groupInviteIds.length > 0) {
+                const statuses = await getGroupInviteStatuses(groupInviteIds);
+                setGroupInviteStatuses(statuses);
+            }
+
             setIsLoading(false);
         };
 
@@ -46,7 +67,13 @@ const NotificationsList = () => {
                     <p className="p-4 text-center text-gray-500">No new notifications.</p>
                 ) : (
                     notifications.map(notification => (
-                        <NotificationItem key={notification.id} notification={notification} onRead={handleMarkAsRead} />
+                        <NotificationItem 
+                            key={notification.id} 
+                            notification={notification} 
+                            onRead={handleMarkAsRead} 
+                            followStatus={followStatuses[notification.actor_id]}
+                            groupInviteStatus={groupInviteStatuses[notification.content_id]}
+                        />
                     ))
                 )}
             </div>

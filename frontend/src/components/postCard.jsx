@@ -74,7 +74,7 @@ export default function PostCard({ post, showComments, setShowComments }) {
         <p className="text-xs text-gray-500">{formatTimeAgo(post.createdat)}</p>
       </div>
       
-      <p className="text-sm mb-3 break-words whitespace-pre-wrap">{post.content}</p>
+      <p className="text-sm mb-3 break-words">{post.content}</p>
       
       {post.imageurl?.Valid && (() => {
         const raw = (post.imageurl.String || "");
