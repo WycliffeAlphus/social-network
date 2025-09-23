@@ -8,6 +8,24 @@ import (
 	"log"
 )
 
+// NotificationServicer defines the interface for notification operations.
+type NotificationServicer interface {
+	CreateFollowRequestNotification(actorID, targetUserID string) error
+	CreateFollowAcceptedNotification(actorID, targetUserID string) error
+	CreateNewFollowerNotification(actorID, targetUserID string) error
+	CreateFollowBackNotification(actorID, targetUserID string) error
+	CreateFollowDeclinedNotification(actorID, targetUserID string) error
+	CreateGroupInviteNotification(actorID, targetUserID string, groupID, invitationID int) error
+	GetByUserID(userID string) ([]*model.Notification, error)
+	MarkAllAsRead(userID string) error
+	CreateGroupJoinRequestNotification(actorID, groupOwnerID string, groupID int) error
+	CreateGroupJoinAcceptedNotification(actorID, targetUserID string, groupID int) error
+	CreateGroupEventNotification(actorID string, groupID, eventID int) error
+	CreatePostNotification(actorID, postID string, groupID *int) error
+	CreateCommentNotification(actorID, postOwnerID, postID string) error
+	CreateReactionNotification(actorID, postOwnerID, postID string) error
+}
+
 type NotificationService struct {
 	repo      *repository.NotificationRepository
 	userRepo  *repository.UserRepository
@@ -68,7 +86,6 @@ func (s *NotificationService) CreateFollowBackNotification(actorID, targetUserID
 
 	return s.repo.Create(notification)
 }
-
 
 // CreateFollowAcceptedNotification creates a notification for an accepted follow request.
 func (s *NotificationService) CreateFollowAcceptedNotification(actorID, targetUserID string) error {
@@ -140,7 +157,6 @@ func (s *NotificationService) MarkAllAsRead(userID string) error {
 func (s *NotificationService) MarkAsRead(notificationID int, userID string) error {
 	return s.repo.MarkAsRead(notificationID, userID)
 }
-
 
 // CreateGroupJoinRequestNotification creates a notification for the group owner when a user requests to join.
 func (s *NotificationService) CreateGroupJoinRequestNotification(actorID, groupOwnerID string, groupID int) error {

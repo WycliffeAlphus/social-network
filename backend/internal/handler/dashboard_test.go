@@ -3,6 +3,7 @@ package handler
 import (
 	"backend/internal/context"
 	"backend/internal/model"
+	"backend/pkg/db/sqlite"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -11,6 +12,13 @@ import (
 )
 
 func TestDashboardHandler(t *testing.T) {
+	// Defensive: skip test if DB is not available
+	db, err := sqlite.ConnectAndMigrate()
+	if err != nil {
+		t.Skip("DB not available for test")
+	}
+	defer db.Close()
+
 	// Create test user
 	user := &model.User{
 		ID:        "test-user-id",
@@ -28,7 +36,7 @@ func TestDashboardHandler(t *testing.T) {
 	// Record response
 	rr := httptest.NewRecorder()
 
-	// DashboardHandler(nil)(rr, req)
+	DashboardHandler(db)(rr, req)
 
 	// Check response status
 	if rr.Code != http.StatusOK {
@@ -96,23 +104,15 @@ func TestDashboardHandler(t *testing.T) {
 }
 
 func TestDashboardHandler_MethodNotAllowed(t *testing.T) {
-	// Create test user
-	user := &model.User{
-		ID:    "test-user-id",
-		Email: "test@example.com",
-	}
-
 	// Create POST request (should be rejected)
 	req := httptest.NewRequest("POST", "/api/dashboard", nil)
-	ctx := context.WithUser(req.Context(), user)
-	req = req.WithContext(ctx)
 
 	// Record response
-	// rr := httptest.NewRecorder()
-	// DashboardHandler(nil)(rr, req)
+	rr := httptest.NewRecorder()
+	DashboardHandler(nil)(rr, req)
 
-	// // Check response status
-	// if rr.Code != http.StatusMethodNotAllowed {
-	// 	t.Errorf("Expected status 405, got %d", rr.Code)
-	// }
+	// Check response status
+	if rr.Code != http.StatusMethodNotAllowed {
+		t.Errorf("Expected status 405, got %d", rr.Code)
+	}
 }

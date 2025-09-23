@@ -9,7 +9,6 @@ import (
 
 	ctxpkg "backend/internal/context"
 	"backend/internal/model"
-	"backend/internal/service"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -29,7 +28,7 @@ func (m *MockNotificationService) CreateNewFollowerNotification(actorID, targetU
 	return nil
 }
 
-func (m *MockNotificationService) CreateGroupInviteNotification(actorID, targetUserID string, groupID int) error {
+func (m *MockNotificationService) CreateGroupInviteNotification(actorID, targetUserID string, groupID, invitationID int) error {
 	return nil
 }
 
@@ -65,12 +64,20 @@ func (m *MockNotificationService) CreateReactionNotification(actorID, postOwnerI
 	return nil
 }
 
+func (m *MockNotificationService) CreateFollowBackNotification(actorID, targetUserID string) error {
+	return nil
+}
+
+func (m *MockNotificationService) CreateFollowDeclinedNotification(actorID, targetUserID string) error {
+	return nil
+}
+
 func TestFollowUser_InvalidMethod(t *testing.T) {
 	db, _ := sql.Open("sqlite3", ":memory:")
 	defer db.Close()
 
 	mockNotificationService := &MockNotificationService{}
-	followerHandler := NewFollowerHandler(db, (*service.NotificationService)(mockNotificationService))
+	followerHandler := NewFollowerHandler(db, mockNotificationService)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/users/follow", nil)
 	// Inject mock user into context
@@ -89,7 +96,7 @@ func TestAcceptFollowRequest_InvalidMethod(t *testing.T) {
 	defer db.Close()
 
 	mockNotificationService := &MockNotificationService{}
-	followerHandler := NewFollowerHandler(db, (*service.NotificationService)(mockNotificationService))
+	followerHandler := NewFollowerHandler(db, mockNotificationService)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/follow/accept", nil)
 	mockUser := &model.User{ID: "test-user"}
@@ -107,7 +114,7 @@ func TestDeclineFollowRequest_InvalidMethod(t *testing.T) {
 	defer db.Close()
 
 	mockNotificationService := &MockNotificationService{}
-	followerHandler := NewFollowerHandler(db, (*service.NotificationService)(mockNotificationService))
+	followerHandler := NewFollowerHandler(db, mockNotificationService)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/follow/decline", nil)
 	mockUser := &model.User{ID: "test-user"}
@@ -125,7 +132,7 @@ func TestCancelFollowRequest_InvalidMethod(t *testing.T) {
 	defer db.Close()
 
 	mockNotificationService := &MockNotificationService{}
-	followerHandler := NewFollowerHandler(db, (*service.NotificationService)(mockNotificationService))
+	followerHandler := NewFollowerHandler(db, mockNotificationService)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/follow/cancel", nil)
 	mockUser := &model.User{ID: "test-user"}
@@ -143,7 +150,7 @@ func TestFollowUser_InvalidBody(t *testing.T) {
 	defer db.Close()
 
 	mockNotificationService := &MockNotificationService{}
-	followerHandler := NewFollowerHandler(db, (*service.NotificationService)(mockNotificationService))
+	followerHandler := NewFollowerHandler(db, mockNotificationService)
 
 	req := httptest.NewRequest(http.MethodPost, "/api/users/follow", bytes.NewBuffer([]byte("notjson")))
 	mockUser := &model.User{ID: "test-user"}

@@ -17,11 +17,11 @@ import (
 
 type FollowerHandler struct {
 	DB                  *sql.DB // Keeping DB for now, can be refactored to a FollowerService later
-	NotificationService *service.NotificationService
+	NotificationService service.NotificationServicer
 }
 
 // NewFollowerHandler creates a new FollowerHandler.
-func NewFollowerHandler(db *sql.DB, ns *service.NotificationService) *FollowerHandler {
+func NewFollowerHandler(db *sql.DB, ns service.NotificationServicer) *FollowerHandler {
 	return &FollowerHandler{
 		DB:                  db,
 		NotificationService: ns,
@@ -190,12 +190,6 @@ func (h *FollowerHandler) AcceptFollowRequest(w http.ResponseWriter, r *http.Req
 
 	if rowsAffected == 0 {
 		utils.RespondWithError(w, http.StatusNotFound, "Follow request not found or already processed")
-		return
-	}
-
-	if err != nil {
-		log.Printf("Error accepting follow request: %v", err)
-		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to accept follow request")
 		return
 	}
 
@@ -672,8 +666,8 @@ func CheckFollowRelationship(db *sql.DB) http.HandlerFunc {
 
 		response := map[string]interface{}{
 			"hasFollowRelationship": hasFollowRelationship,
-			"messageReceiverExists":   exists,
-			"receiverData":   receiverData,
+			"messageReceiverExists": exists,
+			"receiverData":          receiverData,
 		}
 
 		w.Header().Set("Content-Type", "application/json")
