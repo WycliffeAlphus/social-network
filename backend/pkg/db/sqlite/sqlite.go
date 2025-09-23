@@ -54,13 +54,21 @@ func CreateMigrationFile() {
 		}
 
 		fmt.Println("Migration files created successfully")
-	} else if len(os.Args) > 1 && (os.Args[1] != "migrate" || os.Args[2] != "create") {
-		fmt.Println("Unrecognized CLI commands")
-		fmt.Println()
-		fmt.Println("Migration usage:")
-		fmt.Println("go run main.go migrate create <migration-file-name> - Creates new migration files")
-		os.Exit(1)
+		os.Exit(0)
 	}
+
+	// validate CLI commands and their order
+	if len(os.Args) >= 2 && os.Args[1] == "migrate" {
+		fmt.Println("Error: Missing or invalid 'create' command or migration file name.")
+	} else {
+		fmt.Println("Unrecognized CLI commands.")
+	}
+
+	// display usage help
+	fmt.Println()
+	fmt.Println("Migration usage (Creates new migration files):")
+	fmt.Println("go run main.go migrate create <migration-file-name>")
+	os.Exit(1)
 }
 
 // InsertSession inserts a new session into the sessions table.

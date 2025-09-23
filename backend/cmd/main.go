@@ -1,15 +1,20 @@
 package main
 
 import (
+	"log"
+	"net/http"
+	"os"
+
+	"backend/internal/handler"
 	"backend/internal/middlewares"
 	"backend/internal/routes"
 	"backend/pkg/db/sqlite"
-	"log"
-	"net/http"
 )
 
 func main() {
-	sqlite.CreateMigrationFile()
+	if len(os.Args) >= 2 {
+		sqlite.CreateMigrationFile()
+	}
 
 	// Connect to the SQLite database and apply migrations
 	db, err := sqlite.ConnectAndMigrate()
@@ -19,6 +24,8 @@ func main() {
 
 	// Register all routes (handlers)
 	routes.RegisterRoutes(db)
+
+	go handler.HandleMessages(db)
 
 	// Serve uploaded files from the /uploads/ directory
 	// This allows accessing files at http://localhost:8080/uploads/<filename>

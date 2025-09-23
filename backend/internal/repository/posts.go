@@ -21,7 +21,7 @@ func GetPosts(id string, db *sql.DB) (*[]model.Post, error) {
 			COALESCE(MAX(CASE WHEN r.user_id = ? THEN r.type ELSE '' END), '') AS user_reaction
 		FROM posts p
 		LEFT JOIN reactions r ON p.id = r.post_id
-		WHERE p.visibility = 'public' 
+		WHERE (p.visibility = 'public' 
 		   OR p.user_id = ?
 		   OR (
 				p.visibility = 'almostprivate'
@@ -40,7 +40,8 @@ func GetPosts(id string, db *sql.DB) (*[]model.Post, error) {
 					WHERE private_posts.post_id = p.id
 					  AND private_posts.user_id = ?
 				)
-			)
+			))
+AND p.group_id IS NULL
 		GROUP BY p.id
 		ORDER BY p.created_at DESC`, id, id, id, id, id)
 

@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { useEffect, useState } from "react"
+import Loading from "./loading"
 
 export default function FollowSuggestion() {
     const [loading, setLoading] = useState(true)
@@ -29,7 +30,7 @@ export default function FollowSuggestion() {
                 const data = await response.json()
                 setAvailableUsers(data.users)
                 setVisibility(data.visibility)
-                
+
                 // Fetch follow status for each user
                 await Promise.all(
                     data.users.map(async (user) => {
@@ -108,7 +109,7 @@ export default function FollowSuggestion() {
     };
 
     if (loading) {
-        return <div className="container mx-auto p-4">Loading...</div>
+        return <div className="flex items-center justify-center h-screen"><Loading /></div>
     }
 
     return (
@@ -118,10 +119,9 @@ export default function FollowSuggestion() {
                 {availableUsers && availableUsers.length > 0 ? (
                     availableUsers.map((otherUser) => {
                         const followStatus = followStatusMap[otherUser.id] || 'not_following'
-                        
+
                         let buttonLabel = "Follow";
                         let buttonClass = "bg-blue-500 hover:bg-blue-600";
-                        let isDisabled = false;
 
                         if (followStatus === 'accepted') {
                             buttonLabel = "Following"
@@ -135,26 +135,31 @@ export default function FollowSuggestion() {
                         }
 
                         return (
-                            <div key={otherUser.id} className="flex items-center justify-between p-4">
-                                <div className="flex items-center">
+                            <div key={otherUser.id} className="flex items-center justify-between p4">
+                                <Link
+                                    href={`/profile/${otherUser.id}`}
+                                    className="group flex items-center gap-3 rounded-lg transition-colors w-fit"
+                                >
                                     {otherUser.avatar?.String ? (
                                         <img
                                             src={otherUser.avatar.String}
-                                            className="w-12 h-12 object-cover rounded-full mr-3"
                                             alt="User avatar"
+                                            className="w-12 h-12 rounded-full object-cover"
                                         />
-                                    ) : null}
+                                    ) : (
+                                        <div className="w-12 h-12 rounded-full bg-gray-200 overflow-hidden flex items-center justify-center">
+                                            <span className="text-lg text-black font-medium">
+                                                {otherUser.firstName?.charAt(0).toUpperCase()}
+                                                {otherUser.lastName?.charAt(0).toUpperCase()}
+                                            </span>
+                                        </div>
+                                    )}
                                     <div>
-                                        <p className="text-sm text-gray-500">
+                                        <span className="font-medium group-hover:text-[#4169e1]">
                                             {otherUser.firstName} {otherUser.lastName}
-                                        </p>
-                                        {followStatus === 'requested' && (
-                                            <p className="text-xs text-gray-400 mt-1">
-                                                This account is private
-                                            </p>
-                                        )}
+                                        </span>
                                     </div>
-                                </div>
+                                </Link>
                                 <button
                                     onClick={() => {
                                         if (followStatus === 'requested') {

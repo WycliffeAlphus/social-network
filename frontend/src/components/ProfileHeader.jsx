@@ -1,5 +1,6 @@
 'use client'
 import Link from 'next/link'
+import { EnvelopeIcon } from "@heroicons/react/24/outline";
 
 export default function ProfileHeader({
   user,
@@ -20,7 +21,7 @@ export default function ProfileHeader({
     let className = 'bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center gap-2'
     let onClick = onFollow
     let disabled = false
-    
+
     if (followStatus === 'accepted') {
       label = 'Following'
       className = 'bg-white border-2 border-blue-200 text-blue-700 px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover:bg-blue-50 hover:border-blue-300 shadow-md hover:shadow-lg flex items-center gap-2'
@@ -66,10 +67,10 @@ export default function ProfileHeader({
         <div className="relative group">
           <div className="w-36 h-36 rounded-full overflow-hidden bg-blue-200 shadow-2xl ring-4 ring-white ring-offset-4 ring-offset-blue-50 transition-all duration-300 group-hover:ring-offset-8">
             {user.img_url ? (
-              <img 
-                src={user.img_url} 
-                alt="avatar" 
-                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110" 
+              <img
+                src={user.img_url}
+                alt="avatar"
+                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-5xl font-bold text-white bg-blue-500">
@@ -97,8 +98,8 @@ export default function ProfileHeader({
 
           {/* Followers/Following Stats */}
           <div className="flex gap-8">
-            <Link 
-              href={`/followers/${user.id}`} 
+            <Link
+              href={`/followers/${user.id}`}
               className="group bg-white rounded-xl px-6 py-4 border border-blue-100 hover:border-blue-300 transition-all duration-300 hover:shadow-lg transform hover:-translate-y-1"
             >
               <div className="text-center">
@@ -110,9 +111,9 @@ export default function ProfileHeader({
                 </div>
               </div>
             </Link>
-            
-            <Link 
-              href={`/following/${user.id}`} 
+
+            <Link
+              href={`/following/${user.id}`}
               className="group bg-white rounded-xl px-6 py-4 border border-blue-100 hover:border-blue-300 transition-all duration-300 hover:shadow-lg transform hover:-translate-y-1"
             >
               <div className="text-center">
@@ -125,6 +126,12 @@ export default function ProfileHeader({
               </div>
             </Link>
           </div>
+
+          {!isOwner &&
+            <Link href={`/messages/${user.id}`}>
+              <EnvelopeIcon className="h-6 w-6 text-gray-500" />
+            </Link>
+          }
 
           {/* Actions */}
           <div className="pt-4">
@@ -145,7 +152,7 @@ export default function ProfileHeader({
                       </div>
                     </div>
                   </div>
-                  
+
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input
                       type="checkbox"

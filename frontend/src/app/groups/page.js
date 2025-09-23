@@ -81,10 +81,12 @@ export default function GroupsPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {groups.map((group) => (
-            <div key={group.id} className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
-              <h2 className="text-xl font-semibold mb-2 text-gray-900">{group.title}</h2>
-              <p className="text-gray-600">{group.description}</p>
-            </div>
+            <Link href={`/groups/${group.id}`} key={group.id}>
+              <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
+                <h2 className="text-xl font-semibold mb-2 text-gray-900">{group.title}</h2>
+                <p className="text-gray-600">{group.description}</p>
+              </div>
+            </Link>
           ))}
         </div>
       )}

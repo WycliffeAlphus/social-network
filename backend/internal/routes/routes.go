@@ -49,6 +49,10 @@ func RegisterRoutes(db *sql.DB) {
 	http.HandleFunc("/api/incoming-follow-request-status/", middlewares.AuthMiddleware(db, followerHandler.GetIncomingFollowRequestStatus()))
 	http.HandleFunc("/api/followers/", middlewares.AuthMiddleware(db, followerHandler.GetFollowers()))
 	http.HandleFunc("/api/following/", middlewares.AuthMiddleware(db, followerHandler.GetFollowing()))
+	http.HandleFunc("/api/follow-relationship", middlewares.AuthMiddleware(db, handler.CheckFollowRelationship(db)))
+	http.HandleFunc("/ws", handler.WebSocketConnection(db))
+	http.HandleFunc("/api/users", middlewares.AuthMiddleware(db, handler.HandleUserStatuses(db)))
+	http.HandleFunc("/api/conversations", middlewares.AuthMiddleware(db, handler.PrivateConversations(db)))
 
 	groupsHandler := func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
@@ -66,8 +70,9 @@ func RegisterRoutes(db *sql.DB) {
 
 	// Group join request endpoints
 	http.HandleFunc("/api/groups/", func(w http.ResponseWriter, r *http.Request) {
+		path := r.URL.Path
 		// Handle /api/groups/:id/join endpoint
-		if strings.Contains(r.URL.Path, "/join") {
+		if strings.Contains(path, "/join") {
 			if r.URL.Query().Get("action") == "accept" {
 				middlewares.AuthMiddleware(db, http.HandlerFunc(groupHandler.AcceptJoinRequest)).ServeHTTP(w, r)
 			} else {

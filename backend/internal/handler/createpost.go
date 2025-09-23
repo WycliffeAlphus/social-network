@@ -51,6 +51,11 @@ func CreatePost(db *sql.DB, notificationService *service.NotificationService) ht
 			CreatedAt:  time.Now(),
 		}
 
+		// Check for group_id and update the post model
+		if groupID := r.FormValue("group_id"); groupID != "" {
+			post.GroupId = sql.NullString{String: groupID, Valid: true}
+		}
+
 		if post.Visibility == "" {
 			post.Visibility = "public"
 		}
@@ -82,9 +87,9 @@ func CreatePost(db *sql.DB, notificationService *service.NotificationService) ht
 		}
 
 		_, postInsertErr := db.Exec(`
-			INSERT INTO posts (id, user_id, title, content, visibility, post_image, created_at)
-			VALUES (?, ?, ?, ?, ?, ?, ?)`,
-			post.Id, post.UserId, post.Title, post.Content, post.Visibility, post.ImageUrl, post.CreatedAt)
+			INSERT INTO posts (id, user_id, title, content, visibility, post_image, created_at, group_id)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+			post.Id, post.UserId, post.Title, post.Content, post.Visibility, post.ImageUrl, post.CreatedAt, post.GroupId)
 		if postInsertErr != nil {
 			http.Error(w, "Failed to create post", http.StatusInternalServerError)
 			return
@@ -131,7 +136,7 @@ func validatePost(post model.Post) (*PostCreationErrors, bool) {
 	}
 
 	visibility := strings.ToLower(post.Visibility)
-	if visibility != "public" && visibility != "private" && visibility != "almostprivate" {
+	if visibility != "public" && visibility != "private" && visibility != "almostprivate" && visibility != "group" {
 		errors.PostPrivacy = "Invalid privacy value. Must be 'public', 'almost private', or 'private'"
 	}
 
