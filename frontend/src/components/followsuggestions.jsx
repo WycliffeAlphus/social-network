@@ -122,6 +122,7 @@ export default function FollowSuggestion() {
 
                         let buttonLabel = "Follow";
                         let buttonClass = "bg-blue-500 hover:bg-blue-600";
+                        let isDisabled = false;
 
                         if (followStatus === 'accepted') {
                             buttonLabel = "Following"
