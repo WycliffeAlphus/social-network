@@ -15,7 +15,7 @@ func GetFollowSuggestions(db *sql.DB) http.HandlerFunc {
 
 		// query to get users that the current user is not following
 		rows, err := db.Query(`
-        SELECT u.id, u.fname, u.lname, u.imgurl,
+        SELECT u.id, u.fname, u.lname, u.imgurl, u.profileVisibility,
 			EXISTS (
                    SELECT 1 FROM followers f 
                    WHERE f.follower_id = u.id AND f.followed_id = ?
@@ -44,9 +44,10 @@ func GetFollowSuggestions(db *sql.DB) http.HandlerFunc {
 				LastName  string
 				Avatar    sql.NullString
 				FollowsMe bool
+				Visibility string
 			}
 
-			if err := rows.Scan(&user.ID, &user.FirstName, &user.LastName, &user.Avatar, &user.FollowsMe); err != nil {
+			if err := rows.Scan(&user.ID, &user.FirstName, &user.LastName, &user.Avatar, &user.Visibility, &user.FollowsMe); err != nil {
 				log.Printf("Error scanning user: %v", err)
 				continue
 			}
@@ -57,6 +58,7 @@ func GetFollowSuggestions(db *sql.DB) http.HandlerFunc {
 				"lastName":  user.LastName,
 				"avatar":    user.Avatar,
 				"followsMe": user.FollowsMe,
+				"visibility": user.Visibility,
 			}
 
 			users = append(users, userMap)

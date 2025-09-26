@@ -18,4 +18,7 @@ type Post struct {
 	CreatorImg       string         `json:"creatorimg,omitempty"`
 	CommentCount     int            `json:"commentcount,omitempty"`
 	GroupId          sql.NullString `json:"groupid,omitempty"`
+	LikeCount        int            `json:"likeCount"`
+	DislikeCount     int            `json:"dislikeCount"`
+	UserReaction     string         `json:"userReaction"`
 }

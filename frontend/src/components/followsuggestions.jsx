@@ -58,6 +58,12 @@ export default function FollowSuggestion() {
     }
 
     const handleFollow = async (userId) => {
+        const userToFollow = availableUsers.find(user => user.id === userId);
+
+        // Optimistically update the UI
+        const newStatus = userToFollow && userToFollow.visibility === 'private' ? 'requested' : 'accepted';
+        setFollowStatusMap(prev => ({ ...prev, [userId]: newStatus }));
+
         try {
             const response = await fetch('http://localhost:8080/api/users/follow', {
                 method: 'POST',
@@ -68,13 +74,15 @@ export default function FollowSuggestion() {
                 credentials: 'include'
             });
 
-            if (response.ok) {
-                const data = await response.json();
-                setFollowStatusMap(prev => ({ ...prev, [userId]: data.status }))
-            } else {
+            if (!response.ok) {
+                // If the request fails, revert the change
+                setFollowStatusMap(prev => ({ ...prev, [userId]: 'not_following' }));
                 console.error('Failed to follow user');
             }
+            // No need to parse the response if we are updating optimistically
         } catch (err) {
+            // If the request fails, revert the change
+            setFollowStatusMap(prev => ({ ...prev, [userId]: 'not_following' }));
             console.error('Error following user:', err)
         }
     };
@@ -114,10 +122,12 @@ export default function FollowSuggestion() {
 
                         let buttonLabel = "Follow";
                         let buttonClass = "bg-blue-500 hover:bg-blue-600";
+                        let isDisabled = false;
 
                         if (followStatus === 'accepted') {
                             buttonLabel = "Following"
                             buttonClass = "border border-gray-400 hover:bg-gray-400 hover:text-black"
+                            isDisabled = true;
                         } else if (followStatus === 'requested') {
                             buttonLabel = "Requested"
                             buttonClass = "bg-gray-300 text-gray-600 hover:bg-gray-400 hover:text-black"
@@ -160,6 +170,7 @@ export default function FollowSuggestion() {
                                         }
                                     }}
                                     className={`px-4 py-2 rounded-3xl text-white ${buttonClass}`}
+                                    disabled={isDisabled}
                                 >
                                     {buttonLabel}
                                 </button>

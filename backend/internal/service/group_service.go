@@ -4,6 +4,7 @@ import (
 	"backend/internal/model"
 	"backend/internal/repository"
 	"fmt"
+	"strconv"
 )
 
 type GroupService struct {
@@ -70,36 +71,41 @@ func (s *GroupService) CreateGroup(title, description, privacySetting string, cr
 }
 
 // RequestToJoinGroup creates a join request for a user to join a group.
-func (s *GroupService) RequestToJoinGroup(groupID uint, userID string) error {
+func (s *GroupService) RequestToJoinGroup(groupID uint, userID string) (*model.Group, error) {
 	// Check if group exists
 	group, err := s.Repo.FindGroupByID(groupID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if group == nil {
-		return fmt.Errorf("group not found")
+		return nil, fmt.Errorf("group not found")
 	}
 
 	// Check if user is already a member or has a pending request
 	isMember, status, err := s.Repo.CheckUserMembership(groupID, userID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if isMember {
 		if status == "active" {
-			return fmt.Errorf("user is already a member of this group")
+			return nil, fmt.Errorf("user is already a member of this group")
 		} else if status == "pending" {
-			return fmt.Errorf("user already has a pending join request for this group")
+			return nil, fmt.Errorf("user already has a pending join request for this group")
 		}
 	}
 
 	// Check if user is the group creator (creators are automatically members)
 	if group.CreatorID == userID {
-		return fmt.Errorf("group creator cannot request to join their own group")
+		return nil, fmt.Errorf("group creator cannot request to join their own group")
 	}
 
 	// Create the join request
-	return s.Repo.CreateJoinRequest(groupID, userID)
+	err = s.Repo.CreateJoinRequest(groupID, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	return group, nil
 }
 
 // AcceptJoinRequest allows a group creator to accept a pending join request.
@@ -124,4 +130,104 @@ func (s *GroupService) AcceptJoinRequest(groupID uint, requesterUserID string, c
 
 	// Accept the join request
 	return s.Repo.AcceptJoinRequest(groupID, requesterUserID)
+}
+
+// InviteUserToGroup creates an invitation for a user to join a group.
+func (s *GroupService) InviteUserToGroup(groupID uint, inviterID string, targetUserID string) (int, error) {
+	// In a real app, you would check if the inviterID has permission to invite.
+	// For now, we'll assume any member can invite.
+
+	// Check if target user is already a member
+	isMember, _, err := s.Repo.CheckUserMembership(groupID, targetUserID)
+	if err != nil {
+		return 0, err
+	}
+	if isMember {
+		return 0, fmt.Errorf("user is already a member or has a pending invitation")
+	}
+
+	// Create the invitation (pending member)
+	return s.Repo.CreateGroupInvitation(groupID, inviterID, targetUserID)
+}
+
+// AcceptGroupInvitation accepts a group invitation.
+func (s *GroupService) AcceptGroupInvitation(invitationID int, userID string) (err error) { // Named return
+	invite, err := s.Repo.GetGroupInvitation(invitationID)
+	if err != nil {
+		return err
+	}
+
+	uid, err := strconv.ParseUint(userID, 10, 64)
+	if err != nil {
+		return fmt.Errorf("invalid user ID")
+	}
+
+	if invite.InvitedUserID != uint(uid) {
+		return fmt.Errorf("you are not authorized to accept this invitation")
+	}
+	if invite.Status != "pending" {
+		return fmt.Errorf("this invitation is no longer valid")
+	}
+
+	tx, err := s.Repo.DB.Begin()
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if p := recover(); p != nil {
+			tx.Rollback()
+			panic(p) // re-throw panic after Rollback
+		} else if err != nil {
+			tx.Rollback() // err is non-nil; don't change it
+		} else {
+			err = tx.Commit() // if Commit returns error, update err
+		}
+	}()
+
+	if err = s.Repo.AcceptGroupInvitation(invitationID); err != nil {
+		return err
+	}
+
+	member := &model.GroupMember{
+		GroupID: uint(invite.GroupID),
+		UserID:  strconv.FormatUint(uint64(invite.InvitedUserID), 10),
+		Role:    "member",
+		Status:  "active",
+	}
+	if err = s.Repo.InsertGroupMember(tx, member); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// DeclineGroupInvitation declines a group invitation.
+func (s *GroupService) DeclineGroupInvitation(invitationID int, userID string) error {
+	invite, err := s.Repo.GetGroupInvitation(invitationID)
+	if err != nil {
+		return err
+	}
+	uid, err := strconv.ParseUint(userID, 10, 64)
+	if err != nil {
+		return fmt.Errorf("invalid user ID")
+	}
+	if invite.InvitedUserID != uint(uid) {
+		return fmt.Errorf("you are not authorized to decline this invitation")
+	}
+	if invite.Status != "pending" {
+		return fmt.Errorf("this invitation is no longer valid")
+	}
+
+	return s.Repo.DeclineGroupInvitation(invitationID)
+}
+
+// CreateEvent creates a new event for a group.
+func (s *GroupService) CreateEvent(event *model.Event) (*model.Event, error) {
+	// In a real app, you would check if the creator is a member of the group.
+	id, err := s.Repo.CreateEvent(event)
+	if err != nil {
+		return nil, err
+	}
+	event.ID = id
+	return event, nil
 }
