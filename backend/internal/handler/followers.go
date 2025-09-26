@@ -201,6 +201,12 @@ func (h *FollowerHandler) AcceptFollowRequest(w http.ResponseWriter, r *http.Req
 		// Non-critical error, so we don't block the user response
 	}
 
+	// Mark the original follow request notification as read
+	if err := h.NotificationService.MarkFollowRequestNotificationAsRead(followerID, currentUserID); err != nil {
+		log.Printf("Error marking follow request notification as read: %v", err)
+		// Non-critical error, so we don't block the user response
+	}
+
 	utils.RespondWithJSON(w, http.StatusOK, map[string]string{"message": "Follow request accepted", "status": "accepted"})
 }
 
@@ -261,6 +267,12 @@ func (h *FollowerHandler) DeclineFollowRequest(w http.ResponseWriter, r *http.Re
 	actorID := currentUserID
 	if err := h.NotificationService.CreateFollowDeclinedNotification(actorID, followerID); err != nil {
 		log.Printf("Error creating follow declined notification: %v", err)
+		// Non-critical error, so we don't block the user response
+	}
+
+	// Mark the original follow request notification as read
+	if err := h.NotificationService.MarkFollowRequestNotificationAsRead(followerID, currentUserID); err != nil {
+		log.Printf("Error marking follow request notification as read: %v", err)
 		// Non-critical error, so we don't block the user response
 	}
 

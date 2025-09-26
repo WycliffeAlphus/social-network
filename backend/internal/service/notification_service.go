@@ -18,6 +18,9 @@ type NotificationServicer interface {
 	CreateGroupInviteNotification(actorID, targetUserID string, groupID, invitationID int) error
 	GetByUserID(userID string) ([]*model.Notification, error)
 	MarkAllAsRead(userID string) error
+	MarkAsRead(notificationID int, userID string) error
+	MarkFollowRequestNotificationAsRead(actorID, targetUserID string) error
+	MarkGroupInviteNotificationAsRead(groupID, invitationID int, userID string) error
 	CreateGroupJoinRequestNotification(actorID, groupOwnerID string, groupID int) error
 	CreateGroupJoinAcceptedNotification(actorID, targetUserID string, groupID int) error
 	CreateGroupEventNotification(actorID string, groupID, eventID int) error
@@ -350,4 +353,14 @@ func (s *NotificationService) CreateGroupCreatedNotification(actorID string, gro
 	}
 
 	return s.repo.Create(notification)
+}
+
+// MarkFollowRequestNotificationAsRead marks follow request notifications as read when accepted/declined.
+func (s *NotificationService) MarkFollowRequestNotificationAsRead(actorID, targetUserID string) error {
+	return s.repo.MarkFollowRequestAsRead(actorID, targetUserID)
+}
+
+// MarkGroupInviteNotificationAsRead marks group invite notifications as read when accepted/declined.
+func (s *NotificationService) MarkGroupInviteNotificationAsRead(groupID, invitationID int, userID string) error {
+	return s.repo.MarkGroupInviteAsRead(groupID, invitationID, userID)
 }

@@ -72,6 +72,18 @@ func (m *MockNotificationService) CreateFollowDeclinedNotification(actorID, targ
 	return nil
 }
 
+func (m *MockNotificationService) MarkAsRead(notificationID int, userID string) error {
+	return nil
+}
+
+func (m *MockNotificationService) MarkFollowRequestNotificationAsRead(actorID, targetUserID string) error {
+	return nil
+}
+
+func (m *MockNotificationService) MarkGroupInviteNotificationAsRead(groupID, invitationID int, userID string) error {
+	return nil
+}
+
 func TestFollowUser_InvalidMethod(t *testing.T) {
 	db, _ := sql.Open("sqlite3", ":memory:")
 	defer db.Close()

@@ -52,6 +52,16 @@ const NotificationItem = ({ notification, onRead, onFollowBack, followStatus, gr
             } else {
                 const errorData = await response.json();
                 console.error(`Failed to ${action} request: ${errorData.message || 'Unknown error'}`);
+
+                // If the request was already processed, mark as read anyway
+                if (response.status === 404 && errorData.message && errorData.message.includes('already processed')) {
+                    handleMarkAsRead();
+                    if (action === 'accept') {
+                        onFollowBack(notification.id, notification.actor_id, 'accepted');
+                    } else {
+                        onFollowBack(notification.id, notification.actor_id, 'not_following');
+                    }
+                }
             }
         } catch (err) {
             console.error(`Error ${action} follow request:`, err);
@@ -70,6 +80,11 @@ const NotificationItem = ({ notification, onRead, onFollowBack, followStatus, gr
             } else {
                 const errorData = await response.json();
                 console.error(`Failed to ${action} group invite: ${errorData.message || 'Unknown error'}`);
+
+                // If the invite was already processed, mark as read anyway
+                if (response.status === 404 || (errorData.message && errorData.message.includes('already processed'))) {
+                    handleMarkAsRead();
+                }
             }
         } catch (err) {
             console.error(`Error ${action} group invite:`, err);
@@ -122,9 +137,14 @@ const NotificationItem = ({ notification, onRead, onFollowBack, followStatus, gr
     };
 
     const renderActionButtons = () => {
+        // Don't show action buttons for read notifications
+        if (notification.is_read) {
+            return null;
+        }
+
         switch (notification.type) {
             case 'follow_request':
-                if (followStatus === 'not_following') {
+                if (followStatus === 'not_following' || followStatus === undefined) {
                     return (
                         <div className="flex space-x-2 mt-2">
                             <button onClick={(e) => {e.preventDefault(); handleFollowRequest('accept', notification.actor_id)}} className="px-3 py-1 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition text-xs">Accept</button>
@@ -140,7 +160,7 @@ const NotificationItem = ({ notification, onRead, onFollowBack, followStatus, gr
                 }
                 return null;
             case 'group_invite':
-                if (groupInviteStatus === 'pending') {
+                if (groupInviteStatus === 'pending' || groupInviteStatus === undefined) {
                     return (
                         <div className="flex space-x-2 mt-2">
                             <button onClick={(e) => {e.preventDefault(); handleGroupInvite('accept', notification.content_id)}} className="px-3 py-1 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition text-xs">Accept</button>
@@ -150,7 +170,7 @@ const NotificationItem = ({ notification, onRead, onFollowBack, followStatus, gr
                 }
                 return null;
             case 'new_follower':
-                if (followStatus === 'not_following') {
+                if (followStatus === 'not_following' || followStatus === undefined) {
                     return (
                         <div className="flex space-x-2 mt-2">
                             <button onClick={(e) => {e.preventDefault(); handleFollowBack(notification.actor_id)}} className="px-3 py-1 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition text-xs">Follow Back</button>

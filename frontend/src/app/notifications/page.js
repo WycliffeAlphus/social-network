@@ -19,21 +19,21 @@ function NotificationsPage() {
 
             if (notificationsData && notificationsData.length > 0) {
                 const userIds = notificationsData
-                    .filter(n => n.type === 'new_follower' || n.type === 'follow_request')
+                    .filter(n => (n.type === 'new_follower' || n.type === 'follow_request') && !n.is_read)
                     .map(n => n.actor_id);
-                
+
                 if (userIds.length > 0) {
                     const statusesResponse = await getFollowStatuses(userIds);
-                    setFollowStatuses(statusesResponse.data);
+                    setFollowStatuses(statusesResponse || statusesResponse.data || {});
                 }
 
                 const invitationIds = notificationsData
-                    .filter(n => n.type === 'group_invite')
+                    .filter(n => n.type === 'group_invite' && !n.is_read)
                     .map(n => n.content_id);
 
                 if (invitationIds.length > 0) {
                     const statusesResponse = await getGroupInviteStatuses(invitationIds);
-                    setGroupInviteStatuses(statusesResponse.data);
+                    setGroupInviteStatuses(statusesResponse || statusesResponse.data || {});
                 }
             }
         } catch (err) {

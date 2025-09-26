@@ -66,3 +66,17 @@ func (r *NotificationRepository) MarkAllAsRead(userID string) error {
 	_, err := r.DB.Exec(query, userID)
 	return err
 }
+
+// MarkFollowRequestAsRead marks follow request notifications as read.
+func (r *NotificationRepository) MarkFollowRequestAsRead(actorID, targetUserID string) error {
+	query := `UPDATE notifications SET is_read = 1 WHERE user_id = ? AND actor_id = ? AND type = 'follow_request'`
+	_, err := r.DB.Exec(query, targetUserID, actorID)
+	return err
+}
+
+// MarkGroupInviteAsRead marks group invite notifications as read.
+func (r *NotificationRepository) MarkGroupInviteAsRead(groupID, invitationID int, userID string) error {
+	query := `UPDATE notifications SET is_read = 1 WHERE user_id = ? AND content_id = ? AND type = 'group_invite'`
+	_, err := r.DB.Exec(query, userID, invitationID)
+	return err
+}

@@ -274,6 +274,12 @@ func (h *GroupHandler) AcceptGroupInvitation(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	// Mark the group invite notification as read
+	if err := h.NotificationService.MarkGroupInviteNotificationAsRead(0, invitationID, userID); err != nil {
+		log.Printf("Error marking group invite notification as read: %v", err)
+		// Non-critical error, so we don't block the user response
+	}
+
 	utils.RespondWithJSON(w, http.StatusOK, map[string]string{"message": "Invitation accepted"})
 }
 
@@ -291,6 +297,12 @@ func (h *GroupHandler) DeclineGroupInvitation(w http.ResponseWriter, r *http.Req
 	if err := h.Service.DeclineGroupInvitation(invitationID, userID); err != nil {
 		utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
+	}
+
+	// Mark the group invite notification as read
+	if err := h.NotificationService.MarkGroupInviteNotificationAsRead(0, invitationID, userID); err != nil {
+		log.Printf("Error marking group invite notification as read: %v", err)
+		// Non-critical error, so we don't block the user response
 	}
 
 	utils.RespondWithJSON(w, http.StatusOK, map[string]string{"message": "Invitation declined"})

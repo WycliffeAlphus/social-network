@@ -16,7 +16,7 @@ const NotificationsList = () => {
             setNotifications(data || []);
 
             const followRequestUserIds = data
-                .filter(n => n.type === 'follow_request')
+                .filter(n => (n.type === 'follow_request' || n.type === 'new_follower') && !n.is_read)
                 .map(n => n.actor_id);
 
             if (followRequestUserIds.length > 0) {
@@ -25,7 +25,7 @@ const NotificationsList = () => {
             }
 
             const groupInviteIds = data
-                .filter(n => n.type === 'group_invite')
+                .filter(n => n.type === 'group_invite' && !n.is_read)
                 .map(n => n.content_id);
 
             if (groupInviteIds.length > 0) {
@@ -52,6 +52,11 @@ const NotificationsList = () => {
         ));
     };
 
+    const handleFollowBack = (notificationId, actorId, status) => {
+        setFollowStatuses(prev => ({...prev, [actorId]: status}));
+        setNotifications(prev => prev.map(n => n.id === notificationId ? { ...n, is_read: true } : n));
+    };
+
     return (
         <div className="absolute top-full right-0 mt-2 w-80 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-20">
             <div className="p-3 flex justify-between items-center border-b border-gray-200 dark:border-gray-700">
@@ -67,10 +72,11 @@ const NotificationsList = () => {
                     <p className="p-4 text-center text-gray-500">No new notifications.</p>
                 ) : (
                     notifications.map(notification => (
-                        <NotificationItem 
-                            key={notification.id} 
-                            notification={notification} 
-                            onRead={handleMarkAsRead} 
+                        <NotificationItem
+                            key={notification.id}
+                            notification={notification}
+                            onRead={handleMarkAsRead}
+                            onFollowBack={handleFollowBack}
                             followStatus={followStatuses[notification.actor_id]}
                             groupInviteStatus={groupInviteStatuses[notification.content_id]}
                         />
