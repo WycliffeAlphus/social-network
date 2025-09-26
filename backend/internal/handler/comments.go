@@ -3,9 +3,12 @@ package handler
 import (
 	"backend/internal/context"
 	"backend/internal/model"
+	"backend/internal/repository"
+	"backend/internal/service"
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -19,7 +22,7 @@ const (
 )
 
 // CommentHandler handles both GET and POST requests for /posts/:id/comments
-func CommentHandler(db *sql.DB) http.HandlerFunc {
+func CommentHandler(db *sql.DB, notificationService *service.NotificationService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Check if the path ends with /comments
 		if !strings.HasSuffix(r.URL.Path, "/comments") {
@@ -29,28 +32,28 @@ func CommentHandler(db *sql.DB) http.HandlerFunc {
 
 		switch r.Method {
 		case http.MethodPost:
-			createComment(w, r, db)
+			createComment(w, r, db, notificationService)
 		case http.MethodGet:
 			getComments(w, r, db)
 		default:
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		}
 	}
 }
 
 // createComment handles POST /posts/:id/comments
-func createComment(w http.ResponseWriter, r *http.Request, db *sql.DB) {
+func createComment(w http.ResponseWriter, r *http.Request, db *sql.DB, notificationService *service.NotificationService) {
 	// Get user ID from context
 	currentUser := context.MustGetUser(r.Context())
 	if currentUser == nil {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
 
 	// Extract post ID from URL
 	pathParts := strings.Split(r.URL.Path, "/")
 	if len(pathParts) < 4 {
-		http.Error(w, "Invalid URL format", http.StatusBadRequest)
+		http.Error(w, "invalid URL format", http.StatusBadRequest)
 		return
 	}
 	postId := pathParts[3] // /posts/:id/comments
@@ -58,7 +61,7 @@ func createComment(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	// Parse request body
 	var req model.CommentRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		http.Error(w, "invalid request body", http.StatusBadRequest)
 		return
 	}
 
@@ -72,11 +75,11 @@ func createComment(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	var postExists bool
 	err := db.QueryRow("SELECT EXISTS(SELECT 1 FROM posts WHERE id = ?)", postId).Scan(&postExists)
 	if err != nil {
-		http.Error(w, "Database error", http.StatusInternalServerError)
+		http.Error(w, "database error", http.StatusInternalServerError)
 		return
 	}
 	if !postExists {
-		http.Error(w, "Post not found", http.StatusNotFound)
+		http.Error(w, "post not found", http.StatusNotFound)
 		return
 	}
 
@@ -85,11 +88,11 @@ func createComment(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		var parentExists bool
 		err := db.QueryRow("SELECT EXISTS(SELECT 1 FROM comments WHERE id = ? AND post_id = ?)", req.ParentId, postId).Scan(&parentExists)
 		if err != nil {
-			http.Error(w, "Database error", http.StatusInternalServerError)
+			http.Error(w, "database error", http.StatusInternalServerError)
 			return
 		}
 		if !parentExists {
-			http.Error(w, "Parent comment not found", http.StatusNotFound)
+			http.Error(w, "parent comment not found", http.StatusNotFound)
 			return
 		}
 	}
@@ -109,15 +112,27 @@ func createComment(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		commentId, postId, currentUser.ID, req.Content, parentId, now, now)
 
 	if err != nil {
-		http.Error(w, "Failed to create comment", http.StatusInternalServerError)
+		http.Error(w, "failed to create comment", http.StatusInternalServerError)
 		return
 	}
 
 	// Get the created comment with user info
 	comment, err := getCommentWithUserInfo(db, commentId)
 	if err != nil {
-		http.Error(w, "Failed to retrieve comment", http.StatusInternalServerError)
+		http.Error(w, "failed to retrieve comment", http.StatusInternalServerError)
 		return
+	}
+
+	// Get post owner ID
+	postOwnerID, err := repository.GetPostOwnerID(db, postId)
+	if err != nil {
+		log.Printf("Failed to get post owner ID: %v", err)
+	} else {
+		// Create notification
+		log.Printf("Creating comment notification for user %s", postOwnerID)
+		if err := notificationService.CreateCommentNotification(currentUser.ID, postOwnerID, postId); err != nil {
+			log.Printf("Failed to create comment notification: %v", err)
+		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -133,7 +148,7 @@ func getComments(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	// Extract post ID from URL
 	pathParts := strings.Split(r.URL.Path, "/")
 	if len(pathParts) < 4 {
-		http.Error(w, "Invalid URL format", http.StatusBadRequest)
+		http.Error(w, "invalid URL format", http.StatusBadRequest)
 		return
 	}
 	postId := pathParts[3] // /posts/:id/comments
@@ -142,11 +157,11 @@ func getComments(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	var postExists bool
 	err := db.QueryRow("SELECT EXISTS(SELECT 1 FROM posts WHERE id = ?)", postId).Scan(&postExists)
 	if err != nil {
-		http.Error(w, "Database error", http.StatusInternalServerError)
+		http.Error(w, "database error", http.StatusInternalServerError)
 		return
 	}
 	if !postExists {
-		http.Error(w, "Post not found", http.StatusNotFound)
+		http.Error(w, "post not found", http.StatusNotFound)
 		return
 	}
 
@@ -160,7 +175,7 @@ func getComments(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		ORDER BY c.created_at ASC`,
 		postId)
 	if err != nil {
-		http.Error(w, "Failed to retrieve comments", http.StatusInternalServerError)
+		http.Error(w, "failed to retrieve comments", http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
@@ -242,10 +257,10 @@ func buildRepliesTree(db *sql.DB, parentCommentId string) ([]model.CommentWithUs
 
 func validateComment(content string) error {
 	if len(strings.TrimSpace(content)) < MinCommentLength {
-		return fmt.Errorf("Comment must be at least %d character long", MinCommentLength)
+		return fmt.Errorf("comment must be at least %d character long", MinCommentLength)
 	}
 	if len(content) > MaxCommentLength {
-		return fmt.Errorf("Comment must be at most %d characters long", MaxCommentLength)
+		return fmt.Errorf("comment must be at most %d characters long", MaxCommentLength)
 	}
 	return nil
 }

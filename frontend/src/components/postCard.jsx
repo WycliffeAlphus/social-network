@@ -75,9 +75,9 @@ export default function PostCard({ post }) { // Removed showComments, setShowCom
         </div>
         <p className="text-xs text-gray-500">{formatTimeAgo(post.createdat)}</p>
       </div>
-
-      <p className="text-sm mb-3">{post.content}</p>
-
+      
+      <p className="text-sm mb-3 break-words">{post.content}</p>
+      
       {post.imageurl?.Valid && (() => {
         const raw = (post.imageurl.String || "");
         const stripped = raw.replace(/^\/?frontend\/public/, "");

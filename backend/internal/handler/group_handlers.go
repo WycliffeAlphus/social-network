@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -23,7 +24,8 @@ type CreateGroupRequest struct {
 
 // GroupHandler holds the business logic service for groups.
 type GroupHandler struct {
-	Service *service.GroupService
+	Service             *service.GroupService
+	NotificationService *service.NotificationService
 }
 
 func (h *GroupHandler) GetGroups(w http.ResponseWriter, r *http.Request) {
@@ -82,6 +84,12 @@ func (h *GroupHandler) CreateGroup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Trigger notification for the group creator
+	if err := h.NotificationService.CreateGroupCreatedNotification(creatorID, int(newGroup.ID)); err != nil {
+		log.Printf("Failed to create group created notification: %v", err)
+		// Do not block response to user for notification failure
+	}
+
 	// Respond with Success
 	utils.RespondWithJSON(w, http.StatusCreated, newGroup)
 }
@@ -110,11 +118,19 @@ func (h *GroupHandler) JoinGroupRequest(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Call service to create join request
-	err = h.Service.RequestToJoinGroup(groupID, userID)
+	group, err := h.Service.RequestToJoinGroup(groupID, userID)
 	if err != nil {
 		log.Printf("Failed to create join request: %v", err)
 		utils.RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
+	}
+
+	// Trigger notification for the group owner
+	actorID := userID
+	groupOwnerID := group.CreatorID
+	if err := h.NotificationService.CreateGroupJoinRequestNotification(actorID, groupOwnerID, int(groupID)); err != nil {
+		log.Printf("Failed to create group join request notification: %v", err)
+		// Do not block response to user for notification failure
 	}
 
 	utils.RespondWithJSON(w, http.StatusOK, map[string]string{
@@ -167,6 +183,14 @@ func (h *GroupHandler) AcceptJoinRequest(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	// Create a notification for the user who's request was accepted
+	actorID := creatorUserID
+	targetUserID := req.UserID
+	if err := h.NotificationService.CreateGroupJoinAcceptedNotification(actorID, targetUserID, int(groupID)); err != nil {
+		log.Printf("Failed to create group join accepted notification: %v", err)
+		// Non-critical error, so we don't block the user response
+	}
+
 	utils.RespondWithJSON(w, http.StatusOK, map[string]string{
 		"message": "Join request accepted successfully",
 	})
@@ -191,4 +215,152 @@ func extractGroupIDFromPath(path string) (uint, error) {
 	}
 
 	return 0, fmt.Errorf("group ID not found in path")
+}
+
+// InviteUserToGroup handles POST /groups/:id/invite
+func (h *GroupHandler) InviteUserToGroup(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		utils.RespondWithError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		return
+	}
+
+	inviter := context.MustGetUser(r.Context())
+	inviterID := inviter.ID
+
+	groupID, err := extractGroupIDFromPath(r.URL.Path)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid group ID")
+		return
+	}
+
+	var req struct {
+		TargetUserID string `json:"target_user_id"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid request payload")
+		return
+	}
+
+	invitationID, err := h.Service.InviteUserToGroup(groupID, inviterID, req.TargetUserID)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	// Trigger notification for the invited user
+	inviterIDInt := inviterID
+	targetUserIDInt := req.TargetUserID
+	if err := h.NotificationService.CreateGroupInviteNotification(inviterIDInt, targetUserIDInt, int(groupID), invitationID); err != nil {
+		log.Printf("Failed to create group invite notification: %v", err)
+		// Do not block response to user for notification failure
+	}
+
+	utils.RespondWithJSON(w, http.StatusOK, map[string]string{"message": "Invitation sent successfully"})
+}
+
+// AcceptGroupInvitation handles POST /groups/invites/:id/accept
+func (h *GroupHandler) AcceptGroupInvitation(w http.ResponseWriter, r *http.Request) {
+	user := context.MustGetUser(r.Context())
+	userID := user.ID
+
+	invitationID, err := strconv.Atoi(strings.TrimPrefix(r.URL.Path, "/api/groups/invites/"))
+	if err != nil {
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid invitation ID")
+		return
+	}
+
+	if err := h.Service.AcceptGroupInvitation(invitationID, userID); err != nil {
+		utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	utils.RespondWithJSON(w, http.StatusOK, map[string]string{"message": "Invitation accepted"})
+}
+
+// DeclineGroupInvitation handles POST /groups/invites/:id/decline
+func (h *GroupHandler) DeclineGroupInvitation(w http.ResponseWriter, r *http.Request) {
+	user := context.MustGetUser(r.Context())
+	userID := user.ID
+
+	invitationID, err := strconv.Atoi(strings.TrimPrefix(r.URL.Path, "/api/groups/invites/"))
+	if err != nil {
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid invitation ID")
+		return
+	}
+
+	if err := h.Service.DeclineGroupInvitation(invitationID, userID); err != nil {
+		utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	utils.RespondWithJSON(w, http.StatusOK, map[string]string{"message": "Invitation declined"})
+}
+
+// CreateEvent handles POST /groups/:id/events
+func (h *GroupHandler) CreateEvent(w http.ResponseWriter, r *http.Request) {
+	creator := context.MustGetUser(r.Context())
+	creatorID := creator.ID
+
+	groupID, err := extractGroupIDFromPath(r.URL.Path)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid group ID")
+		return
+	}
+
+	var event model.Event
+	if err := json.NewDecoder(r.Body).Decode(&event); err != nil {
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid request payload")
+		return
+	}
+
+	event.CreatorID = creatorID
+	event.GroupID = int(groupID)
+
+	createdEvent, err := h.Service.CreateEvent(&event)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	// Trigger notification for group members
+	if err := h.NotificationService.CreateGroupEventNotification(creatorID, int(groupID), createdEvent.ID); err != nil {
+		log.Printf("Failed to create group event notification: %v", err)
+	}
+
+	utils.RespondWithJSON(w, http.StatusCreated, createdEvent)
+}
+
+// GetGroupInviteStatuses checks the status for a list of group invitations.
+func (h *GroupHandler) GetGroupInviteStatuses(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var request struct {
+		InvitationIDs []int `json:"invitationIds"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	statuses := make(map[int]string)
+	for _, invitationID := range request.InvitationIDs {
+		invite, err := h.Service.Repo.GetGroupInvitation(invitationID)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				statuses[invitationID] = "not_found"
+			} else {
+				log.Printf("Error checking group invitation status: %v", err)
+				statuses[invitationID] = "error"
+			}
+		} else {
+			statuses[invitationID] = invite.Status
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(statuses)
 }

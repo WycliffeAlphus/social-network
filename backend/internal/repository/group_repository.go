@@ -154,3 +154,89 @@ func (r *GroupRepository) IsGroupCreator(groupID uint, userID string) (bool, err
 
 	return creatorID == userID, nil
 }
+
+// GetGroupMembers retrieves all active members of a group.
+func (r *GroupRepository) GetGroupMembers(groupID uint) ([]string, error) {
+	rows, err := r.DB.Query(`
+		SELECT user_id FROM group_members
+		WHERE group_id = ? AND status = 'active'
+	`, groupID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var memberIDs []string
+	for rows.Next() {
+		var memberID string
+		if err := rows.Scan(&memberID); err != nil {
+			return nil, err
+		}
+		memberIDs = append(memberIDs, memberID)
+	}
+
+	return memberIDs, rows.Err()
+}
+
+// CreateEvent inserts a new event into the database.
+func (r *GroupRepository) CreateEvent(event *model.Event) (int, error) {
+	query := `
+		INSERT INTO events (group_id, creator_id, title, description, event_time)
+		VALUES (?, ?, ?, ?, ?)
+	`
+	res, err := r.DB.Exec(query, event.GroupID, event.CreatorID, event.Title, event.Description, event.EventTime)
+	if err != nil {
+		return 0, err
+	}
+	id, err := res.LastInsertId()
+	if err != nil {
+		return 0, err
+	}
+	return int(id), nil
+}
+
+// CreateGroupInvitation inserts a new group invitation into the database.
+func (r *GroupRepository) CreateGroupInvitation(groupID uint, inviterID, targetUserID string) (int, error) {
+	result, err := r.DB.Exec(`
+		INSERT INTO group_invites (group_id, inviter_user_id, invited_user_id, status)
+		VALUES (?, ?, ?, 'pending')
+	`, groupID, inviterID, targetUserID)
+	if err != nil {
+		return 0, err
+	}
+	id, err := result.LastInsertId()
+	if err != nil {
+		return 0, err
+	}
+	return int(id), nil
+}
+
+// AcceptGroupInvitation marks a group invitation as accepted.
+func (r *GroupRepository) AcceptGroupInvitation(invitationID int) error {
+	_, err := r.DB.Exec(`
+		UPDATE group_invites SET status = 'accepted' WHERE id = ?
+	`, invitationID)
+	return err
+}
+
+// DeclineGroupInvitation marks a group invitation as declined.
+func (r *GroupRepository) DeclineGroupInvitation(invitationID int) error {
+	_, err := r.DB.Exec(`
+		UPDATE group_invites SET status = 'declined' WHERE id = ?
+	`, invitationID)
+	return err
+}
+
+// GetGroupInvitation retrieves a group invitation by its ID.
+func (r *GroupRepository) GetGroupInvitation(invitationID int) (*model.GroupInvite, error) {
+	var invite model.GroupInvite
+	err := r.DB.QueryRow(`
+		SELECT id, group_id, inviter_user_id, invited_user_id, status
+		FROM group_invites
+		WHERE id = ?
+	`, invitationID).Scan(&invite.ID, &invite.GroupID, &invite.InviterUserID, &invite.InvitedUserID, &invite.Status)
+	if err != nil {
+		return nil, err
+	}
+	return &invite, nil
+}

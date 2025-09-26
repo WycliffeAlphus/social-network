@@ -110,6 +110,32 @@ func ProfileHandler(db *sql.DB) http.HandlerFunc {
 	}
 }
 
+func CurrentUserProfileHandler(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			http.Error(w, "Method not allowed. Use GET for profile.", http.StatusMethodNotAllowed)
+			return
+		}
+
+		currentUserId := context.MustGetUser(r.Context()).ID
+
+		user, err := getusers.GetUserByID(db, currentUserId)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				http.Error(w, "Profile not found", http.StatusNotFound)
+				return
+			} else {
+				log.Println("Error getting user by id", err)
+				http.Error(w, "An error occured, check back later", http.StatusInternalServerError)
+				return
+			}
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(user)
+	}
+}
+
 func UpdateProfileHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("UpdateProfileHandler called")

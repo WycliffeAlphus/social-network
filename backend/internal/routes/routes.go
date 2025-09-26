@@ -20,7 +20,16 @@ func RegisterRoutes(db *sql.DB) {
 
 	groupRepo := repository.NewGroupRepository(db)
 	groupService := service.NewGroupService(groupRepo)
-	groupHandler := &handler.GroupHandler{Service: groupService}
+
+	// Initialize Notification-related dependencies
+	notificationRepo := repository.NewNotificationRepository(db)
+	notificationService := service.NewNotificationService(notificationRepo, userRepo, groupRepo)
+	notificationHandler := handler.NewNotificationHandler(notificationService)
+
+	groupHandler := &handler.GroupHandler{Service: groupService, NotificationService: notificationService}
+
+	// Initialize Follower-related dependencies
+	followerHandler := handler.NewFollowerHandler(db, notificationService)
 
 	// Public routes (no authentication required)
 	http.HandleFunc("/api/register", userHandler.Register)
@@ -28,15 +37,18 @@ func RegisterRoutes(db *sql.DB) {
 	http.HandleFunc("/api/logout", handler.LogoutHandler)
 
 	// http.Handle("/api/profile/", middlewares.AuthMiddleware(db, userHandler.Profile))
+	http.Handle("/api/profile/current", middlewares.AuthMiddleware(db, handler.CurrentUserProfileHandler(db)))
 	http.Handle("/api/profile/", middlewares.AuthMiddleware(db, handler.ProfileHandler(db)))
 	http.HandleFunc("/api/users/available", middlewares.AuthMiddleware(db, handler.GetFollowSuggestions(db)))
-	http.HandleFunc("/api/users/follow", middlewares.AuthMiddleware(db, handler.FollowUser(db)))
-	http.HandleFunc("/api/follow/accept", middlewares.AuthMiddleware(db, handler.AcceptFollowRequest(db)))
-	http.HandleFunc("/api/follow/decline", middlewares.AuthMiddleware(db, handler.DeclineFollowRequest(db)))
-	http.HandleFunc("/api/follow/cancel", middlewares.AuthMiddleware(db, handler.CancelFollowRequest(db)))
-	http.HandleFunc("/api/follow-status/", middlewares.AuthMiddleware(db, handler.GetFollowStatus(db)))
-	http.HandleFunc("/api/followers/", middlewares.AuthMiddleware(db, handler.GetFollowers(db)))
-	http.HandleFunc("/api/following/", middlewares.AuthMiddleware(db, handler.GetFollowing(db)))
+	http.HandleFunc("/api/users/follow", middlewares.AuthMiddleware(db, followerHandler.FollowUser))
+	http.HandleFunc("/api/follow/accept", middlewares.AuthMiddleware(db, followerHandler.AcceptFollowRequest))
+	http.HandleFunc("/api/follow/decline", middlewares.AuthMiddleware(db, followerHandler.DeclineFollowRequest))
+	http.HandleFunc("/api/follow/cancel", middlewares.AuthMiddleware(db, followerHandler.CancelFollowRequest))
+	http.HandleFunc("/api/follow-status/", middlewares.AuthMiddleware(db, followerHandler.GetFollowStatus()))
+	http.HandleFunc("/api/follow-statuses", middlewares.AuthMiddleware(db, followerHandler.GetFollowStatuses))
+	http.HandleFunc("/api/incoming-follow-request-status/", middlewares.AuthMiddleware(db, followerHandler.GetIncomingFollowRequestStatus()))
+	http.HandleFunc("/api/followers/", middlewares.AuthMiddleware(db, followerHandler.GetFollowers()))
+	http.HandleFunc("/api/following/", middlewares.AuthMiddleware(db, followerHandler.GetFollowing()))
 	http.HandleFunc("/api/follow-relationship", middlewares.AuthMiddleware(db, handler.CheckFollowRelationship(db)))
 	http.HandleFunc("/ws", handler.WebSocketConnection(db))
 	http.HandleFunc("/api/users", middlewares.AuthMiddleware(db, handler.HandleUserStatuses(db)))
@@ -54,6 +66,7 @@ func RegisterRoutes(db *sql.DB) {
 	}
 
 	http.HandleFunc("/api/groups", groupsHandler)
+	http.HandleFunc("/api/group-invites/statuses", middlewares.AuthMiddleware(db, groupHandler.GetGroupInviteStatuses))
 
 	// Group join request endpoints
 	http.HandleFunc("/api/groups/", func(w http.ResponseWriter, r *http.Request) {
@@ -66,22 +79,50 @@ func RegisterRoutes(db *sql.DB) {
 				middlewares.AuthMiddleware(db, http.HandlerFunc(groupHandler.JoinGroupRequest)).ServeHTTP(w, r)
 			}
 			return
-		} else if strings.Contains(path, "/posts") {
-			middlewares.AuthMiddleware(db, http.HandlerFunc(handler.GetGroupPosts(db))).ServeHTTP(w, r)
-			return
-		} else {
-			middlewares.AuthMiddleware(db, http.HandlerFunc(handler.GetGroup(db))).ServeHTTP(w, r)
+		}
+		// Handle /api/groups/:id/invite endpoint
+		if strings.Contains(r.URL.Path, "/invite") {
+			middlewares.AuthMiddleware(db, http.HandlerFunc(groupHandler.InviteUserToGroup)).ServeHTTP(w, r)
 			return
 		}
+		// Handle /api/groups/invites/:id/accept endpoint
+		if strings.Contains(r.URL.Path, "/invites/") && strings.HasSuffix(r.URL.Path, "/accept") {
+			middlewares.AuthMiddleware(db, http.HandlerFunc(groupHandler.AcceptGroupInvitation)).ServeHTTP(w, r)
+			return
+		}
+		// Handle /api/groups/invites/:id/decline endpoint
+		if strings.Contains(r.URL.Path, "/invites/") && strings.HasSuffix(r.URL.Path, "/decline") {
+			middlewares.AuthMiddleware(db, http.HandlerFunc(groupHandler.DeclineGroupInvitation)).ServeHTTP(w, r)
+			return
+		}
+		// Handle /api/groups/:id/events endpoint
+		if strings.Contains(r.URL.Path, "/events") {
+			middlewares.AuthMiddleware(db, http.HandlerFunc(groupHandler.CreateEvent)).ServeHTTP(w, r)
+			return
+		}
+		http.Error(w, "Not found", http.StatusNotFound)
 	})
 
-	http.HandleFunc("/api/follow-requests", middlewares.AuthMiddleware(db, handler.GetFollowRequests(db)))
+	http.HandleFunc("/api/follow-requests", middlewares.AuthMiddleware(db, followerHandler.GetFollowRequests()))
 	http.HandleFunc("/api/profile/update", middlewares.AuthMiddleware(db, handler.UpdateProfileHandler(db)))
-	http.HandleFunc("/api/createpost", middlewares.AuthMiddleware(db, handler.CreatePost(db)))
+	http.HandleFunc("/api/createpost", middlewares.AuthMiddleware(db, handler.CreatePost(db, notificationService)))
 
 	// Comment routes
-	http.HandleFunc("/api/posts/", middlewares.AuthMiddleware(db, handler.CommentHandler(db)))
+	http.HandleFunc("/api/posts/", middlewares.AuthMiddleware(db, handler.CommentHandler(db, notificationService)))
 	http.HandleFunc("/api/feeds", middlewares.AuthMiddleware(db, handler.DashboardHandler(db)))
-	http.HandleFunc("/api/reaction", middlewares.AuthMiddleware(db, handler.HandleReaction(db)))
+	http.HandleFunc("/api/reaction", middlewares.AuthMiddleware(db, handler.HandleReaction(db, notificationService)))
 
+	// Notification routes
+	http.HandleFunc("/api/notifications/read", middlewares.AuthMiddleware(db, notificationHandler.MarkNotificationsAsRead))
+	http.HandleFunc("/api/notifications/", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodPut && strings.Contains(r.URL.Path, "/read") {
+			middlewares.AuthMiddleware(db, notificationHandler.MarkNotificationAsRead).ServeHTTP(w, r)
+		} else if r.Method == http.MethodGet {
+			middlewares.AuthMiddleware(db, notificationHandler.GetNotifications).ServeHTTP(w, r)
+		} else {
+			http.NotFound(w, r)
+		}
+	})
+	http.HandleFunc("/api/notifications", middlewares.AuthMiddleware(db, notificationHandler.GetNotifications))
+	http.HandleFunc("/api/post/", middlewares.AuthMiddleware(db, handler.GetPost(db)))
 }

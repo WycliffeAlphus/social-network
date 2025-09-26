@@ -22,9 +22,7 @@ export default function FollowRequestsPage() {
           throw new Error('Failed to fetch follow requests');
         }
         const data = await response.json();
-        console.log(Array.isArray(data))
-        console.log(data)
-        setFollowRequests(data);
+        setFollowRequests(data.data);
       } catch (err) {
         setError(err.message);
       } finally {
