@@ -67,45 +67,45 @@ export default function Sidebar({ data }) {
 
   return (
     <>
-      <aside className="sticky w-[5rem] xl:w-[12rem] pt-[3rem] top-0 h-[100vh] overflow-y-auto">
+      <aside className="sticky min-w-[5rem] xl:w-[12rem] pt-[3rem] top-0 h-[100vh] overflow-y-auto scrollbar">
         <ul className="w-full">
-          <li className="p-4 border-gray-100/20">
+          <li className="p-4">
             <Link href="/" className="flex w-full pb-4 items-center items-center justify-center md:justify-start">
               <HomeIcon className="h-6 w-6 mr-2" />
               <span className="hidden xl:inline">Home</span>
             </Link>
           </li>
-          <li className="p-4 border-gray-100/20">
+          <li className="p-4">
             <Link href="/follow-requests" className="flex w-full pb-4 items-center items-center justify-center md:justify-start">
               <UserPlusIcon className="h-6 w-6 mr-2" />
               <span className="hidden xl:inline">Follow requests</span>
             </Link>
           </li>
-          <li className="p-4 border-gray-100/20">
+          <li className="p-4">
             <Link href="/messages" className="flex w-full pb-4 items-center items-center justify-center md:justify-start">
               <ChatBubbleLeftIcon className="h-6 w-6 mr-2" />
               <span className="hidden xl:inline">Messages</span>
             </Link>
           </li>
-          <li className="p-4 border-gray-100/20">
+          <li className="p-4">
             <Link href="/groups" className="flex w-full pb-4 items-center items-center justify-center md:justify-start">
               <UserGroupIcon className="h-6 w-6 mr-2" />
               <span className="hidden xl:inline">Groups</span>
             </Link>
           </li>
-          <li className="p-4 border-gray-100/20">
+          <li className="p-4">
             <Link href="/notifications" className="flex w-full pb-4 items-center items-center justify-center md:justify-start">
               <BellIcon className="h-6 w-6 mr-2" />
               <span className="hidden xl:inline">Notifications</span>
             </Link>
           </li>
-          <li className="p-4 border-gray-100/20">
+          <li className="p-4">
             <Link href={`/profile/${data.current_user_id}`} className="flex w-full pb-4 items-center items-center justify-center md:justify-start">
               <UserIcon className="h-6 w-6 mr-2" />
               <span className="hidden xl:inline">Profile</span>
             </Link>
           </li>
-          <li className="relative p-4 border-gray-100/20">
+          <li className="relative p-4">
             <button
               onClick={() => {
                 setShowCreateOptions((prev) => !prev)
@@ -137,7 +137,7 @@ export default function Sidebar({ data }) {
             )}
           </li>
 
-          <li className="p-4 border-gray-100/20">
+          <li className="p-4">
             <button
               onClick={() => {
                 setShowAccountOptions((prev) => !prev)

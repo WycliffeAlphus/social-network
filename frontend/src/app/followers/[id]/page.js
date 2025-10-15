@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import Rightbar from '@/components/rightbar'
 import FollowSuggestion from '@/components/followsuggestions'
+import Loading from '@/components/loading'
 
 export default function FollowersPage() {
     const { id } = useParams()
@@ -33,7 +34,7 @@ export default function FollowersPage() {
         fetchFollowers()
     }, [id])
 
-    if (loading) return <div className="flex justify-center py-8">Loading...</div>
+    if (loading) return <div className="flex items-center justify-center h-screen"><Loading /></div>
     if (error) return <div className="flex justify-center py-8 text-red-500">Error: {error}</div>
 
     return (
@@ -43,7 +44,7 @@ export default function FollowersPage() {
                     <FollowSuggestion />
                 </div>
                 <h1 className="py-[0.7rem] px-[1rem] bg-ble-500 text-2xl font-bold border-t lg:border-0 border-gray-400">Followers</h1>
-                <div className="p-7 border-t border-gray-400">
+                <div className="p-7">
                     {followers.length > 0 ? (
                         followers.map(user => (
                             <Link

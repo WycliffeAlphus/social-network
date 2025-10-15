@@ -1,6 +1,7 @@
-"use client"; // Essential for using useRouter, usePathname, and conditional rendering
+"use client";
 
 import FollowSuggestion from "@/components/followsuggestions";
+import Loading from '@/components/loading'
 import Rightbar from "@/components/rightbar";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -80,7 +81,7 @@ export default function FollowRequestsPage() {
     }
   };
 
-  if (loading) return <div className="flex justify-center py-8">Loading...</div>
+  if (loading) return <div className="flex items-center justify-center h-screen"><Loading /></div>
 
   return (
     <div className="flex min-h-screen">
@@ -124,13 +125,13 @@ export default function FollowRequestsPage() {
                     </div>
                   </Link>
                   <div className="flex space-x-2">
-                    <button 
+                    <button
                       onClick={() => handleAccept(request.follower_id)}
                       className="px-4 py-1 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition"
                     >
                       Accept
                     </button>
-                    <button 
+                    <button
                       onClick={() => handleDecline(request.follower_id)}
                       className="px-4 py-1 bg-gray-200 text-gray-800 rounded-full hover:bg-gray-300 transition"
                     >

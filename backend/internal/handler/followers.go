@@ -4,6 +4,7 @@ import (
 	"backend/internal/context"
 	"backend/internal/model"
 	"backend/pkg/extractid"
+	"backend/pkg/getusers"
 	"database/sql"
 	"encoding/json"
 	"log"
@@ -487,6 +488,47 @@ func GetFollowStatus(db *sql.DB) http.HandlerFunc {
 
 		response := map[string]string{
 			"status": status,
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(response)
+	}
+}
+
+// CheckFollowRelationship checks if either user follows the other
+func CheckFollowRelationship(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		currentUserID := context.MustGetUser(r.Context()).ID
+		receiverId := r.URL.Query().Get("receiverId")
+
+		receiverData, exists := getusers.UserExists(db, receiverId, w)
+
+		if receiverId == "" || !exists {
+			http.Error(w, "User IDs are required", http.StatusBadRequest)
+			return
+		}
+
+		var hasFollowRelationship bool
+		query := `
+        SELECT EXISTS(
+            SELECT 1 FROM followers 
+            WHERE 
+                ((follower_id = ? AND followed_id = ?) OR 
+                 (follower_id = ? AND followed_id = ?)) 
+            AND status = 'accepted'
+        ) AS has_relationship
+    	`
+		err := db.QueryRow(query, currentUserID, receiverId, receiverId, currentUserID).Scan(&hasFollowRelationship)
+		if err != nil {
+			log.Println("Error checking if follow relationship exists: ", err)
+			http.Error(w, "An error occured, please check back later", http.StatusInternalServerError)
+			return
+		}
+
+		response := map[string]interface{}{
+			"hasFollowRelationship": hasFollowRelationship,
+			"messageReceiverExists":   exists,
+			"receiverData":   receiverData,
 		}
 
 		w.Header().Set("Content-Type", "application/json")

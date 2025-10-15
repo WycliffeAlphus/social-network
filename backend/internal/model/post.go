@@ -17,4 +17,5 @@ type Post struct {
 	Creator          string         `json:"creator,omitempty"`
 	CreatorImg       string         `json:"creatorimg,omitempty"`
 	CommentCount     int            `json:"commentcount,omitempty"`
+	GroupId          sql.NullString `json:"groupid,omitempty"`
 }

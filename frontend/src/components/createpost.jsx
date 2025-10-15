@@ -6,9 +6,9 @@ import { PhotoIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
-export default function CreatePost({ onClose }) {
+export default function CreatePost({ onClose, groupId }) {
     const [showFollowers, setShowFollowers] = useState(false);
-    const [selectedPrivacy, setSelectedPrivacy] = useState('public');
+    const [selectedPrivacy, setSelectedPrivacy] = useState(groupId ? 'group' : 'public');
     const [error, setError] = useState('')
     const [loadingFollowers, setLoadingFollowers] = useState(false);
     const [followersError, setFollowersError] = useState(null);
@@ -19,7 +19,7 @@ export default function CreatePost({ onClose }) {
     const [formData, setFormData] = useState({
         title: '',
         content: '',
-        postPrivacy: 'public',
+        postPrivacy: groupId ? 'group' : 'public',
         postImage: '',
     })
 
@@ -114,6 +114,10 @@ export default function CreatePost({ onClose }) {
         try {
             const formDataToSend = new FormData()
 
+            if (groupId) {
+                formDataToSend.append('group_id', groupId);
+            }
+
             // include selected followers if private mode
             if (selectedPrivacy === 'private') {
                 formDataToSend.append('allowedFollowers', JSON.stringify(selectedFollowers));
@@ -156,8 +160,12 @@ export default function CreatePost({ onClose }) {
             }
 
             if (response.ok) {
-                router.push('/') // redirect to home after post creation
-                onClose()
+                if (groupId) { // If it's a group post
+                    onClose(); // Just close the modal, stay on the group page
+                } else { // If it's a personal post
+                    router.push('/'); // Redirect to home
+                    onClose();
+                }
             }
         } catch (err) {
             setError('Post creation failed. Please try again.')
@@ -189,7 +197,7 @@ export default function CreatePost({ onClose }) {
                     value={formData.title}
                     onChange={handleChange}
                     placeholder="What's your post about?"
-                    className="mt-1 w-full py-1 px-3 border-b border-gray-700 focus:outline-none focus:border-b-blue-500"
+                    className="mt-1 w-full py-1 px-3 border-b border-gray-400 focus:outline-none focus:border-b-blue-500"
                     required
                 />
                 <div id="title-error" className="text-red-500"></div>
@@ -203,7 +211,7 @@ export default function CreatePost({ onClose }) {
                     name="content"
                     value={formData.content}
                     onChange={handleChange}
-                    className="mt-1 w-full max-h-[9rem] min-h-[9rem] p-3 border-b border-gray-700 focus:outline-none focus:border-b-blue-500"
+                    className="mt-1 w-full max-h-[9rem] min-h-[9rem] p-3 border-b border-gray-400 focus:outline-none focus:border-b-blue-500"
                     placeholder="Write your post content here..."
                     required
                 ></textarea>
@@ -211,13 +219,13 @@ export default function CreatePost({ onClose }) {
             </div>
 
             {/* Privacy Settings */}
-            <div>
+            {!groupId && <div>
                 <h2 className="text-sm mb-3 text-gray-700 dark:text-white">Privacy Settings</h2>
 
                 <div className="space-y-3">
                     {/* Public Option */}
                     <div
-                        className={`flex items-center px-3 py-1 border rounded-lg cursor-pointer ${selectedPrivacy === 'public' ? 'border-blue-500' : 'border-gray-700 hover:border-blue-500'}`}
+                        className={`flex items-center px-3 py-1 border rounded-lg cursor-pointer ${selectedPrivacy === 'public' ? 'border-blue-500' : 'border-gray-400 hover:border-blue-500'}`}
                         onClick={() => handlePrivacyChange('public')}
                     >
                         <input
@@ -237,7 +245,7 @@ export default function CreatePost({ onClose }) {
 
                     {/* Followers Only Option */}
                     <div
-                        className={`flex items-center px-3 py-1 border rounded-lg cursor-pointer ${selectedPrivacy === 'almostprivate' ? 'border-blue-500' : 'border-gray-700 hover:border-blue-500'}`}
+                        className={`flex items-center px-3 py-1 border rounded-lg cursor-pointer ${selectedPrivacy === 'almostprivate' ? 'border-blue-500' : 'border-gray-400 hover:border-blue-500'}`}
                         onClick={() => handlePrivacyChange('almostprivate')}
                     >
                         <input
@@ -257,7 +265,7 @@ export default function CreatePost({ onClose }) {
 
                     {/* Private Option */}
                     <div
-                        className={`flex items-center px-3 py-1 border rounded-lg cursor-pointer ${selectedPrivacy === 'private' ? 'border-blue-500' : 'border-gray-700 hover:border-blue-500'}`}
+                        className={`flex items-center px-3 py-1 border rounded-lg cursor-pointer ${selectedPrivacy === 'private' ? 'border-blue-500' : 'border-gray-400 hover:border-blue-500'}`}
                         onClick={() => handlePrivacyChange('private')}
                     >
                         <input
@@ -275,6 +283,7 @@ export default function CreatePost({ onClose }) {
                         </label>
                     </div>
                     <div id="private-error" className="text-red-500"></div>
+                    <div id="postPrivacy-error" className="text-red-500"></div>
                 </div>
 
                 {/* Follower Selector (shown only when private is selected) */}
@@ -317,7 +326,7 @@ export default function CreatePost({ onClose }) {
                         </div>
                     </div>
                 )}
-            </div>
+            </div>}
 
             {/* Image Upload */}
             <div className="mt-6">

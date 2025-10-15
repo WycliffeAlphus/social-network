@@ -37,6 +37,10 @@ func RegisterRoutes(db *sql.DB) {
 	http.HandleFunc("/api/follow-status/", middlewares.AuthMiddleware(db, handler.GetFollowStatus(db)))
 	http.HandleFunc("/api/followers/", middlewares.AuthMiddleware(db, handler.GetFollowers(db)))
 	http.HandleFunc("/api/following/", middlewares.AuthMiddleware(db, handler.GetFollowing(db)))
+	http.HandleFunc("/api/follow-relationship", middlewares.AuthMiddleware(db, handler.CheckFollowRelationship(db)))
+	http.HandleFunc("/ws", handler.WebSocketConnection(db))
+	http.HandleFunc("/api/users", middlewares.AuthMiddleware(db, handler.HandleUserStatuses(db)))
+	http.HandleFunc("/api/conversations", middlewares.AuthMiddleware(db, handler.PrivateConversations(db)))
 
 	groupsHandler := func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
@@ -53,6 +57,7 @@ func RegisterRoutes(db *sql.DB) {
 
 	// Group join request endpoints
 	http.HandleFunc("/api/groups/", func(w http.ResponseWriter, r *http.Request) {
+		path := r.URL.Path
 		// Handle /api/groups/:id/join endpoint
 		if strings.Contains(r.URL.Path, "/join") {
 			action := r.URL.Query().Get("action")
@@ -65,6 +70,13 @@ func RegisterRoutes(db *sql.DB) {
 				middlewares.AuthMiddleware(db, http.HandlerFunc(groupHandler.JoinGroupRequest)).ServeHTTP(w, r)
 			}
 			return
+		} else if strings.Contains(path, "/posts") {
+			middlewares.AuthMiddleware(db, http.HandlerFunc(handler.GetGroupPosts(db))).ServeHTTP(w, r)
+			return
+		} else {
+			middlewares.AuthMiddleware(db, http.HandlerFunc(handler.GetGroup(db))).ServeHTTP(w, r)
+			return
+		}
 		}
 		// Handle /api/groups/:id/join-requests endpoint
 		if strings.Contains(r.URL.Path, "/join-requests") {
