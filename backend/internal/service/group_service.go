@@ -164,3 +164,51 @@ func (s *GroupService) RejectJoinRequest(groupID uint, requesterUserID string, c
 	// Reject the join request
 	return s.Repo.RejectJoinRequest(groupID, requesterUserID)
 }
+
+// IsUserGroupMember checks if a user is an active member of a group.
+func (s *GroupService) IsUserGroupMember(groupID uint, userID string) (bool, error) {
+	isMember, status, err := s.Repo.CheckUserMembership(groupID, userID)
+	if err != nil {
+		return false, err
+	}
+	return isMember && status == "active", nil
+}
+
+// InviteUserToGroup allows a group creator to invite a user to join a group.
+func (s *GroupService) InviteUserToGroup(groupID uint, invitedUserID string, creatorUserID string) error {
+	// Verify that the user sending the invite is the group creator
+	isCreator, err := s.Repo.IsGroupCreator(groupID, creatorUserID)
+	if err != nil {
+		return err
+	}
+	if !isCreator {
+		return fmt.Errorf("only group creators can invite users")
+	}
+
+	// Check if group exists
+	group, err := s.Repo.FindGroupByID(groupID)
+	if err != nil {
+		return err
+	}
+	if group == nil {
+		return fmt.Errorf("group not found")
+	}
+
+	// Check if user is already a member or has a pending request/invite
+	isMember, status, err := s.Repo.CheckUserMembership(groupID, invitedUserID)
+	if err != nil {
+		return err
+	}
+	if isMember {
+		if status == "active" {
+			return fmt.Errorf("user is already a member of this group")
+		} else if status == "pending" {
+			return fmt.Errorf("user already has a pending request for this group")
+		} else if status == "invited" {
+			return fmt.Errorf("user has already been invited to this group")
+		}
+	}
+
+	// Create the invite
+	return s.Repo.CreateGroupInvite(groupID, invitedUserID)
+}

@@ -70,20 +70,22 @@ func RegisterRoutes(db *sql.DB) {
 				middlewares.AuthMiddleware(db, http.HandlerFunc(groupHandler.JoinGroupRequest)).ServeHTTP(w, r)
 			}
 			return
+		} else if strings.Contains(path, "/membership") {
+			middlewares.AuthMiddleware(db, http.HandlerFunc(groupHandler.CheckGroupMembership)).ServeHTTP(w, r)
+			return
+		} else if strings.Contains(path, "/invite") {
+			middlewares.AuthMiddleware(db, http.HandlerFunc(groupHandler.InviteUserToGroup)).ServeHTTP(w, r)
+			return
 		} else if strings.Contains(path, "/posts") {
 			middlewares.AuthMiddleware(db, http.HandlerFunc(handler.GetGroupPosts(db))).ServeHTTP(w, r)
+			return
+		} else if strings.Contains(r.URL.Path, "/join-requests") {
+			middlewares.AuthMiddleware(db, http.HandlerFunc(groupHandler.GetPendingJoinRequests)).ServeHTTP(w, r)
 			return
 		} else {
 			middlewares.AuthMiddleware(db, http.HandlerFunc(handler.GetGroup(db))).ServeHTTP(w, r)
 			return
 		}
-		}
-		// Handle /api/groups/:id/join-requests endpoint
-		if strings.Contains(r.URL.Path, "/join-requests") {
-			middlewares.AuthMiddleware(db, http.HandlerFunc(groupHandler.GetPendingJoinRequests)).ServeHTTP(w, r)
-			return
-		}
-		http.Error(w, "Not found", http.StatusNotFound)
 	})
 
 	http.HandleFunc("/api/follow-requests", middlewares.AuthMiddleware(db, handler.GetFollowRequests(db)))

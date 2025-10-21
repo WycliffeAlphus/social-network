@@ -214,3 +214,12 @@ func (r *GroupRepository) RejectJoinRequest(groupID uint, userID string) error {
 
 	return nil
 }
+
+// CreateGroupInvite creates a group invite for a user.
+func (r *GroupRepository) CreateGroupInvite(groupID uint, userID string) error {
+	_, err := r.DB.Exec(`
+		INSERT INTO group_members (group_id, user_id, role, status)
+		VALUES (?, ?, 'member', 'invited')
+	`, groupID, userID)
+	return err
+}
