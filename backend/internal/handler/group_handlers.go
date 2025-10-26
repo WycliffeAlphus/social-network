@@ -467,6 +467,56 @@ func (h *GroupHandler) GetUserGroupInvites(w http.ResponseWriter, r *http.Reques
 	utils.RespondWithJSON(w, http.StatusOK, invites)
 }
 
+// GetAvailableUsersForGroup handles GET /groups/:id/available-users endpoint.
+// It retrieves users who can be invited to the group (not already members).
+func (h *GroupHandler) GetAvailableUsersForGroup(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		utils.RespondWithError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		return
+	}
+
+	user := context.MustGetUser(r.Context())
+	currentUserID := user.ID
+
+	if currentUserID == "0" {
+		utils.RespondWithError(w, http.StatusUnauthorized, "User ID not found or is invalid")
+		return
+	}
+
+	// Extract group ID from URL path
+	groupID, err := extractGroupIDFromPath(r.URL.Path)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid group ID")
+		return
+	}
+
+	// Verify user is a member of the group
+	isMember, err := h.Service.IsUserGroupMember(groupID, currentUserID)
+	if err != nil {
+		log.Printf("Failed to check group membership: %v", err)
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to verify membership")
+		return
+	}
+	if !isMember {
+		utils.RespondWithError(w, http.StatusForbidden, "Only group members can invite users")
+		return
+	}
+
+	// Get available users
+	users, err := h.Service.GetAvailableUsersForGroup(groupID)
+	if err != nil {
+		log.Printf("Failed to get available users: %v", err)
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to retrieve users")
+		return
+	}
+
+	if users == nil {
+		users = []map[string]interface{}{}
+	}
+
+	utils.RespondWithJSON(w, http.StatusOK, users)
+}
+
 // extractGroupIDFromPath extracts the group ID from URL paths like /groups/123/join
 func extractGroupIDFromPath(path string) (uint, error) {
 	parts := strings.Split(strings.Trim(path, "/"), "/")

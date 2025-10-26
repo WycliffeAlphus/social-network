@@ -25,6 +25,11 @@ func (s *GroupService) GetUserGroups(userID string) ([]model.Group, error) {
 	return s.Repo.GetUserGroups(userID)
 }
 
+// GetAvailableUsersForGroup retrieves users who are not already members of the group.
+func (s *GroupService) GetAvailableUsersForGroup(groupID uint) ([]map[string]interface{}, error) {
+	return s.Repo.GetAvailableUsersForGroup(groupID)
+}
+
 func (s *GroupService) CreateGroup(title, description, privacySetting string, creatorID string) (*model.Group, error) {
 	// Start a transaction within the service layer
 	tx, err := s.Repo.DB.Begin() // Access DB from repository

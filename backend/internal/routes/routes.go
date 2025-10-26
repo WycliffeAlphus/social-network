@@ -67,8 +67,11 @@ func RegisterRoutes(db *sql.DB) {
 	// Group join request endpoints
 	http.HandleFunc("/api/groups/", func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
-		// Check for /join-requests BEFORE /join (more specific route first)
-		if strings.Contains(r.URL.Path, "/join-requests") {
+		// Check for more specific routes first
+		if strings.Contains(r.URL.Path, "/available-users") {
+			middlewares.AuthMiddleware(db, http.HandlerFunc(groupHandler.GetAvailableUsersForGroup)).ServeHTTP(w, r)
+			return
+		} else if strings.Contains(r.URL.Path, "/join-requests") {
 			middlewares.AuthMiddleware(db, http.HandlerFunc(groupHandler.GetPendingJoinRequests)).ServeHTTP(w, r)
 			return
 		} else if strings.Contains(r.URL.Path, "/join") {

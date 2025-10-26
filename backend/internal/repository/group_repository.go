@@ -334,3 +334,47 @@ func (r *GroupRepository) GetUserGroups(userID string) ([]model.Group, error) {
 
 	return groups, nil
 }
+
+// GetAvailableUsersForGroup retrieves all users who are not members of the specified group.
+func (r *GroupRepository) GetAvailableUsersForGroup(groupID uint) ([]map[string]interface{}, error) {
+	rows, err := r.DB.Query(`
+		SELECT u.id, u.fname, u.lname, u.nickname, u.imgurl
+		FROM users u
+		WHERE u.id NOT IN (
+			SELECT gm.user_id
+			FROM group_members gm
+			WHERE gm.group_id = ? AND gm.deleted_at IS NULL
+		)
+		ORDER BY u.fname, u.lname
+	`, groupID)
+
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var users []map[string]interface{}
+	for rows.Next() {
+		var id, fname, lname, nickname string
+		var imgurl sql.NullString
+
+		err := rows.Scan(&id, &fname, &lname, &nickname, &imgurl)
+		if err != nil {
+			return nil, err
+		}
+
+		user := map[string]interface{}{
+			"id":       id,
+			"fname":    fname,
+			"lname":    lname,
+			"nickname": nickname,
+		}
+		if imgurl.Valid {
+			user["imgurl"] = imgurl.String
+		}
+
+		users = append(users, user)
+	}
+
+	return users, nil
+}
