@@ -32,7 +32,23 @@ func (h *GroupHandler) GetGroups(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	groups, err := h.Service.GetAllGroups()
+	user := context.MustGetUser(r.Context())
+	userID := user.ID
+
+	// Check if filter parameter is present
+	filter := r.URL.Query().Get("filter")
+
+	var groups []model.Group
+	var err error
+
+	if filter == "my" {
+		// Get only groups where user is a member
+		groups, err = h.Service.GetUserGroups(userID)
+	} else {
+		// Get all groups (default behavior)
+		groups, err = h.Service.GetAllGroups()
+	}
+
 	if err != nil {
 		log.Printf("Failed to retrieve groups: %v", err)
 		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to retrieve groups")
@@ -183,6 +199,8 @@ func (h *GroupHandler) GetPendingJoinRequests(w http.ResponseWriter, r *http.Req
 	user := context.MustGetUser(r.Context())
 	creatorUserID := user.ID
 
+	log.Printf("[DEBUG] GetPendingJoinRequests - user ID: %s", creatorUserID)
+
 	if creatorUserID == "0" {
 		utils.RespondWithError(w, http.StatusUnauthorized, "User ID not found or is invalid")
 		return
@@ -195,6 +213,8 @@ func (h *GroupHandler) GetPendingJoinRequests(w http.ResponseWriter, r *http.Req
 		return
 	}
 
+	log.Printf("[DEBUG] GetPendingJoinRequests - group ID: %d, creator ID: %s", groupID, creatorUserID)
+
 	// Call service to get pending join requests
 	requests, err := h.Service.GetPendingJoinRequests(groupID, creatorUserID)
 	if err != nil {
@@ -202,6 +222,8 @@ func (h *GroupHandler) GetPendingJoinRequests(w http.ResponseWriter, r *http.Req
 		utils.RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
+
+	log.Printf("[DEBUG] GetPendingJoinRequests - found %d requests", len(requests))
 
 	utils.RespondWithJSON(w, http.StatusOK, requests)
 }
@@ -293,7 +315,7 @@ func (h *GroupHandler) CheckGroupMembership(w http.ResponseWriter, r *http.Reque
 }
 
 // InviteUserToGroup handles POST /groups/:id/invite endpoint.
-// It allows group creators to invite users to join a group.
+// It allows group members to invite users to join a group.
 func (h *GroupHandler) InviteUserToGroup(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		utils.RespondWithError(w, http.StatusMethodNotAllowed, "Method not allowed")
@@ -301,9 +323,9 @@ func (h *GroupHandler) InviteUserToGroup(w http.ResponseWriter, r *http.Request)
 	}
 
 	user := context.MustGetUser(r.Context())
-	creatorUserID := user.ID
+	inviterUserID := user.ID
 
-	if creatorUserID == "0" {
+	if inviterUserID == "0" {
 		utils.RespondWithError(w, http.StatusUnauthorized, "User ID not found or is invalid")
 		return
 	}
@@ -330,7 +352,7 @@ func (h *GroupHandler) InviteUserToGroup(w http.ResponseWriter, r *http.Request)
 	}
 
 	// Call service to invite user
-	err = h.Service.InviteUserToGroup(groupID, req.UserID, creatorUserID)
+	err = h.Service.InviteUserToGroup(groupID, req.UserID, inviterUserID)
 	if err != nil {
 		log.Printf("Failed to invite user: %v", err)
 		utils.RespondWithError(w, http.StatusBadRequest, err.Error())
@@ -340,6 +362,109 @@ func (h *GroupHandler) InviteUserToGroup(w http.ResponseWriter, r *http.Request)
 	utils.RespondWithJSON(w, http.StatusOK, map[string]string{
 		"message": "User invited successfully",
 	})
+}
+
+// AcceptGroupInvite handles POST /groups/:id/invites/accept endpoint.
+// It allows invited users to accept an invitation to join a group.
+func (h *GroupHandler) AcceptGroupInvite(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		utils.RespondWithError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		return
+	}
+
+	user := context.MustGetUser(r.Context())
+	userID := user.ID
+
+	if userID == "0" {
+		utils.RespondWithError(w, http.StatusUnauthorized, "User ID not found or is invalid")
+		return
+	}
+
+	// Extract group ID from URL path
+	groupID, err := extractGroupIDFromPath(r.URL.Path)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid group ID")
+		return
+	}
+
+	// Call service to accept invitation
+	err = h.Service.AcceptGroupInvite(groupID, userID)
+	if err != nil {
+		log.Printf("Failed to accept invitation: %v", err)
+		utils.RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	utils.RespondWithJSON(w, http.StatusOK, map[string]string{
+		"message": "Invitation accepted successfully",
+	})
+}
+
+// RejectGroupInvite handles POST /groups/:id/invites/reject endpoint.
+// It allows invited users to reject an invitation to join a group.
+func (h *GroupHandler) RejectGroupInvite(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		utils.RespondWithError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		return
+	}
+
+	user := context.MustGetUser(r.Context())
+	userID := user.ID
+
+	if userID == "0" {
+		utils.RespondWithError(w, http.StatusUnauthorized, "User ID not found or is invalid")
+		return
+	}
+
+	// Extract group ID from URL path
+	groupID, err := extractGroupIDFromPath(r.URL.Path)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid group ID")
+		return
+	}
+
+	// Call service to reject invitation
+	err = h.Service.RejectGroupInvite(groupID, userID)
+	if err != nil {
+		log.Printf("Failed to reject invitation: %v", err)
+		utils.RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	utils.RespondWithJSON(w, http.StatusOK, map[string]string{
+		"message": "Invitation rejected successfully",
+	})
+}
+
+// GetUserGroupInvites handles GET /groups/invites endpoint.
+// It retrieves all pending group invitations for the authenticated user.
+func (h *GroupHandler) GetUserGroupInvites(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		utils.RespondWithError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		return
+	}
+
+	user := context.MustGetUser(r.Context())
+	userID := user.ID
+
+	if userID == "0" {
+		utils.RespondWithError(w, http.StatusUnauthorized, "User ID not found or is invalid")
+		return
+	}
+
+	// Call service to get user's group invitations
+	invites, err := h.Service.GetUserGroupInvites(userID)
+	if err != nil {
+		log.Printf("Failed to get group invitations: %v", err)
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to retrieve invitations")
+		return
+	}
+
+	if invites == nil {
+		invites = []model.Group{}
+	}
+
+	utils.RespondWithJSON(w, http.StatusOK, invites)
 }
 
 // extractGroupIDFromPath extracts the group ID from URL paths like /groups/123/join
