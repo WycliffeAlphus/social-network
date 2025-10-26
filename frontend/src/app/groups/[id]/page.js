@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import CreatePost from "@/components/createpost";
-import PostCard from "@/components/postCard"; // Import PostCard
-import { UserPlusIcon } from '@heroicons/react/24/outline';
+import PostCard from "@/components/postCard";
+import { UserPlusIcon, CalendarIcon, PlusIcon } from '@heroicons/react/24/outline';
 
 export default function GroupPage() {
   const [group, setGroup] = useState(null);
@@ -27,23 +28,40 @@ export default function GroupPage() {
 
   const checkMembership = async () => {
     try {
+      console.log('Checking membership for group:', id);
       const response = await fetch(`http://localhost:8080/api/groups/${id}/membership`, {
         credentials: "include",
       });
+      console.log('Membership check response status:', response.status);
+
       if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Membership check failed:', errorData);
         throw new Error("Failed to check membership");
       }
+
       const data = await response.json();
-      if (data.is_member) {
+      console.log('Membership check result:', data);
+
+      if (data.data && data.data.is_member) {
+        console.log('User IS a member');
+        setIsMember(true);
+        fetchCurrentUser();
+        fetchGroupDetails();
+        fetchGroupPosts();
+      } else if (data.is_member) {
+        console.log('User IS a member (alternate format)');
         setIsMember(true);
         fetchCurrentUser();
         fetchGroupDetails();
         fetchGroupPosts();
       } else {
+        console.log('User is NOT a member');
         setError("You are not a member of this group");
         setLoading(false);
       }
     } catch (e) {
+      console.error('Membership check error:', e);
       setError(e.message);
       setLoading(false);
     }
@@ -102,10 +120,10 @@ export default function GroupPage() {
       {loading && <p>Loading...</p>}
       {error && (
         <div className="text-center py-12">
-          <p className="text-red-500 text-xl mb-4">{error}</p>
+          <p className="text-xl mb-4">{error}</p>
           <button
             onClick={() => router.push('/groups')}
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            className="border border-black hover:bg-black hover:text-white font-bold py-2 px-4 transition duration-300 ease-in-out"
           >
             Back to Groups
           </button>
@@ -113,35 +131,49 @@ export default function GroupPage() {
       )}
       {!error && group && (
         <div>
-          <div className="flex justify-between items-start mb-4">
-            <div>
+          <div className="mb-6">
+            <div className="flex justify-between items-start mb-2">
               <h1 className="text-3xl font-bold">{group.title}</h1>
-              <p className="text-gray-600">{group.description}</p>
               {isGroupCreator && (
-                <span className="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium mt-2">
-                  You are the creator
+                <span className="bg-black text-white px-3 py-1 text-sm font-medium">
+                  Creator
                 </span>
               )}
             </div>
+            <p className="text-gray-600">{group.description}</p>
           </div>
 
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3 mb-8">
             <button
               onClick={() => setShowCreatePost(true)}
-              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition duration-300 ease-in-out"
+              className="bg-black hover:bg-gray-800 text-white font-bold py-2 px-4 transition duration-300 ease-in-out flex items-center gap-2"
             >
+              <PlusIcon className="h-5 w-5" />
               Create Post
             </button>
 
-            {isGroupCreator && (
+            {isMember && (
+              <Link href={`/groups/${id}/events`}>
+                <button className="border border-black hover:bg-black hover:text-white font-bold py-2 px-4 transition duration-300 ease-in-out flex items-center gap-2">
+                  <CalendarIcon className="h-5 w-5" />
+                  View Events
+                </button>
+              </Link>
+            )}
+
+            {isMember && (
               <button
                 onClick={() => setShowInviteModal(true)}
-                className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition duration-300 ease-in-out flex items-center gap-2"
+                className="border border-black hover:bg-black hover:text-white font-bold py-2 px-4 transition duration-300 ease-in-out flex items-center gap-2"
               >
                 <UserPlusIcon className="h-5 w-5" />
                 Invite Members
               </button>
             )}
+          </div>
+
+          <div className="border-t border-gray-400 pt-6">
+            <h2 className="text-2xl font-bold mb-4">Group Posts</h2>
           </div>
         </div>
       )}
@@ -222,13 +254,13 @@ function InviteMembersModal({ groupId, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full max-h-[80vh] overflow-y-auto">
-        <div className="flex justify-between items-center mb-4">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={onClose}>
+      <div className="bg-white shadow-xl p-6 max-w-md w-full max-h-[80vh] overflow-y-auto border border-gray-400" onClick={(e) => e.stopPropagation()}>
+        <div className="flex justify-between items-center mb-4 border-b border-gray-400 pb-4">
           <h2 className="text-2xl font-bold">Invite Members</h2>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 text-2xl"
+            className="text-gray-500 hover:text-black text-2xl font-bold"
           >
             &times;
           </button>
@@ -241,7 +273,7 @@ function InviteMembersModal({ groupId, onClose }) {
         ) : (
           <div className="space-y-3">
             {users.map((user) => (
-              <div key={user.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+              <div key={user.id} className="flex justify-between items-center p-3 border border-gray-300 hover:border-gray-400">
                 <div>
                   <p className="font-medium">{user.fname} {user.lname}</p>
                   <p className="text-sm text-gray-500">@{user.nickname}</p>
@@ -249,10 +281,10 @@ function InviteMembersModal({ groupId, onClose }) {
                 <button
                   onClick={() => handleInvite(user.id)}
                   disabled={inviting[user.id]}
-                  className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+                  className={`px-4 py-2 font-medium transition-all duration-200 ${
                     inviting[user.id]
-                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                      : 'bg-blue-500 hover:bg-blue-600 text-white'
+                      ? 'border border-gray-400 text-gray-400 cursor-not-allowed'
+                      : 'bg-black hover:bg-gray-800 text-white'
                   }`}
                 >
                   {inviting[user.id] ? 'Inviting...' : 'Invite'}

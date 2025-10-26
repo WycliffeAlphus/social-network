@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { UserPlusIcon, CheckIcon, ClockIcon, UserGroupIcon, BellIcon } from '@heroicons/react/24/outline';
+import { UserPlusIcon, ClockIcon, UserGroupIcon, BellIcon } from '@heroicons/react/24/outline';
 
 export default function GroupsPage() {
   const [groups, setGroups] = useState([]);
@@ -14,26 +14,30 @@ export default function GroupsPage() {
   const [pendingRequests, setPendingRequests] = useState({});
   const [groupMemberships, setGroupMemberships] = useState({});
   const [pendingJoinCounts, setPendingJoinCounts] = useState({});
+  const [activeTab, setActiveTab] = useState('all'); // 'all' or 'my'
   const router = useRouter();
 
   useEffect(() => {
-    async function fetchCurrentUser() {
+    async function fetchData() {
       try {
-        const response = await fetch("http://localhost:8080/api/profile/currentuser", {
+        // First, fetch current user
+        const userResponse = await fetch("http://localhost:8080/api/profile/currentuser", {
           credentials: 'include',
         });
-        if (response.ok) {
-          const userData = await response.json();
+        let userData = null;
+        if (userResponse.ok) {
+          const rawUserData = await userResponse.json();
+          // Extract the actual user ID from current_user_id field
+          userData = {
+            ...rawUserData,
+            id: rawUserData.current_user_id
+          };
           setCurrentUser(userData);
         }
-      } catch (e) {
-        console.error("Failed to fetch current user:", e);
-      }
-    }
 
-    async function fetchGroups() {
-      try {
-        const response = await fetch("http://localhost:8080/api/groups", {
+        // Then fetch groups
+        const filterParam = activeTab === 'my' ? '?filter=my' : '';
+        const response = await fetch(`http://localhost:8080/api/groups${filterParam}`, {
           credentials: 'include',
         });
 
@@ -52,8 +56,8 @@ export default function GroupsPage() {
 
         if (responseData && Array.isArray(responseData.data)) {
           setGroups(responseData.data);
-          // Fetch membership status for each group
-          await fetchMembershipStatus(responseData.data);
+          // Fetch membership status for each group, passing userData
+          await fetchMembershipStatus(responseData.data, userData);
         } else {
           console.error("API did not return a valid groups array:", responseData);
           setGroups([]);
@@ -69,7 +73,7 @@ export default function GroupsPage() {
       }
     }
 
-    async function fetchMembershipStatus(groupsList) {
+    async function fetchMembershipStatus(groupsList, user) {
       const memberships = {};
       const joinCounts = {};
       for (const group of groupsList) {
@@ -87,7 +91,7 @@ export default function GroupsPage() {
         }
 
         // Fetch pending join requests count for groups created by current user
-        if (currentUser && group.creator_id === currentUser.id) {
+        if (user && group.creator_id === user.id) {
           try {
             const requestsResponse = await fetch(`http://localhost:8080/api/groups/${group.id}/join-requests`, {
               credentials: 'include',
@@ -106,9 +110,8 @@ export default function GroupsPage() {
       setPendingJoinCounts(joinCounts);
     }
 
-    fetchCurrentUser();
-    fetchGroups();
-  }, [router]);
+    fetchData();
+  }, [router, activeTab]);
 
   const handleJoinRequest = async (groupId) => {
     try {
@@ -153,16 +156,16 @@ export default function GroupsPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen justify-center items-center bg-gray-100">
-        <p className="text-xl text-gray-700">Loading groups...</p>
+      <div className="flex min-h-screen justify-center items-center">
+        <p className="text-xl">Loading groups...</p>
       </div>
     );
   }
 
   if (error && !loading) {
     return (
-      <div className="flex min-h-screen justify-center items-center bg-gray-100">
-        <p className="text-xl text-red-500">Error: {error}</p>
+      <div className="flex min-h-screen justify-center items-center">
+        <p className="text-xl">Error: {error}</p>
       </div>
     );
   }
@@ -172,18 +175,50 @@ export default function GroupsPage() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Groups</h1>
         <div className="flex gap-3">
+          <Link href="/groups/invites">
+            <button className="border border-black hover:bg-black hover:text-white font-bold py-2 px-4 transition duration-300 ease-in-out flex items-center gap-2">
+              <BellIcon className="h-5 w-5" />
+              Invitations
+            </button>
+          </Link>
           <Link href="/groups/join-requests">
-            <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition duration-300 ease-in-out flex items-center gap-2">
+            <button className="border border-black hover:bg-black hover:text-white font-bold py-2 px-4 transition duration-300 ease-in-out flex items-center gap-2">
               <UserGroupIcon className="h-5 w-5" />
               Manage Requests
             </button>
           </Link>
           <Link href="/groups/create">
-            <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition duration-300 ease-in-out">
+            <button className="bg-black hover:bg-gray-800 text-white font-bold py-2 px-4 transition duration-300 ease-in-out">
               Create New Group
             </button>
           </Link>
         </div>
+      </div>
+
+      {/* Tab Navigation */}
+      <div className="mb-6 border-b border-gray-400">
+        <nav className="flex space-x-8" aria-label="Tabs">
+          <button
+            onClick={() => setActiveTab('all')}
+            className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+              activeTab === 'all'
+                ? 'border-black text-black'
+                : 'border-transparent text-gray-500 hover:text-black hover:border-gray-400'
+            }`}
+          >
+            All Groups
+          </button>
+          <button
+            onClick={() => setActiveTab('my')}
+            className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+              activeTab === 'my'
+                ? 'border-black text-black'
+                : 'border-transparent text-gray-500 hover:text-black hover:border-gray-400'
+            }`}
+          >
+            My Groups
+          </button>
+        </nav>
       </div>
 
       {(!Array.isArray(groups) || groups.length === 0) ? (
