@@ -200,21 +200,19 @@ export default function GroupsPage() {
         <nav className="flex space-x-8" aria-label="Tabs">
           <button
             onClick={() => setActiveTab('all')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-              activeTab === 'all'
-                ? 'border-black text-black'
-                : 'border-transparent text-gray-500 hover:text-black hover:border-gray-400'
-            }`}
+            className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'all'
+              ? 'border-black text-black'
+              : 'border-transparent text-gray-500 hover:text-black hover:border-gray-400'
+              }`}
           >
             All Groups
           </button>
           <button
             onClick={() => setActiveTab('my')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-              activeTab === 'my'
-                ? 'border-black text-black'
-                : 'border-transparent text-gray-500 hover:text-black hover:border-gray-400'
-            }`}
+            className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'my'
+              ? 'border-black text-black'
+              : 'border-transparent text-gray-500 hover:text-black hover:border-gray-400'
+              }`}
           >
             My Groups
           </button>
@@ -224,22 +222,22 @@ export default function GroupsPage() {
       {(!Array.isArray(groups) || groups.length === 0) ? (
         <p className="text-gray-600 text-center">No groups found. Start by creating a new one!</p>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="gap-6">
           {groups.map((group) => (
-            <div key={group.id} className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300" >
-              <div className="flex justify-between items-start mb-3">
-                <Link href={`/groups/${group.id}`}>
+            <div key={group.id} className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 mb-4" >
+              <Link href={`/groups/${group.id}`}>
+
+                <div className="flex justify-between items-start mb-3">
                   <h2 className="text-xl font-semibold text-gray-900">{group.title}</h2>
-                </Link>
-                <span className={`px-2 py-1 text-xs rounded-full ${group.privacy_setting === 'public' ? 'bg-green-100 text-green-800' :
+
+                  <span className={`px-2 py-1 text-xs rounded-full ${group.privacy_setting === 'public' ? 'bg-green-100 text-green-800' :
                     group.privacy_setting === 'private' ? 'bg-yellow-100 text-yellow-800' :
                       'bg-red-100 text-red-800'
-                  }`}>
-                  {group.privacy_setting}
-                </span>
-              </div>
-
-              <p className="text-gray-600 mb-4">{group.description}</p>
+                    }`}>
+                    {group.privacy_setting}
+                  </span>
+                </div>
+              </Link>
 
               <div className="flex flex-col gap-3">
                 <div className="flex justify-between items-center">
@@ -264,8 +262,8 @@ export default function GroupsPage() {
                       onClick={() => handleJoinRequest(group.id)}
                       disabled={pendingRequests[group.id]}
                       className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-200 ${pendingRequests[group.id]
-                          ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                          : 'bg-blue-500 hover:bg-blue-600 text-white hover:shadow-md'
+                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        : 'bg-blue-500 hover:bg-blue-600 text-white hover:shadow-md'
                         }`}
                     >
                       {pendingRequests[group.id] ? (
@@ -301,6 +299,7 @@ export default function GroupsPage() {
                   </Link>
                 )}
               </div>
+
             </div>
           ))}
         </div>

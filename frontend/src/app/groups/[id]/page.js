@@ -207,16 +207,19 @@ function InviteMembersModal({ groupId, onClose }) {
 
   useEffect(() => {
     fetchAvailableUsers();
+    
   }, []);
 
   const fetchAvailableUsers = async () => {
     try {
-      const response = await fetch("http://localhost:8080/api/users/available", {
+      const response = await fetch(`http://localhost:8080/api/groups/${groupId}/available-users`, {
         credentials: 'include',
       });
       if (response.ok) {
         const data = await response.json();
-        setUsers(data || []);
+        console.log(data);
+
+        setUsers(data.data || []);
       }
     } catch (e) {
       console.error("Failed to fetch users:", e);
@@ -272,7 +275,7 @@ function InviteMembersModal({ groupId, onClose }) {
           <p className="text-gray-600">No users available to invite.</p>
         ) : (
           <div className="space-y-3">
-            {users.map((user) => (
+            {users?.map((user) => (
               <div key={user.id} className="flex justify-between items-center p-3 border border-gray-300 hover:border-gray-400">
                 <div>
                   <p className="font-medium">{user.fname} {user.lname}</p>
