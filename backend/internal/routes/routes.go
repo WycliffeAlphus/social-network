@@ -22,6 +22,10 @@ func RegisterRoutes(db *sql.DB) {
 	groupService := service.NewGroupService(groupRepo)
 	groupHandler := &handler.GroupHandler{Service: groupService}
 
+	eventRepo := repository.NewEventRepository(db)
+	eventService := service.NewEventService(eventRepo, groupRepo)
+	eventHandler := &handler.EventHandler{Service: eventService}
+
 	// Public routes (no authentication required)
 	http.HandleFunc("/api/register", userHandler.Register)
 	http.HandleFunc("/api/login", handler.LoginHandler)
@@ -55,15 +59,53 @@ func RegisterRoutes(db *sql.DB) {
 
 	http.HandleFunc("/api/groups", groupsHandler)
 
+	// Group invites list endpoint (no group ID in path)
+	http.HandleFunc("/api/groups/invites", func(w http.ResponseWriter, r *http.Request) {
+		middlewares.AuthMiddleware(db, http.HandlerFunc(groupHandler.GetUserGroupInvites)).ServeHTTP(w, r)
+	})
+
 	// Group join request endpoints
 	http.HandleFunc("/api/groups/", func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
-		// Handle /api/groups/:id/join endpoint
-		if strings.Contains(path, "/join") {
-			if r.URL.Query().Get("action") == "accept" {
+		// Check for more specific routes first
+		if strings.Contains(r.URL.Path, "/available-users") {
+			middlewares.AuthMiddleware(db, http.HandlerFunc(groupHandler.GetAvailableUsersForGroup)).ServeHTTP(w, r)
+			return
+		} else if strings.Contains(r.URL.Path, "/join-requests") {
+			middlewares.AuthMiddleware(db, http.HandlerFunc(groupHandler.GetPendingJoinRequests)).ServeHTTP(w, r)
+			return
+		} else if strings.Contains(r.URL.Path, "/join") {
+			// Handle /api/groups/:id/join endpoint
+			action := r.URL.Query().Get("action")
+			switch action {
+			case "accept":
 				middlewares.AuthMiddleware(db, http.HandlerFunc(groupHandler.AcceptJoinRequest)).ServeHTTP(w, r)
-			} else {
+			case "reject":
+				middlewares.AuthMiddleware(db, http.HandlerFunc(groupHandler.RejectJoinRequest)).ServeHTTP(w, r)
+			default:
 				middlewares.AuthMiddleware(db, http.HandlerFunc(groupHandler.JoinGroupRequest)).ServeHTTP(w, r)
+			}
+			return
+		} else if strings.Contains(path, "/membership") {
+			middlewares.AuthMiddleware(db, http.HandlerFunc(groupHandler.CheckGroupMembership)).ServeHTTP(w, r)
+			return
+		} else if strings.Contains(path, "/invites/accept") {
+			middlewares.AuthMiddleware(db, http.HandlerFunc(groupHandler.AcceptGroupInvite)).ServeHTTP(w, r)
+			return
+		} else if strings.Contains(path, "/invites/reject") {
+			middlewares.AuthMiddleware(db, http.HandlerFunc(groupHandler.RejectGroupInvite)).ServeHTTP(w, r)
+			return
+		} else if strings.Contains(path, "/invite") {
+			middlewares.AuthMiddleware(db, http.HandlerFunc(groupHandler.InviteUserToGroup)).ServeHTTP(w, r)
+			return
+		} else if strings.Contains(path, "/events") {
+			// Handle event endpoints
+			if r.Method == http.MethodGet {
+				middlewares.AuthMiddleware(db, http.HandlerFunc(eventHandler.GetGroupEvents)).ServeHTTP(w, r)
+			} else if r.Method == http.MethodPost {
+				middlewares.AuthMiddleware(db, http.HandlerFunc(eventHandler.CreateEvent)).ServeHTTP(w, r)
+			} else {
+				http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 			}
 			return
 		} else if strings.Contains(path, "/posts") {
@@ -71,6 +113,24 @@ func RegisterRoutes(db *sql.DB) {
 			return
 		} else {
 			middlewares.AuthMiddleware(db, http.HandlerFunc(handler.GetGroup(db))).ServeHTTP(w, r)
+			return
+		}
+	})
+
+	// Event endpoints
+	http.HandleFunc("/api/events/", func(w http.ResponseWriter, r *http.Request) {
+		path := r.URL.Path
+		if strings.Contains(path, "/respond") {
+			middlewares.AuthMiddleware(db, http.HandlerFunc(eventHandler.RespondToEvent)).ServeHTTP(w, r)
+			return
+		} else if r.Method == http.MethodGet {
+			middlewares.AuthMiddleware(db, http.HandlerFunc(eventHandler.GetEventDetails)).ServeHTTP(w, r)
+			return
+		} else if r.Method == http.MethodDelete {
+			middlewares.AuthMiddleware(db, http.HandlerFunc(eventHandler.DeleteEvent)).ServeHTTP(w, r)
+			return
+		} else {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 			return
 		}
 	})
